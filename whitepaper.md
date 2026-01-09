@@ -78,7 +78,7 @@ BuildOS is not just another project management tool—it's a complete digital tr
 
 BuildOS serves the entire construction ecosystem, from commercial construction firms and residential developers to general contractors and specialty subcontractors. With the construction software market valued at $12 billion and growing at 10% annually, BuildOS is positioned to capture significant market share by addressing the critical pain points that plague the industry.
 
-Our platform is designed for organizations of all sizes, from small regional contractors managing 5-10 projects to large enterprise firms coordinating hundreds of concurrent developments. The subscription-based model ($50-200 per user/month) ensures accessibility while providing scalable revenue growth.
+Our platform is designed for organizations of all sizes, from small regional contractors managing individual projects to large enterprise firms and institutional developers coordinating billions in capital deployment. The project-based pricing model ($2,400-$12,000 per project per year) aligns with how construction firms budget and allows costs to be passed through to project owners, while portfolio licensing ($25k-$150k annually) serves developers managing multiple assets.
 
 ## Competitive Edge & Innovation
 
@@ -1369,54 +1369,149 @@ Many smaller firms still rely on spreadsheets and email for project management. 
 
 BuildOS provides a clear upgrade path for these firms with affordable pricing and easy adoption.
 
-## Subscription Model and Pricing
+## Project Intelligence Infrastructure Pricing
 
-BuildOS uses a subscription-based pricing model with three tiers:
+BuildOS is not sold like commodity software. It is **mission-critical infrastructure** that protects execution and capital. Our pricing reflects the value we deliver: risk reduction, capital intelligence, and continuous project visibility.
 
-### Starter Tier ($50/user/month)
+### How Buyers Evaluate BuildOS
 
-- Core project management features
-- RFI and submittal management
-- Daily reports and time tracking
-- Document storage (100GB)
-- Email support
-- **Target**: Small contractors (5-20 users)
+**General Contractors Ask:**
+- "Does this reduce rework and protect us from claims?"
+- "Does this speed takeoffs, submittals, and change orders?"
+- "Can we pass the cost through to project owners?"
 
-### Professional Tier ($100/user/month)
+**Developers & Owners Ask:**
+- "Does this protect capital and improve IRR visibility?"
+- "Does this de-risk our exit strategy?"
+- "Can this replace consultants and spreadsheet chaos?"
 
-- All Starter features
-- Change order automation
-- Financial analytics
-- Equipment management
-- Webhook integrations
-- Document storage (500GB)
-- Phone and email support
-- **Target**: Mid-size contractors (20-100 users)
+**BuildOS Answer:**  
+*We are not a tool. We are risk reduction + capital intelligence.*
 
-### Enterprise Tier ($200/user/month)
+### Pricing Models
 
-- All Professional features
-- AI design services integration
-- Advanced financial modeling
-- Custom workflows and integrations
-- Unlimited document storage
-- Dedicated success manager
-- Priority support
-- **Target**: Large contractors (100+ users)
+#### Model A: Project-Based Pricing (Primary for GCs & Developers)
 
-This tiered approach ensures BuildOS is accessible to firms of all sizes while providing a clear upgrade path as organizations grow.
+This model aligns with how construction firms budget and allows costs to be passed through to project owners.
+
+| Project Size | Annual License | Monthly Equivalent |
+|-------------|----------------|-------------------|
+| **Under $10M** | $2,400 - $3,500 | $200 - $290 |
+| **$10M - $50M** | $5,000 - $7,500 | $415 - $625 |
+| **$50M - $150M** | $9,000 - $12,000 | $750 - $1,000 |
+| **$150M+** | Custom / Enterprise | $1,000+ |
+
+**All Tiers Include:**
+- ✓ Complete feature set—no à-la-carte modules
+- ✓ Unlimited drawings and documents
+- ✓ Unlimited stakeholder access (role-based)
+- ✓ AI design services integration
+- ✓ Financial analytics and ROI calculator
+- ✓ Real-time notifications and activity tracking
+- ✓ 2-4 week implementation
+
+#### Model B: User-Based Pricing (Large Enterprise Firms)
+
+For multi-project firms with field-heavy operations, user-based pricing provides flexibility.
+
+| Role | Monthly Price | Annual Price |
+|------|--------------|--------------|
+| **Field / Engineer** | $150 - $200 | $1,800 - $2,400 |
+| **PM / Estimator** | $250 - $350 | $3,000 - $4,200 |
+| **Executive / Finance** | $400 - $500 | $4,800 - $6,000 |
+
+*Minimum annual commitment: $2,500 - $5,000*
+
+#### Model C: Portfolio Licensing (Developers & Institutional Owners)
+
+For real estate developers and owners managing multiple assets, portfolio licensing provides enterprise-grade analytics and reporting.
+
+**$25,000 - $150,000 per year** based on:
+- Number of active assets in portfolio
+- Total capital deployed across projects
+- Investor reporting and analytics depth
+- AI-powered risk alerts and exit modeling
+
+**This Replaces:**
+- Financial consultants ($50k-$250k per project)
+- Manual spreadsheet management
+- Fragmented reporting tools
+- Static asset management platforms
+
+### Why This Pricing Is Defensible
+
+| Platform | Annual Cost | What You Get | What's Missing |
+|----------|------------|--------------|----------------|
+| **Bluebeam** | $300-$400/user | Document markup | Zero financial intelligence, no AI, no project management |
+| **Procore** | $10k-$50k/year | Project management | Weak financial modeling, 8-12 week setup, fragmented UX |
+| **Consultants** | $50k-$250k/project | One-time analysis | Slow, static outputs, no continuous intelligence |
+| **BuildOS** | $2,400-$12,000/project | **Complete operating system** | **Nothing—it's unified infrastructure** |
+
+### What BuildOS Delivers That Others Don't
+
+- **Financial Intelligence:** IRR/NPV calculations, capital stack management, multi-year projections—built-in, not bolted on
+- **AI Integration:** Design services, predictive analytics, risk alerts—native to the platform
+- **Capital Protection:** Real-time visibility into budget variance, change order impact, exit scenario modeling
+- **Continuous Intelligence:** Not static reports—live dashboards that update as the project evolves
+
+### Market Positioning
+
+**We Position BuildOS As:**
+
+- **Project Intelligence Platform** (not "software")
+- **Construction Operating System** (mission-critical)
+- **Capital Protection Infrastructure** (risk reduction)
+
+**Our Positioning Statement:**
+
+*"BuildOS replaces drawings, spreadsheets, and financial blind spots with one trusted system that protects both execution and capital."*
+
+### Launch & Scaling Strategy
+
+**Phase 1: Early Access** (Current)
+- Target: Founding customers and early adopters
+- Pricing: $2,500 / project / year OR $150 / user / month
+- Value: "Founding Customer" badge, case study participation
+- Goal: 50 customers, validate product-market fit
+
+**Phase 2: Market Validation** (6-12 months)
+- Target: Mid-market GCs and regional developers
+- Pricing: $5,000-$7,500 / project / year
+- Value: Procurement-ready contracts, reference customers, ROI case studies
+- Goal: 200 customers, $1.5M ARR
+
+**Phase 3: Enterprise Scale** (12-24 months)
+- Target: Large GCs, institutional developers, ENR Top 400 firms
+- Pricing: $12,000+ / project, portfolio licensing $50k-$150k
+- Value: Multi-year contracts, strategic partnerships, white-label options
+- Goal: 500 customers, $10M+ ARR
 
 ## Revenue Projections
 
-With conservative market penetration assumptions, BuildOS has significant revenue potential:
+With enterprise-grade pricing and conservative market penetration, BuildOS has significant revenue potential:
 
-- **Year 1**: 100 customers, 2,000 users, $2M ARR
-- **Year 3**: 500 customers, 12,000 users, $12M ARR
-- **Year 5**: 2,000 customers, 50,000 users, $50M ARR
+**Scenario: Project-Based Revenue Model**
 
-These projections assume average revenue per user of $100/month and account for customer churn and expansion.
+| Year | Projects | Avg Price/Project | Annual Recurring Revenue |
+|------|----------|-------------------|-------------------------|
+| **Year 1** | 50 projects | $3,500 | $175,000 |
+| **Year 2** | 200 projects | $5,000 | $1,000,000 |
+| **Year 3** | 500 projects | $6,500 | $3,250,000 |
+| **Year 5** | 1,500 projects | $7,500 | $11,250,000 |
 
-The construction software market's size, growth rate, and fragmentation create an ideal environment for BuildOS to capture significant market share and build a substantial, profitable business.
+**Alternative Scenario: Mixed Model (Projects + Portfolio)**
+
+- **Year 1**: 50 projects ($175k) + 5 portfolio licenses ($150k) = $325k ARR
+- **Year 3**: 400 projects ($2.6M) + 30 portfolio licenses ($1.2M) = $3.8M ARR
+- **Year 5**: 1,200 projects ($9M) + 80 portfolio licenses ($4M) = $13M ARR
+
+These projections are conservative and assume:
+- Gradual price increases as brand recognition grows
+- Mix of small/mid/large projects
+- 15% annual customer churn (low for infrastructure software)
+- Average customer lifetime value (LTV) of 4-5 years
+
+The construction software market's size ($12B), growth rate (10% CAGR), and current fragmentation create an ideal environment for BuildOS to capture significant market share at premium pricing.
 
 \newpage
 

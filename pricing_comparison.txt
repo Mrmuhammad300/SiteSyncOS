@@ -1,0 +1,128 @@
+# BuildOS Pricing Strategy Transformation
+
+## BEFORE (Commodity Software Positioning)
+┌─────────────────────────────────────────────┐
+│ STARTER TIER                                │
+│ $50/user/month                              │
+│ Target: 5-20 users, small contractors      │
+│ Positioning: Affordable tool               │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ PROFESSIONAL TIER                           │
+│ $100/user/month                             │
+│ Target: 20-100 users, mid-size firms       │
+│ Positioning: Feature-rich software         │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ ENTERPRISE TIER                             │
+│ $200/user/month                             │
+│ Target: 100+ users, large contractors      │
+│ Positioning: Premium software              │
+└─────────────────────────────────────────────┘
+
+Competing with: Bluebeam, point solutions
+Annual Revenue Example: $100/user × 2,000 users = $2M ARR
+
+
+## AFTER (Mission-Critical Infrastructure)
+┌─────────────────────────────────────────────┐
+│ MODEL A: PROJECT-BASED PRICING              │
+│ $2,400 - $12,000 per project per year      │
+│ Target: GCs, developers, any project size  │
+│ Positioning: Project intelligence platform │
+│ Includes: ALL features, unlimited users    │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ MODEL B: USER-BASED PRICING                 │
+│ $150-$500 per user/month (role-based)      │
+│ Target: Large enterprise, field-heavy ops  │
+│ Positioning: Construction operating system │
+│ Minimum: $2,500-$5,000/year commitment     │
+└─────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────┐
+│ MODEL C: PORTFOLIO LICENSING                │
+│ $25,000 - $150,000 per year                │
+│ Target: Developers, institutional owners   │
+│ Positioning: Capital protection infra      │
+│ Replaces: Consultants ($50k-$250k/project) │
+└─────────────────────────────────────────────┘
+
+Competing with: Procore ($10k-$50k), Consultants ($50k-$250k)
+Annual Revenue Example: 200 projects × $5k + 20 portfolios × $50k = $2M ARR
+
+
+## KEY DIFFERENCES
+
+┌─────────────────┬──────────────────────┬────────────────────────┐
+│ Dimension       │ BEFORE               │ AFTER                  │
+├─────────────────┼──────────────────────┼────────────────────────┤
+│ Positioning     │ "Software tool"      │ "Infrastructure"       │
+│ Price Point     │ $50-200/user/month   │ $2,400-12,000/project  │
+│ Value Metric    │ Per user             │ Per project/portfolio  │
+│ Competition     │ Bluebeam, tools      │ Procore, consultants   │
+│ Buyer Mindset   │ Cost reduction       │ Risk reduction         │
+│ Sales Cycle     │ Bottom-up adoption   │ Top-down procurement   │
+│ Brand Position  │ Affordable option    │ Premium platform       │
+│ Customer LTV    │ 2-3 years            │ 4-5 years              │
+│ Churn Risk      │ Higher (tools)       │ Lower (infrastructure) │
+│ Pricing Power   │ Limited              │ Strong                 │
+└─────────────────┴──────────────────────┴────────────────────────┘
+
+
+## POSITIONING STATEMENT
+
+OLD: "Affordable construction management software for teams of all sizes"
+
+NEW: "BuildOS replaces drawings, spreadsheets, and financial blind spots 
+     with one trusted system that protects both execution and capital."
+
+
+## INVESTOR NARRATIVE
+
+OLD: "We're making construction software affordable for SMBs"
+     → Competing on price, commodity positioning
+
+NEW: "We're replacing consultants and fragmented tools with continuous 
+     project intelligence infrastructure"
+     → Competing on value, premium positioning
+
+
+## REVENUE TRAJECTORY COMPARISON
+
+Year 3 Projections:
+
+OLD MODEL (Per-User):
+  500 customers × 24 avg users × $100/month × 12 months = $14.4M ARR
+
+NEW MODEL (Project-Based + Portfolio):
+  400 projects × $6,500/year = $2.6M
+  + 30 portfolios × $40k/year = $1.2M
+  = $3.8M ARR
+
+Note: Lower initial ARR but higher margins, lower churn, 
+      premium brand position, better exit multiples
+
+
+## COMPETITIVE DEFENSE
+
+Against "Why so expensive?"
+
+OLD RESPONSE: 
+  "We're actually very affordable compared to enterprise tools"
+
+NEW RESPONSE:
+  "A single change order dispute costs $15k-50k. BuildOS costs $5k/year 
+   and prevents multiple disputes. For a $25M project, we're less than 
+   0.03% of project value while protecting 20% cost overruns."
+
+
+## BOTTOM LINE
+
+We're not competing with Bluebeam anymore.
+We're competing with Procore and replacing consultants.
+
+This is mission-critical infrastructure, not commodity software.
