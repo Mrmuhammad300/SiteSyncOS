@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
-import prisma from '@/lib/db';
+import { prisma } from '@/lib/db';
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const projectId = searchParams.get('projectId');
 
     if (!projectId) {
@@ -21,50 +21,50 @@ export async function GET(request: NextRequest) {
       where: { projectId },
       include: {
         transactions: {
-          select: { amount: true, status: true, type: true },
+          select: { amount: true, type: true, status: true }
         },
-        children: true,
+        parent: { select: { id: true, name: true } },
+        children: { select: { id: true, name: true } }
       },
-      orderBy: { code: 'asc' },
+      orderBy: { name: 'asc' }
     });
 
-    // Calculate spent and remaining for each category
-    const categoriesWithStats = categories.map((cat) => {
-      const spent = cat.transactions
-        .filter((t) => t.type === 'Expense' && (t.status === 'Approved' || t.status === 'Paid'))
-        .reduce((sum, t) => sum + t.amount, 0);
-      const pending = cat.transactions
-        .filter((t) => t.type === 'Expense' && t.status === 'Pending')
-        .reduce((sum, t) => sum + t.amount, 0);
+    // Calculate totals for each category
+    const categoriesWithTotals = categories.map(cat => {
+      const paidTransactions = cat.transactions.filter(t => t.status === 'Paid');
+      const spent = paidTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+      const committed = cat.transactions
+        .filter(t => t.status === 'Pending' || t.status === 'Approved')
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+      
       return {
         ...cat,
         spent,
-        pending,
-        remaining: cat.budgetedAmount - spent,
-        percentUsed: cat.budgetedAmount > 0 ? (spent / cat.budgetedAmount) * 100 : 0,
-        transactions: undefined,
+        committed,
+        remaining: (cat.budgetedAmount || 0) - spent - committed,
+        transactions: undefined
       };
     });
 
-    return NextResponse.json({ categories: categoriesWithStats });
+    return NextResponse.json({ categories: categoriesWithTotals });
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    console.error('Error fetching budget categories:', error);
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { projectId, name, code, description, budgetedAmount, parentId } = body;
+    const body = await req.json();
+    const { projectId, name, code, budgetedAmount, parentId, description } = body;
 
     if (!projectId || !name) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID and name required' }, { status: 400 });
     }
 
     const category = await prisma.budgetCategory.create({
@@ -72,15 +72,15 @@ export async function POST(request: NextRequest) {
         projectId,
         name,
         code,
-        description,
         budgetedAmount: budgetedAmount || 0,
         parentId,
-      },
+        description
+      }
     });
 
     return NextResponse.json({ category }, { status: 201 });
   } catch (error) {
-    console.error('Error creating category:', error);
+    console.error('Error creating budget category:', error);
     return NextResponse.json({ error: 'Failed to create category' }, { status: 500 });
   }
 }

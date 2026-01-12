@@ -31,18 +31,36 @@ import {
   Menu,
   X,
   Palette,
+  Calendar,
+  Wallet,
+  Receipt,
+  Landmark,
+  Users,
+  Wrench,
+  BarChart3,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Projects', href: '/projects', icon: FolderKanban },
-  { name: 'Properties', href: '/properties', icon: Building2 },
-  { name: 'Design Services', href: '/design-services', icon: Palette },
+  { name: 'Gantt', href: '/gantt', icon: Calendar },
+  { name: 'Budgeting', href: '/budgeting', icon: Wallet },
+  { name: 'Draw Requests', href: '/draw-requests', icon: Receipt },
   { name: 'RFIs', href: '/rfis', icon: MessageSquare },
   { name: 'Submittals', href: '/submittals', icon: ClipboardCheck },
+  { name: 'Change Orders', href: '/change-orders', icon: DollarSign },
+  { name: 'Properties', href: '/properties', icon: Building2 },
+  { name: 'Tenants', href: '/tenant-management', icon: Users },
+  { name: 'Maintenance', href: '/maintenance', icon: Wrench },
+  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+];
+
+const secondaryNavigation = [
+  { name: 'Contractor Portal', href: '/contractor-portal', icon: HardHat },
+  { name: 'Lender Portal', href: '/lender-portal', icon: Landmark },
+  { name: 'Design Services', href: '/design-services', icon: Palette },
   { name: 'Daily Reports', href: '/daily-reports', icon: FileText },
   { name: 'Documents', href: '/documents', icon: FileStack },
-  { name: 'Change Orders', href: '/change-orders', icon: DollarSign },
   { name: 'Punch List', href: '/punch-items', icon: CheckCircle },
 ];
 
@@ -82,22 +100,45 @@ export function DashboardNav() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navigation.map((item) => {
+          <div className="hidden lg:flex items-center space-x-1">
+            {navigation.slice(0, 8).map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
               return (
                 <Link key={item.name} href={item.href}>
                   <Button
                     variant="ghost"
-                    className={`flex items-center space-x-2 ${isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                    size="sm"
+                    className={`flex items-center space-x-1 ${isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-100'}`}
                   >
                     <Icon className="w-4 h-4" />
-                    <span>{item.name}</span>
+                    <span className="text-sm">{item.name}</span>
                   </Button>
                 </Link>
               );
             })}
+            {/* More dropdown for additional items */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-gray-700 hover:bg-gray-100">
+                  <Menu className="w-4 h-4 mr-1" />
+                  <span className="text-sm">More</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>More Modules</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {[...navigation.slice(8), ...secondaryNavigation].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem key={item.name} onClick={() => router.push(item.href)}>
+                      <Icon className="mr-2 h-4 w-4" />
+                      {item.name}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* User Menu */}
@@ -152,8 +193,25 @@ export function DashboardNav() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 space-y-1">
+          <div className="lg:hidden py-4 space-y-1 max-h-[70vh] overflow-y-auto">
+            <p className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Main</p>
             {navigation.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+              return (
+                <Link key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start flex items-center space-x-3 ${isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{item.name}</span>
+                  </Button>
+                </Link>
+              );
+            })}
+            <p className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase mt-4">Portals & Tools</p>
+            {secondaryNavigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
               return (

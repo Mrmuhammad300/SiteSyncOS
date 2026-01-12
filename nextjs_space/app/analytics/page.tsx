@@ -212,7 +212,29 @@ export default function AnalyticsPage() {
             <option value="90">Last 90 days</option>
             <option value="365">Last year</option>
           </select>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => {
+            // Generate and download CSV report
+            const csvContent = [
+              ['Category', 'Metric', 'Value'],
+              ['Projects', 'Total', metrics?.projectHealth?.total || 0],
+              ['Projects', 'Active', metrics?.projectHealth?.active || 0],
+              ['Projects', 'Completed', metrics?.projectHealth?.completed || 0],
+              ['RFIs', 'Total', metrics?.rfiMetrics?.total || 0],
+              ['RFIs', 'Open', metrics?.rfiMetrics?.open || 0],
+              ['Submittals', 'Total', metrics?.submittalMetrics?.total || 0],
+              ['Submittals', 'Pending', metrics?.submittalMetrics?.pending || 0],
+              ['Change Orders', 'Total', metrics?.changeOrderMetrics?.total || 0],
+              ['Punch Items', 'Open', metrics?.punchItemMetrics?.open || 0]
+            ].map(row => row.join(',')).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `analytics-report-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+          }}>
             <Download className="h-4 w-4 mr-2" />
             Export Report
           </Button>

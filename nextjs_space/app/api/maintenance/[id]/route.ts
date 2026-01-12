@@ -10,12 +10,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const workOrder = await prisma.workOrder.findUnique({
+    const workOrder = await prisma.maintenanceWorkOrder.findUnique({
       where: { id: params.id },
       include: {
-        project: { select: { id: true, name: true } },
+        property: { select: { id: true, name: true, street: true, city: true } },
+        unit: { select: { id: true, unitNumber: true, floor: true } },
         assignedTo: { select: { id: true, name: true, email: true } },
-        progressPhotos: { orderBy: { createdAt: 'desc' } }
+        tenant: { select: { id: true, firstName: true, lastName: true } }
       }
     });
 
@@ -38,30 +39,30 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     const body = await req.json();
-    const { status, priority, assignedToId, actualHours, startedDate, completedDate, actualCost, notes } = body;
+    const { status, priority, assignedToId, scheduledDate, completedDate, actualCost, resolution, notes } = body;
 
     const updateData: Record<string, unknown> = {};
-    if (status !== undefined) updateData.status = status;
+    if (status !== undefined) {
+      updateData.status = status;
+      if (status === 'InProgress' && !body.startedAt) {
+        updateData.startedAt = new Date();
+      } else if (status === 'Completed') {
+        updateData.completedAt = completedDate ? new Date(completedDate) : new Date();
+      }
+    }
     if (priority !== undefined) updateData.priority = priority;
     if (assignedToId !== undefined) updateData.assignedToId = assignedToId;
-    if (actualHours !== undefined) updateData.actualHours = actualHours;
-    if (startedDate !== undefined) updateData.startedDate = new Date(startedDate);
-    if (completedDate !== undefined) updateData.completedDate = new Date(completedDate);
+    if (scheduledDate !== undefined) updateData.scheduledDate = new Date(scheduledDate);
     if (actualCost !== undefined) updateData.actualCost = actualCost;
+    if (resolution !== undefined) updateData.resolution = resolution;
     if (notes !== undefined) updateData.notes = notes;
 
-    // Auto-update dates based on status
-    if (status === 'InProgress' && !body.startedDate) {
-      updateData.startedDate = new Date();
-    } else if (status === 'Completed' && !body.completedDate) {
-      updateData.completedDate = new Date();
-    }
-
-    const workOrder = await prisma.workOrder.update({
+    const workOrder = await prisma.maintenanceWorkOrder.update({
       where: { id: params.id },
       data: updateData,
       include: {
-        project: { select: { id: true, name: true } },
+        property: { select: { id: true, name: true } },
+        unit: { select: { id: true, unitNumber: true } },
         assignedTo: { select: { id: true, name: true } }
       }
     });
@@ -70,31 +71,5 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   } catch (error) {
     console.error('Error updating work order:', error);
     return NextResponse.json({ error: 'Failed to update work order' }, { status: 500 });
-  }
-}
-
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userRole = (session.user as { role?: string }).role;
-    if (userRole !== 'Admin' && userRole !== 'ProjectManager') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Delete photos first
-    await prisma.workOrderPhoto.deleteMany({
-      where: { workOrderId: params.id }
-    });
-
-    await prisma.workOrder.delete({ where: { id: params.id } });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting work order:', error);
-    return NextResponse.json({ error: 'Failed to delete work order' }, { status: 500 });
   }
 }

@@ -1,40 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
-import prisma from '@/lib/db';
+import { prisma } from '@/lib/db';
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const projectId = searchParams.get('projectId');
     const status = searchParams.get('status');
-    const assignedToId = searchParams.get('assignedToId');
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (projectId) where.projectId = projectId;
     if (status) where.status = status;
-    
-    // Subcontractors only see work orders assigned to them
-    if (session.user.role === 'Subcontractor') {
-      where.assignedToId = session.user.id;
-    } else if (assignedToId) {
-      where.assignedToId = assignedToId;
+
+    // Subcontractors only see their assigned work
+    const userRole = (session.user as { role?: string }).role;
+    const userId = (session.user as { id?: string }).id;
+    if (userRole === 'Subcontractor' && userId) {
+      where.assignedToId = userId;
     }
 
     const workOrders = await prisma.workOrder.findMany({
       where,
       include: {
-        project: { select: { id: true, name: true, projectNumber: true } },
-        assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } },
-        createdBy: { select: { id: true, firstName: true, lastName: true } },
-        progressPhotos: true,
+        project: { select: { id: true, name: true } },
+        assignedTo: { select: { id: true, name: true, email: true } },
+        progressPhotos: { select: { id: true, cloudStoragePath: true, caption: true, createdAt: true } },
+        _count: { select: { progressPhotos: true } }
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'desc' }
     });
 
     return NextResponse.json({ workOrders });
@@ -44,18 +43,23 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { projectId, title, description, location, trade, priority, dueDate, assignedToId, estimatedHours, estimatedCost } = body;
+    const userId = (session.user as { id?: string }).id;
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID not found' }, { status: 400 });
+    }
+
+    const body = await req.json();
+    const { projectId, title, description, location, trade, assignedToId, priority, dueDate, estimatedHours, estimatedCost } = body;
 
     if (!projectId || !title || !description) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ error: 'Project ID, title, and description required' }, { status: 400 });
     }
 
     // Generate work order number
@@ -70,17 +74,18 @@ export async function POST(request: NextRequest) {
         description,
         location,
         trade,
-        priority: priority || 'Normal',
-        dueDate: dueDate ? new Date(dueDate) : null,
         assignedToId,
+        priority: priority || 'Normal',
+        status: 'Pending',
+        dueDate: dueDate ? new Date(dueDate) : null,
         estimatedHours,
         estimatedCost,
-        createdById: session.user.id,
+        createdById: userId
       },
       include: {
         project: { select: { id: true, name: true } },
-        assignedTo: { select: { id: true, firstName: true, lastName: true } },
-      },
+        assignedTo: { select: { id: true, name: true } }
+      }
     });
 
     return NextResponse.json({ workOrder }, { status: 201 });
