@@ -17,6 +17,8 @@ enum UserRole {
   Architect
   Engineer
   Owner
+  Subcontractor
+  Lender
 }
 
 enum ProjectStatus {
@@ -135,6 +137,29 @@ model User {
   // Material Management Relations
   materialRequisitions    MaterialRequisition[]
   
+  // Work Order Relations
+  workOrdersAssigned      WorkOrder[]           @relation("WorkOrderAssignee")
+  workOrdersCreated       WorkOrder[]           @relation("WorkOrderCreator")
+  workOrdersVerified      WorkOrder[]           @relation("WorkOrderVerifier")
+  
+  // Budget & Financial Relations
+  transactionsSubmitted   BudgetTransaction[]   @relation("TransactionSubmitter")
+  transactionsApproved    BudgetTransaction[]   @relation("TransactionApprover")
+  
+  // Gantt Task Relations
+  ganttTasksAssigned      GanttTask[]           @relation("GanttTaskAssignee")
+  
+  // Draw Request Relations
+  drawRequestsSubmitted   DrawRequest[]         @relation("DrawRequestSubmitter")
+  drawRequestsReviewed    DrawRequest[]         @relation("DrawRequestReviewer")
+  drawRequestsApproved    DrawRequest[]         @relation("DrawRequestApprover")
+  
+  // Lender Access
+  lenderAccess            LenderAccess[]
+  
+  // Maintenance Relations
+  maintenanceAssigned     MaintenanceWorkOrder[] @relation("MaintenanceAssignee")
+  
   // NextAuth fields
   properties            Property[]
   accounts          Account[]
@@ -194,6 +219,14 @@ model Project {
   timeEntries         TimeEntry[]
   equipment           Equipment[]           @relation("EquipmentCurrentProject")
   materialRequisitions MaterialRequisition[]
+  
+  // Phase 1 & 2 Relations
+  workOrders          WorkOrder[]
+  budgetCategories    BudgetCategory[]
+  budgetTransactions  BudgetTransaction[]
+  ganttTasks          GanttTask[]
+  drawRequests        DrawRequest[]
+  lenderAccess        LenderAccess[]
 }
 
 model ProjectTeam {
@@ -680,6 +713,11 @@ model Property {
   
   ownerId                 String?
   owner                   User?             @relation(fields: [ownerId], references: [id])
+  
+  // Tenant & Unit Relations
+  tenants                 Tenant[]
+  propertyUnits           Unit[]
+  maintenanceWorkOrders   MaintenanceWorkOrder[]
 
   // Financial snapshots can be stored separately if needed
   @@index([assetType])
@@ -1504,5 +1542,970 @@ model MaterialRequisition {
   @@index([requestedById])
   @@index([status])
   @@index([requestedDate])
+}
+
+// ==============================
+// Phase 1: Contractor Portal & Work Orders
+// ==============================
+
+enum WorkOrderStatus {
+  Pending
+  Assigned
+  InProgress
+  OnHold
+  Completed
+  Verified
+  Cancelled
+}
+
+enum WorkOrderPriority {
+  Low
+  Normal
+  High
+  Urgent
+}
+
+model WorkOrder {
+  id                  String              @id @default(cuid())
+  workOrderNumber     String              @unique
+  
+  // Project Reference
+  projectId           String
+  project             Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Work Order Details
+  title               String
+  description         String              @db.Text
+  location            String?
+  trade               String?
+  
+  // Status & Priority
+  status              WorkOrderStatus     @default(Pending)
+  priority            WorkOrderPriority   @default(Normal)
+  
+  // Dates
+  requestedDate       DateTime            @default(now())
+  dueDate             DateTime?
+  startedDate         DateTime?
+  completedDate       DateTime?
+  verifiedDate        DateTime?
+  
+  // Assignment
+  assignedToId        String?
+  assignedTo          User?               @relation("WorkOrderAssignee", fields: [assignedToId], references: [id])
+  
+  createdById         String
+  createdBy           User                @relation("WorkOrderCreator", fields: [createdById], references: [id])
+  
+  verifiedById        String?
+  verifiedBy          User?               @relation("WorkOrderVerifier", fields: [verifiedById], references: [id])
+  
+  // Cost Tracking
+  estimatedHours      Float?
+  actualHours         Float?
+  estimatedCost       Float?
+  actualCost          Float?
+  
+  // Documents & Photos
+  attachments         String[]            @default([])
+  progressPhotos      WorkOrderPhoto[]
+  
+  // Notes & Communication
+  notes               String?             @db.Text
+  
+  // Timestamps
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@index([projectId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model WorkOrderPhoto {
+  id                String      @id @default(cuid())
+  
+  workOrderId       String
+  workOrder         WorkOrder   @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  
+  cloudStoragePath  String
+  isPublic          Boolean     @default(false)
+  caption           String?
+  uploadedById      String
+  
+  createdAt         DateTime    @default(now())
+  
+  @@index([workOrderId])
+}
+
+// ==============================
+// Phase 1: Real-Time Budgeting
+// ==============================
+
+enum TransactionType {
+  Expense
+  Income
+  Transfer
+  Adjustment
+}
+
+enum TransactionStatus {
+  Pending
+  Approved
+  Rejected
+  Paid
+}
+
+enum ExpenseCategory {
+  Labor
+  Materials
+  Equipment
+  Subcontractor
+  Permits
+  Insurance
+  Utilities
+  Professional
+  Contingency
+  Other
+}
+
+model BudgetCategory {
+  id                String              @id @default(cuid())
+  
+  projectId         String
+  project           Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  name              String
+  code              String?             // Cost code (e.g., "01000", "03300")
+  description       String?
+  budgetedAmount    Float               @default(0)
+  
+  // Parent category for hierarchy
+  parentId          String?
+  parent            BudgetCategory?     @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children          BudgetCategory[]    @relation("CategoryHierarchy")
+  
+  // Transactions
+  transactions      BudgetTransaction[]
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  @@unique([projectId, code])
+  @@index([projectId])
+}
+
+model BudgetTransaction {
+  id                  String              @id @default(cuid())
+  transactionNumber   String              @unique
+  
+  // Project Reference
+  projectId           String
+  project             Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Category Reference
+  categoryId          String?
+  category            BudgetCategory?     @relation(fields: [categoryId], references: [id])
+  
+  // Transaction Details
+  type                TransactionType     @default(Expense)
+  expenseType         ExpenseCategory     @default(Other)
+  description         String
+  amount              Float
+  
+  // Vendor/Payee
+  vendorName          String?
+  vendorInvoiceNumber String?
+  
+  // Dates
+  transactionDate     DateTime
+  dueDate             DateTime?
+  paidDate            DateTime?
+  
+  // Status & Approval
+  status              TransactionStatus   @default(Pending)
+  
+  submittedById       String
+  submittedBy         User                @relation("TransactionSubmitter", fields: [submittedById], references: [id])
+  
+  approvedById        String?
+  approvedBy          User?               @relation("TransactionApprover", fields: [approvedById], references: [id])
+  approvedAt          DateTime?
+  
+  // Receipt/Invoice Attachment
+  receiptPath         String?
+  receiptPublic       Boolean             @default(false)
+  invoicePath         String?
+  invoicePublic       Boolean             @default(false)
+  
+  // Notes
+  notes               String?             @db.Text
+  
+  // Draw Request Link (for Phase 2)
+  drawRequestItemId   String?
+  drawRequestItem     DrawRequestItem?    @relation(fields: [drawRequestItemId], references: [id])
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@index([projectId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([transactionDate])
+}
+
+// ==============================
+// Phase 1: Gantt Chart & Timeline
+// ==============================
+
+enum GanttTaskStatus {
+  NotStarted
+  InProgress
+  Completed
+  OnHold
+  Delayed
+  Cancelled
+}
+
+model GanttTask {
+  id                String            @id @default(cuid())
+  
+  projectId         String
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Task Details
+  name              String
+  description       String?           @db.Text
+  wbsCode           String?           // Work Breakdown Structure code
+  
+  // Dates
+  startDate         DateTime
+  endDate           DateTime
+  actualStartDate   DateTime?
+  actualEndDate     DateTime?
+  
+  // Progress
+  percentComplete   Float             @default(0)
+  status            GanttTaskStatus   @default(NotStarted)
+  
+  // Hierarchy
+  parentId          String?
+  parent            GanttTask?        @relation("TaskHierarchy", fields: [parentId], references: [id])
+  children          GanttTask[]       @relation("TaskHierarchy")
+  
+  // Dependencies
+  predecessors      GanttDependency[] @relation("DependencySuccessor")
+  successors        GanttDependency[] @relation("DependencyPredecessor")
+  
+  // Resources
+  assignedToId      String?
+  assignedTo        User?             @relation("GanttTaskAssignee", fields: [assignedToId], references: [id])
+  
+  // Milestone
+  isMilestone       Boolean           @default(false)
+  isCriticalPath    Boolean           @default(false)
+  
+  // Cost
+  budgetedCost      Float?
+  actualCost        Float?
+  
+  // Sort Order
+  sortOrder         Int               @default(0)
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@index([projectId])
+  @@index([parentId])
+  @@index([startDate])
+  @@index([status])
+}
+
+enum DependencyType {
+  FinishToStart     // FS - Most common
+  StartToStart      // SS
+  FinishToFinish    // FF
+  StartToFinish     // SF
+}
+
+model GanttDependency {
+  id                String          @id @default(cuid())
+  
+  predecessorId     String
+  predecessor       GanttTask       @relation("DependencyPredecessor", fields: [predecessorId], references: [id], onDelete: Cascade)
+  
+  successorId       String
+  successor         GanttTask       @relation("DependencySuccessor", fields: [successorId], references: [id], onDelete: Cascade)
+  
+  type              DependencyType  @default(FinishToStart)
+  lagDays           Int             @default(0)
+  
+  createdAt         DateTime        @default(now())
+  
+  @@unique([predecessorId, successorId])
+  @@index([predecessorId])
+  @@index([successorId])
+}
+
+// ==============================
+// Phase 2: Draw Request Automation
+// ==============================
+
+enum DrawRequestStatus {
+  Draft
+  Submitted
+  UnderReview
+  Approved
+  PartiallyApproved
+  Rejected
+  Funded
+  Closed
+}
+
+model DrawRequest {
+  id                  String              @id @default(cuid())
+  drawNumber          Int
+  requestNumber       String              @unique
+  
+  projectId           String
+  project             Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Request Details
+  title               String
+  description         String?             @db.Text
+  
+  // Financial
+  requestedAmount     Float
+  approvedAmount      Float?
+  fundedAmount        Float?
+  retainage           Float               @default(0)
+  retainagePercent    Float               @default(0.10)
+  
+  // Progress
+  percentComplete     Float               @default(0)
+  
+  // Dates
+  requestDate         DateTime            @default(now())
+  submittedDate       DateTime?
+  reviewedDate        DateTime?
+  approvedDate        DateTime?
+  fundedDate          DateTime?
+  
+  // Status
+  status              DrawRequestStatus   @default(Draft)
+  
+  // People
+  submittedById       String?
+  submittedBy         User?               @relation("DrawRequestSubmitter", fields: [submittedById], references: [id])
+  
+  reviewedById        String?
+  reviewedBy          User?               @relation("DrawRequestReviewer", fields: [reviewedById], references: [id])
+  
+  approvedById        String?
+  approvedBy          User?               @relation("DrawRequestApprover", fields: [approvedById], references: [id])
+  
+  // Line Items
+  items               DrawRequestItem[]
+  
+  // Supporting Documents
+  documents           DrawRequestDocument[]
+  
+  // Compliance Checklist
+  complianceChecks    DrawComplianceCheck[]
+  
+  // Lender Comments
+  lenderComments      String?             @db.Text
+  internalNotes       String?             @db.Text
+  
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  
+  @@unique([projectId, drawNumber])
+  @@index([projectId])
+  @@index([status])
+  @@index([requestDate])
+}
+
+model DrawRequestItem {
+  id                  String          @id @default(cuid())
+  
+  drawRequestId       String
+  drawRequest         DrawRequest     @relation(fields: [drawRequestId], references: [id], onDelete: Cascade)
+  
+  // Item Details
+  lineNumber          Int
+  description         String
+  categoryCode        String?
+  
+  // Budget vs Actual
+  originalBudget      Float
+  previouslyDrawn     Float           @default(0)
+  currentRequest      Float
+  balanceToFinish     Float
+  
+  // Completion
+  percentComplete     Float           @default(0)
+  
+  // Approval
+  approvedAmount      Float?
+  adjustmentReason    String?
+  
+  // Linked Transactions
+  transactions        BudgetTransaction[]
+  
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  
+  @@unique([drawRequestId, lineNumber])
+  @@index([drawRequestId])
+}
+
+model DrawRequestDocument {
+  id                String        @id @default(cuid())
+  
+  drawRequestId     String
+  drawRequest       DrawRequest   @relation(fields: [drawRequestId], references: [id], onDelete: Cascade)
+  
+  // Document Details
+  name              String
+  documentType      String        // "Progress Photo", "Invoice", "Lien Waiver", etc.
+  cloudStoragePath  String
+  isPublic          Boolean       @default(false)
+  
+  uploadedById      String
+  
+  createdAt         DateTime      @default(now())
+  
+  @@index([drawRequestId])
+}
+
+model DrawComplianceCheck {
+  id                String        @id @default(cuid())
+  
+  drawRequestId     String
+  drawRequest       DrawRequest   @relation(fields: [drawRequestId], references: [id], onDelete: Cascade)
+  
+  // Compliance Item
+  checkItem         String
+  description       String?
+  isRequired        Boolean       @default(true)
+  isCompleted       Boolean       @default(false)
+  completedAt       DateTime?
+  completedById     String?
+  
+  // Documentation
+  documentPath      String?
+  notes             String?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  @@index([drawRequestId])
+}
+
+// ==============================
+// Phase 2: Lender Dashboard
+// ==============================
+
+model LenderAccess {
+  id                String        @id @default(cuid())
+  
+  // Lender User
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Project Access
+  projectId         String
+  project           Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Access Level
+  canViewBudget     Boolean       @default(true)
+  canViewDraws      Boolean       @default(true)
+  canViewPhotos     Boolean       @default(true)
+  canViewDocuments  Boolean       @default(true)
+  canApproveDraws   Boolean       @default(false)
+  
+  // Lender Details
+  institution       String?
+  loanNumber        String?
+  loanAmount        Float?
+  
+  // Access Token (for external lender access)
+  accessToken       String?       @unique
+  tokenExpiresAt    DateTime?
+  
+  // Status
+  isActive          Boolean       @default(true)
+  lastAccessAt      DateTime?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  @@unique([userId, projectId])
+  @@index([userId])
+  @@index([projectId])
+  @@index([accessToken])
+}
+
+// ==============================
+// Phase 2: Tenant Management
+// ==============================
+
+enum TenantStatus {
+  Prospect
+  Applicant
+  Approved
+  Active
+  MovingOut
+  Inactive
+  Evicted
+}
+
+enum LeaseStatus {
+  Draft
+  Pending
+  Active
+  Expired
+  Terminated
+  Renewed
+}
+
+model Tenant {
+  id                  String          @id @default(cuid())
+  
+  // Property Reference
+  propertyId          String
+  property            Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  // Tenant Info
+  firstName           String
+  lastName            String
+  email               String?
+  phone               String?
+  alternatePhone      String?
+  
+  // Emergency Contact
+  emergencyContactName    String?
+  emergencyContactPhone   String?
+  emergencyContactRelation String?
+  
+  // Status
+  status              TenantStatus    @default(Prospect)
+  
+  // Documents
+  idDocumentPath      String?
+  applicationPath     String?
+  
+  // Background
+  creditScore         Int?
+  backgroundCheckDate DateTime?
+  backgroundCheckStatus String?
+  
+  // Notes
+  notes               String?         @db.Text
+  
+  // Relations
+  units               UnitTenant[]
+  leases              LeaseAgreement[]
+  payments            TenantPayment[]
+  maintenanceRequests MaintenanceWorkOrder[]
+  communications      TenantCommunication[]
+  
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  
+  @@index([propertyId])
+  @@index([status])
+  @@index([email])
+}
+
+model Unit {
+  id                  String          @id @default(cuid())
+  
+  // Property Reference
+  propertyId          String
+  property            Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  // Unit Details
+  unitNumber          String
+  floor               Int?
+  buildingNumber      String?
+  
+  // Type & Size
+  unitType            String          // e.g., "Studio", "1BR", "2BR"
+  bedrooms            Int             @default(0)
+  bathrooms           Float           @default(1)
+  squareFeet          Int?
+  
+  // Rent
+  marketRent          Float
+  currentRent         Float?
+  
+  // Features
+  features            String[]        @default([])
+  amenities           String[]        @default([])
+  
+  // Status
+  isOccupied          Boolean         @default(false)
+  isAvailable         Boolean         @default(true)
+  availableDate       DateTime?
+  
+  // Condition
+  lastInspectionDate  DateTime?
+  condition           String?         // "Excellent", "Good", "Fair", "Poor"
+  
+  // Photos
+  photos              String[]        @default([])
+  
+  // Relations
+  tenants             UnitTenant[]
+  leases              LeaseAgreement[]
+  maintenanceRequests MaintenanceWorkOrder[]
+  
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  
+  @@unique([propertyId, unitNumber])
+  @@index([propertyId])
+  @@index([isOccupied])
+  @@index([isAvailable])
+}
+
+model UnitTenant {
+  id              String        @id @default(cuid())
+  
+  unitId          String
+  unit            Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  
+  tenantId        String
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Occupancy Details
+  isPrimaryTenant Boolean       @default(false)
+  moveInDate      DateTime?
+  moveOutDate     DateTime?
+  
+  createdAt       DateTime      @default(now())
+  
+  @@unique([unitId, tenantId])
+  @@index([unitId])
+  @@index([tenantId])
+}
+
+model LeaseAgreement {
+  id                  String        @id @default(cuid())
+  leaseNumber         String        @unique
+  
+  // References
+  unitId              String
+  unit                Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  
+  tenantId            String
+  tenant              Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Lease Terms
+  startDate           DateTime
+  endDate             DateTime
+  monthlyRent         Float
+  securityDeposit     Float
+  
+  // Payment Details
+  rentDueDay          Int           @default(1)
+  lateFeeAmount       Float?
+  lateFeeGraceDays    Int           @default(5)
+  
+  // Status
+  status              LeaseStatus   @default(Draft)
+  signedDate          DateTime?
+  terminatedDate      DateTime?
+  terminationReason   String?
+  
+  // Documents
+  leasePath           String?
+  addendumPaths       String[]      @default([])
+  
+  // Renewal
+  isAutoRenewal       Boolean       @default(false)
+  renewalNoticeDays   Int           @default(30)
+  
+  // Notes
+  specialTerms        String?       @db.Text
+  notes               String?       @db.Text
+  
+  // Payments
+  payments            TenantPayment[]
+  
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  
+  @@index([unitId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([endDate])
+}
+
+enum PaymentType {
+  Rent
+  SecurityDeposit
+  LateFee
+  Utility
+  PetDeposit
+  Other
+}
+
+enum PaymentStatus {
+  Pending
+  Processing
+  Completed
+  Failed
+  Refunded
+}
+
+model TenantPayment {
+  id                String          @id @default(cuid())
+  
+  tenantId          String
+  tenant            Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  leaseId           String?
+  lease             LeaseAgreement? @relation(fields: [leaseId], references: [id])
+  
+  // Payment Details
+  type              PaymentType     @default(Rent)
+  amount            Float
+  dueDate           DateTime
+  paidDate          DateTime?
+  
+  // Status
+  status            PaymentStatus   @default(Pending)
+  
+  // Payment Method
+  paymentMethod     String?         // "Check", "ACH", "Credit Card", etc.
+  transactionId     String?
+  
+  // Period
+  periodStart       DateTime?
+  periodEnd         DateTime?
+  
+  // Notes
+  notes             String?
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  @@index([tenantId])
+  @@index([leaseId])
+  @@index([dueDate])
+  @@index([status])
+}
+
+model TenantCommunication {
+  id              String        @id @default(cuid())
+  
+  tenantId        String
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Communication Details
+  type            String        // "Email", "Phone", "Letter", "In-Person"
+  subject         String
+  message         String        @db.Text
+  direction       String        // "Inbound", "Outbound"
+  
+  // Attachments
+  attachments     String[]      @default([])
+  
+  // Tracking
+  sentById        String?
+  sentAt          DateTime?
+  readAt          DateTime?
+  
+  createdAt       DateTime      @default(now())
+  
+  @@index([tenantId])
+  @@index([createdAt])
+}
+
+// ==============================
+// Phase 2: Maintenance System
+// ==============================
+
+enum MaintenanceStatus {
+  Reported
+  Acknowledged
+  Scheduled
+  InProgress
+  PendingParts
+  Completed
+  Verified
+  Cancelled
+}
+
+enum MaintenancePriority {
+  Low
+  Normal
+  High
+  Emergency
+}
+
+enum MaintenanceCategory {
+  Plumbing
+  Electrical
+  HVAC
+  Appliance
+  Structural
+  Flooring
+  Painting
+  Pest
+  Landscaping
+  Security
+  Other
+}
+
+model MaintenanceWorkOrder {
+  id                  String                @id @default(cuid())
+  workOrderNumber     String                @unique
+  
+  // Property/Unit Reference
+  propertyId          String
+  property            Property              @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  unitId              String?
+  unit                Unit?                 @relation(fields: [unitId], references: [id])
+  
+  // Tenant Reference (if reported by tenant)
+  tenantId            String?
+  tenant              Tenant?               @relation(fields: [tenantId], references: [id])
+  
+  // Work Order Details
+  title               String
+  description         String                @db.Text
+  category            MaintenanceCategory   @default(Other)
+  priority            MaintenancePriority   @default(Normal)
+  location            String?               // Specific location within unit
+  
+  // Status
+  status              MaintenanceStatus     @default(Reported)
+  
+  // Dates
+  reportedDate        DateTime              @default(now())
+  acknowledgedDate    DateTime?
+  scheduledDate       DateTime?
+  scheduledTimeSlot   String?               // e.g., "Morning", "Afternoon"
+  startedDate         DateTime?
+  completedDate       DateTime?
+  verifiedDate        DateTime?
+  
+  // Assignment
+  assignedVendorId    String?
+  assignedVendor      MaintenanceVendor?    @relation(fields: [assignedVendorId], references: [id])
+  
+  assignedToId        String?
+  assignedTo          User?                 @relation("MaintenanceAssignee", fields: [assignedToId], references: [id])
+  
+  // Cost
+  estimatedCost       Float?
+  actualCost          Float?
+  laborCost           Float?
+  partsCost           Float?
+  
+  // Parts Used
+  partsUsed           MaintenancePart[]
+  
+  // Photos
+  beforePhotos        String[]              @default([])
+  afterPhotos         String[]              @default([])
+  
+  // Access
+  permissionToEnter   Boolean               @default(false)
+  entryInstructions   String?
+  
+  // Resolution
+  resolutionNotes     String?               @db.Text
+  tenantSatisfaction  Int?                  // 1-5 rating
+  
+  // Internal Notes
+  internalNotes       String?               @db.Text
+  
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  
+  @@index([propertyId])
+  @@index([unitId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([priority])
+  @@index([scheduledDate])
+}
+
+model MaintenanceVendor {
+  id                String                @id @default(cuid())
+  
+  // Vendor Details
+  companyName       String
+  contactName       String?
+  email             String?
+  phone             String
+  alternatePhone    String?
+  
+  // Address
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  
+  // Specialties
+  specialties       MaintenanceCategory[] @default([])
+  serviceAreas      String[]              @default([])
+  
+  // Rates
+  hourlyRate        Float?
+  minimumCharge     Float?
+  
+  // Insurance & Licensing
+  insuranceExpiry   DateTime?
+  licenseNumber     String?
+  licenseExpiry     DateTime?
+  
+  // Rating
+  rating            Float?                @default(0)
+  totalJobs         Int                   @default(0)
+  
+  // Status
+  isActive          Boolean               @default(true)
+  isPreferred       Boolean               @default(false)
+  
+  // Work Orders
+  workOrders        MaintenanceWorkOrder[]
+  
+  // Notes
+  notes             String?               @db.Text
+  
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  
+  @@index([isActive])
+  @@index([isPreferred])
+}
+
+model MaintenancePart {
+  id                  String                @id @default(cuid())
+  
+  workOrderId         String
+  workOrder           MaintenanceWorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  
+  // Part Details
+  partName            String
+  partNumber          String?
+  quantity            Int                   @default(1)
+  unitCost            Float
+  totalCost           Float
+  
+  // Vendor
+  vendorName          String?
+  
+  createdAt           DateTime              @default(now())
+  
+  @@index([workOrderId])
 }
 
