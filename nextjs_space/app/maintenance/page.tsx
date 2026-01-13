@@ -23,14 +23,14 @@ interface MaintenanceWorkOrder {
   priority: string;
   status: string;
   scheduledDate?: string;
-  completedAt?: string;
+  completedDate?: string;
   estimatedCost?: number;
   actualCost?: number;
-  property: { id: string; name: string; address: string };
-  unit?: { id: string; unitNumber: string; floor?: number };
-  assignedTo?: { id: string; name: string };
-  vendor?: { id: string; companyName: string };
-  reportedBy: { id: string; name: string };
+  property?: { id: string; name: string; address?: string } | null;
+  unit?: { id: string; unitNumber: string; floor?: number } | null;
+  assignedTo?: { id: string; name: string } | null;
+  vendor?: { id: string; companyName: string } | null;
+  reportedBy?: { id: string; name: string } | null;
 }
 
 interface Property {

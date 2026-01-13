@@ -16,13 +16,13 @@ import { Users, Building, DollarSign, FileText, Plus, Mail, Phone, CreditCard, A
 
 interface Tenant {
   id: string;
-  companyName?: string;
+  companyName?: string | null;
   contactName: string;
   email: string;
-  phone?: string;
+  phone?: string | null;
   type: string;
   status: string;
-  property: { id: string; name: string; address: string };
+  property?: { id: string; name: string; address?: string } | null;
   units: Array<{ unit: { id: string; unitNumber: string; floor?: number } }>;
   leases: Array<{ id: string; monthlyRent: number; startDate: string; endDate: string; status: string }>;
   payments: Array<{ id: string; amount: number; dueDate: string; status: string }>;
