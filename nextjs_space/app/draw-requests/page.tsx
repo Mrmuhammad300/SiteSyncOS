@@ -42,10 +42,10 @@ export default function DrawRequestsPage() {
   const router = useRouter();
   const [drawRequests, setDrawRequests] = useState<DrawRequest[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<string>('');
+  const [selectedProject, setSelectedProject] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -74,8 +74,8 @@ export default function DrawRequestsPage() {
     try {
       let url = '/api/draw-requests';
       const params = new URLSearchParams();
-      if (selectedProject) params.append('projectId', selectedProject);
-      if (statusFilter) params.append('status', statusFilter);
+      if (selectedProject && selectedProject !== 'all') params.append('projectId', selectedProject);
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
       if (params.toString()) url += `?${params.toString()}`;
 
       const res = await fetch(url);
@@ -240,7 +240,7 @@ export default function DrawRequestsPage() {
             <SelectValue placeholder="All Projects" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Projects</SelectItem>
+            <SelectItem value="all">All Projects</SelectItem>
             {projects.map(p => (
               <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
             ))}
@@ -251,7 +251,7 @@ export default function DrawRequestsPage() {
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="DRAFT">Draft</SelectItem>
             <SelectItem value="SUBMITTED">Submitted</SelectItem>
             <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>

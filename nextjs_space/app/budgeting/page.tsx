@@ -57,7 +57,7 @@ export default function BudgetingPage() {
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -92,7 +92,7 @@ export default function BudgetingPage() {
   const fetchTransactions = async () => {
     try {
       let url = `/api/budget/transactions?projectId=${selectedProject}`;
-      if (filterStatus) url += `&status=${filterStatus}`;
+      if (filterStatus && filterStatus !== 'all') url += `&status=${filterStatus}`;
       const res = await fetch(url);
       const data = await res.json();
       setTransactions(data.transactions || []);
@@ -325,7 +325,7 @@ export default function BudgetingPage() {
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="PENDING">Pending</SelectItem>
                   <SelectItem value="APPROVED">Approved</SelectItem>
                   <SelectItem value="PAID">Paid</SelectItem>
