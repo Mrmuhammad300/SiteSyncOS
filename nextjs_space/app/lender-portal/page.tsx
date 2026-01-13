@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BackButton } from '@/components/ui/back-button';
-import { Building2, DollarSign, FileText, AlertTriangle, CheckCircle, TrendingUp, Eye } from 'lucide-react';
+import { Building2, DollarSign, FileText, AlertTriangle, CheckCircle, TrendingUp, Eye, X, Calendar, Clock } from 'lucide-react';
 
 interface LenderProject {
   id: string;
@@ -245,6 +246,214 @@ export default function LenderPortalPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Project Details Dialog */}
+      <Dialog open={!!selectedProject} onOpenChange={(open) => !open && setSelectedProject(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              {selectedProject?.name}
+              {selectedProject && (
+                <Badge className={getStatusColor(selectedProject.status)}>{selectedProject.status}</Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedProject && (
+            <Tabs defaultValue="overview" className="mt-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="draws">Draw Requests</TabsTrigger>
+                <TabsTrigger value="compliance">Compliance</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="overview" className="space-y-4">
+                {/* Financial Summary */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-muted-foreground">Loan Amount</p>
+                      <p className="text-xl font-bold">{formatCurrency(selectedProject.metrics?.totalBudget || 0)}</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-muted-foreground">Drawn to Date</p>
+                      <p className="text-xl font-bold text-blue-600">{formatCurrency(selectedProject.metrics?.totalSpent || 0)}</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-muted-foreground">Remaining</p>
+                      <p className="text-xl font-bold text-green-600">
+                        {formatCurrency((selectedProject.metrics?.totalBudget || 0) - (selectedProject.metrics?.totalSpent || 0))}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-muted-foreground">Utilization</p>
+                      <p className="text-xl font-bold">{selectedProject.metrics?.budgetUtilization || 0}%</p>
+                      <Progress value={selectedProject.metrics?.budgetUtilization || 0} className="mt-2" />
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                {/* Project Timeline */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Project Timeline</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-8">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Start Date</p>
+                          <p className="font-medium">
+                            {selectedProject.startDate ? new Date(selectedProject.startDate).toLocaleDateString() : 'Not set'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Target Completion</p>
+                          <p className="font-medium">
+                            {selectedProject.endDate ? new Date(selectedProject.endDate).toLocaleDateString() : 'Not set'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Risk Indicators */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Risk Indicators</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Open RFIs</p>
+                        <p className="text-lg font-semibold">{selectedProject.metrics?.openRFIs || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Change Orders</p>
+                        <p className="text-lg font-semibold">{selectedProject.metrics?.changeOrders || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Pending Draws</p>
+                        <p className="text-lg font-semibold">{selectedProject.metrics?.pendingDraws || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Draws</p>
+                        <p className="text-lg font-semibold">{selectedProject.metrics?.totalDraws || 0}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="draws">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Draw Request History</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedProject.drawRequests?.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Draw #</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Items</TableHead>
+                            <TableHead>Documents</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead className="text-right">Net</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedProject.drawRequests.map(dr => (
+                            <TableRow key={dr.id}>
+                              <TableCell className="font-medium">Draw #{dr.drawNumber}</TableCell>
+                              <TableCell>
+                                <Badge variant={dr.status === 'APPROVED' || dr.status === 'FUNDED' ? 'default' : 'secondary'}>
+                                  {dr.status.replace('_', ' ')}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{dr._count?.items || 0}</TableCell>
+                              <TableCell>{dr._count?.documents || 0}</TableCell>
+                              <TableCell className="text-right">{formatCurrency(dr.totalAmount)}</TableCell>
+                              <TableCell className="text-right font-medium text-green-600">{formatCurrency(dr.netAmount)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8">
+                        <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                        <p className="text-muted-foreground">No draw requests yet</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="compliance">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Compliance Status</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          <span>Insurance Documentation</span>
+                        </div>
+                        <Badge variant="outline" className="bg-green-50 text-green-700">Current</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          <span>Lien Waivers</span>
+                        </div>
+                        <Badge variant="outline" className="bg-green-50 text-green-700">Up to Date</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          <span>Permit Status</span>
+                        </div>
+                        <Badge variant="outline" className="bg-green-50 text-green-700">Active</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          {(selectedProject.metrics?.budgetUtilization || 0) > 90 ? (
+                            <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                          ) : (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          )}
+                          <span>Budget Covenant</span>
+                        </div>
+                        <Badge 
+                          variant="outline" 
+                          className={(selectedProject.metrics?.budgetUtilization || 0) > 90 ? "bg-yellow-50 text-yellow-700" : "bg-green-50 text-green-700"}
+                        >
+                          {(selectedProject.metrics?.budgetUtilization || 0) > 90 ? 'Review Required' : 'Compliant'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
