@@ -6,6 +6,12 @@ import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import {
   FolderKanban,
   MessageSquare,
@@ -19,8 +25,20 @@ import {
   Calculator,
   BarChart3,
   Activity,
+  Shield,
+  PlayCircle,
+  Settings,
+  Target,
+  Gauge,
+  Zap,
+  Brain,
+  LineChart,
+  PieChart,
+  Clock,
+  Home,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { isMasterAdmin, isManagement, isContractor, isLender, getRoleDisplayName, getRoleBadgeColor } from '@/lib/roles';
 
 type Project = {
   id: string;
@@ -42,11 +60,33 @@ type DashboardStats = {
   criticalRFIs: number;
 };
 
+type SimulationResult = {
+  scenario: string;
+  projectedBudget: number;
+  projectedTimeline: number;
+  riskLevel: string;
+  recommendations: string[];
+};
+
 export default function DashboardPage() {
   const { data: session } = useSession() || {};
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const userRole = (session?.user as any)?.role;
+  const isAdmin = isMasterAdmin(userRole);
+  const isManager = isManagement(userRole);
+  
+  // Simulation state
+  const [showSimulation, setShowSimulation] = useState(false);
+  const [simulationParams, setSimulationParams] = useState({
+    budgetVariance: 0,
+    scheduleDelay: 0,
+    resourceChange: 0,
+    riskFactor: 'medium',
+  });
+  const [simulationResults, setSimulationResults] = useState<SimulationResult | null>(null);
+  const [runningSimulation, setRunningSimulation] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -73,6 +113,58 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const runSimulation = async () => {
+    setRunningSimulation(true);
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const baseBudget = stats?.totalBudget || 10000000;
+    const budgetImpact = baseBudget * (simulationParams.budgetVariance / 100);
+    const timelineImpact = simulationParams.scheduleDelay;
+    
+    const riskMultipliers: Record<string, number> = {
+      low: 0.8,
+      medium: 1.0,
+      high: 1.3,
+      critical: 1.6
+    };
+    
+    const riskMultiplier = riskMultipliers[simulationParams.riskFactor] || 1.0;
+    const resourceImpact = simulationParams.resourceChange * 0.02;
+    
+    const projectedBudget = baseBudget + budgetImpact + (baseBudget * resourceImpact * riskMultiplier);
+    const projectedTimeline = Math.max(0, 12 + timelineImpact + Math.round(riskMultiplier * 2));
+    
+    const recommendations: string[] = [];
+    if (simulationParams.budgetVariance > 10) {
+      recommendations.push('Consider value engineering to reduce costs');
+    }
+    if (simulationParams.scheduleDelay > 2) {
+      recommendations.push('Implement schedule compression techniques');
+    }
+    if (simulationParams.resourceChange < -10) {
+      recommendations.push('Review resource allocation for critical path activities');
+    }
+    if (simulationParams.riskFactor === 'high' || simulationParams.riskFactor === 'critical') {
+      recommendations.push('Increase contingency reserves');
+      recommendations.push('Implement additional risk monitoring measures');
+    }
+    if (recommendations.length === 0) {
+      recommendations.push('Current parameters within acceptable tolerances');
+    }
+    
+    setSimulationResults({
+      scenario: `Budget ${simulationParams.budgetVariance >= 0 ? '+' : ''}${simulationParams.budgetVariance}%, ` +
+        `Schedule ${simulationParams.scheduleDelay >= 0 ? '+' : ''}${simulationParams.scheduleDelay} months, ` +
+        `Risk: ${simulationParams.riskFactor}`,
+      projectedBudget,
+      projectedTimeline,
+      riskLevel: simulationParams.riskFactor,
+      recommendations,
+    });
+    setRunningSimulation(false);
   };
 
   const statCards = [
@@ -149,8 +241,197 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {session?.user?.name}</h1>
-        <p className="text-gray-600">Manage your construction projects efficiently</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold text-gray-900">Welcome back, {session?.user?.name}</h1>
+              {isAdmin && (
+                <Badge className="bg-purple-100 text-purple-800">
+                  <Shield className="w-3 h-3 mr-1" />
+                  {getRoleDisplayName(userRole)}
+                </Badge>
+              )}
+            </div>
+            <p className="text-gray-600">Manage your construction projects efficiently</p>
+          </div>
+          
+          {/* Admin-only Quick Actions */}
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <Dialog open={showSimulation} onOpenChange={setShowSimulation}>
+                <DialogTrigger asChild>
+                  <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">
+                    <Brain className="w-4 h-4 mr-2" />
+                    Run Simulation
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Brain className="w-5 h-5 text-purple-600" />
+                      Project Scenario Simulation
+                    </DialogTitle>
+                    <DialogDescription>
+                      Model different outcomes by adjusting project parameters. This feature is available only to administrators.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="grid grid-cols-2 gap-6 py-4">
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <Label className="flex items-center justify-between">
+                          <span>Budget Variance (%)</span>
+                          <span className="font-mono text-sm text-muted-foreground">
+                            {simulationParams.budgetVariance >= 0 ? '+' : ''}{simulationParams.budgetVariance}%
+                          </span>
+                        </Label>
+                        <Slider
+                          value={[simulationParams.budgetVariance]}
+                          onValueChange={([v]) => setSimulationParams(p => ({ ...p, budgetVariance: v }))}
+                          min={-30}
+                          max={50}
+                          step={1}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">Adjust expected budget change</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="flex items-center justify-between">
+                          <span>Schedule Delay (months)</span>
+                          <span className="font-mono text-sm text-muted-foreground">
+                            {simulationParams.scheduleDelay >= 0 ? '+' : ''}{simulationParams.scheduleDelay} mo
+                          </span>
+                        </Label>
+                        <Slider
+                          value={[simulationParams.scheduleDelay]}
+                          onValueChange={([v]) => setSimulationParams(p => ({ ...p, scheduleDelay: v }))}
+                          min={-6}
+                          max={12}
+                          step={1}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">Simulate schedule compression or delays</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="flex items-center justify-between">
+                          <span>Resource Change (%)</span>
+                          <span className="font-mono text-sm text-muted-foreground">
+                            {simulationParams.resourceChange >= 0 ? '+' : ''}{simulationParams.resourceChange}%
+                          </span>
+                        </Label>
+                        <Slider
+                          value={[simulationParams.resourceChange]}
+                          onValueChange={([v]) => setSimulationParams(p => ({ ...p, resourceChange: v }))}
+                          min={-50}
+                          max={50}
+                          step={5}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">Adjust workforce/equipment levels</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Risk Factor</Label>
+                        <Select
+                          value={simulationParams.riskFactor}
+                          onValueChange={(v) => setSimulationParams(p => ({ ...p, riskFactor: v }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Low Risk</SelectItem>
+                            <SelectItem value="medium">Medium Risk</SelectItem>
+                            <SelectItem value="high">High Risk</SelectItem>
+                            <SelectItem value="critical">Critical Risk</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">Overall project risk assessment</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="rounded-lg border p-4 bg-slate-50">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <Target className="w-4 h-4" />
+                          Simulation Results
+                        </h4>
+                        
+                        {simulationResults ? (
+                          <div className="space-y-3">
+                            <div className="p-3 rounded-lg bg-white border">
+                              <p className="text-xs text-muted-foreground mb-1">Scenario</p>
+                              <p className="text-sm font-medium">{simulationResults.scenario}</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="p-3 rounded-lg bg-white border">
+                                <p className="text-xs text-muted-foreground mb-1">Projected Budget</p>
+                                <p className="text-lg font-bold text-blue-600">
+                                  ${(simulationResults.projectedBudget / 1000000).toFixed(2)}M
+                                </p>
+                              </div>
+                              <div className="p-3 rounded-lg bg-white border">
+                                <p className="text-xs text-muted-foreground mb-1">Timeline</p>
+                                <p className="text-lg font-bold text-orange-600">
+                                  {simulationResults.projectedTimeline} months
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="p-3 rounded-lg bg-white border">
+                              <p className="text-xs text-muted-foreground mb-2">Recommendations</p>
+                              <ul className="space-y-1">
+                                {simulationResults.recommendations.map((rec, i) => (
+                                  <li key={i} className="text-sm flex items-start gap-2">
+                                    <Zap className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+                                    {rec}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <PlayCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">Adjust parameters and run simulation</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <Button
+                        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600"
+                        onClick={runSimulation}
+                        disabled={runningSimulation}
+                      >
+                        {runningSimulation ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                            Running Simulation...
+                          </>
+                        ) : (
+                          <>
+                            <PlayCircle className="w-4 h-4 mr-2" />
+                            Run Simulation
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
+              <Link href="/analytics">
+                <Button variant="outline">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Analytics
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* Stats Grid */}
@@ -188,6 +469,59 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {/* Admin Control Panel */}
+      {isAdmin && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mb-8"
+        >
+          <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-purple-600" />
+                Admin Control Panel
+              </CardTitle>
+              <CardDescription>Administrative tools and system monitoring</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Link href="/analytics">
+                  <div className="p-4 rounded-lg bg-white border hover:shadow-md transition-shadow cursor-pointer">
+                    <PieChart className="w-6 h-6 text-blue-600 mb-2" />
+                    <h4 className="font-semibold text-sm">System Analytics</h4>
+                    <p className="text-xs text-muted-foreground">View all metrics</p>
+                  </div>
+                </Link>
+                <Link href="/budgeting">
+                  <div className="p-4 rounded-lg bg-white border hover:shadow-md transition-shadow cursor-pointer">
+                    <DollarSign className="w-6 h-6 text-green-600 mb-2" />
+                    <h4 className="font-semibold text-sm">Financial Overview</h4>
+                    <p className="text-xs text-muted-foreground">Budget tracking</p>
+                  </div>
+                </Link>
+                <Link href="/gantt">
+                  <div className="p-4 rounded-lg bg-white border hover:shadow-md transition-shadow cursor-pointer">
+                    <Clock className="w-6 h-6 text-orange-600 mb-2" />
+                    <h4 className="font-semibold text-sm">Timeline Control</h4>
+                    <p className="text-xs text-muted-foreground">Project schedules</p>
+                  </div>
+                </Link>
+                <div
+                  className="p-4 rounded-lg bg-white border hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => setShowSimulation(true)}
+                >
+                  <Brain className="w-6 h-6 text-purple-600 mb-2" />
+                  <h4 className="font-semibold text-sm">Run Simulation</h4>
+                  <p className="text-xs text-muted-foreground">Model scenarios</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Recent Projects */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -200,12 +534,14 @@ export default function DashboardPage() {
               <CardTitle>Recent Projects</CardTitle>
               <CardDescription>Your latest construction projects</CardDescription>
             </div>
-            <Link href="/projects/new">
-              <Button className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600">
-                <Plus className="w-4 h-4 mr-2" />
-                New Project
-              </Button>
-            </Link>
+            {isManager && (
+              <Link href="/projects/new">
+                <Button className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Project
+                </Button>
+              </Link>
+            )}
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -214,9 +550,11 @@ export default function DashboardPage() {
               <div className="text-center py-8">
                 <FolderKanban className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600 mb-4">No projects yet</p>
-                <Link href="/projects/new">
-                  <Button>Create your first project</Button>
-                </Link>
+                {isManager && (
+                  <Link href="/projects/new">
+                    <Button>Create your first project</Button>
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -309,15 +647,17 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </Link>
-          <Link href="/accounting/integrations">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer group border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
-              <CardContent className="p-6">
-                <DollarSign className="w-8 h-8 text-purple-600 mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">Accounting</h3>
-                <p className="text-sm text-gray-600">Connect accounting software</p>
-              </CardContent>
-            </Card>
-          </Link>
+          {isManager && (
+            <Link href="/accounting/integrations">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer group border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
+                <CardContent className="p-6">
+                  <DollarSign className="w-8 h-8 text-purple-600 mb-3 group-hover:scale-110 transition-transform" />
+                  <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">Accounting</h3>
+                  <p className="text-sm text-gray-600">Connect accounting software</p>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
           <Link href="/analytics">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer group border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
               <CardContent className="p-6">
@@ -335,6 +675,7 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.5 }}
+        className="mt-8"
       >
         <Card>
           <CardHeader>

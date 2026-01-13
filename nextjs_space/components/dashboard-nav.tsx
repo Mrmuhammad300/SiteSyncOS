@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback } from './ui/avatar';
+import { Badge } from './ui/badge';
 import { NotificationCenter } from './notification-center';
 import {
   HardHat,
@@ -38,7 +39,11 @@ import {
   Users,
   Wrench,
   BarChart3,
+  Shield,
+  Brain,
+  Home,
 } from 'lucide-react';
+import { isMasterAdmin, isManagement, isContractor, isLender, getRoleDisplayName, getRoleBadgeColor } from '@/lib/roles';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -69,6 +74,11 @@ export function DashboardNav() {
   const router = useRouter();
   const { data: session } = useSession() || {};
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const userRole = (session?.user as any)?.role;
+  const isAdmin = isMasterAdmin(userRole);
+  const isManager = isManagement(userRole);
+  const isContractorUser = isContractor(userRole);
+  const isLenderUser = isLender(userRole);
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
@@ -81,7 +91,30 @@ export function DashboardNav() {
     .join('')
     .toUpperCase() ?? 'U';
 
-  const userRole = (session?.user as any)?.role ?? 'User';
+  // Filter navigation based on role
+  const filteredNavigation = navigation.filter(item => {
+    // Contractors only see limited navigation
+    if (isContractorUser) {
+      return ['Dashboard', 'Projects', 'RFIs', 'Daily Reports', 'Documents'].includes(item.name);
+    }
+    // Lenders have limited view
+    if (isLenderUser) {
+      return ['Dashboard', 'Projects', 'Draw Requests', 'Documents', 'Analytics'].includes(item.name);
+    }
+    return true;
+  });
+
+  const filteredSecondaryNav = secondaryNavigation.filter(item => {
+    // Contractors see contractor portal prominently
+    if (isContractorUser) {
+      return ['Contractor Portal', 'Daily Reports', 'Documents'].includes(item.name);
+    }
+    // Lenders see lender portal
+    if (isLenderUser) {
+      return ['Lender Portal', 'Documents'].includes(item.name);
+    }
+    return true;
+  });
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
@@ -101,7 +134,21 @@ export function DashboardNav() {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
-            {navigation.slice(0, 8).map((item) => {
+            {/* Back to Dashboard for non-dashboard pages */}
+            {pathname !== '/dashboard' && (
+              <Link href="/dashboard">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                >
+                  <Home className="w-4 h-4" />
+                  <span className="text-sm">Home</span>
+                </Button>
+              </Link>
+            )}
+            
+            {filteredNavigation.slice(0, 8).map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
               return (
@@ -128,7 +175,7 @@ export function DashboardNav() {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel>More Modules</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {[...navigation.slice(8), ...secondaryNavigation].map((item) => {
+                {[...filteredNavigation.slice(8), ...filteredSecondaryNav].map((item) => {
                   const Icon = item.icon;
                   return (
                     <DropdownMenuItem key={item.name} onClick={() => router.push(item.href)}>
@@ -137,12 +184,37 @@ export function DashboardNav() {
                     </DropdownMenuItem>
                   );
                 })}
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="flex items-center">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Admin Tools
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => router.push('/analytics')}>
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      System Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                      <Brain className="mr-2 h-4 w-4" />
+                      Simulations
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
 
           {/* User Menu */}
           <div className="flex items-center space-x-2">
+            {/* Admin Badge */}
+            {isAdmin && (
+              <Badge variant="outline" className="hidden md:flex items-center gap-1 bg-purple-50 text-purple-700 border-purple-200">
+                <Shield className="w-3 h-3" />
+                Admin
+              </Badge>
+            )}
+            
             {/* Notification Center */}
             <NotificationCenter />
 
@@ -173,14 +245,32 @@ export function DashboardNav() {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{session?.user?.name}</p>
                     <p className="text-xs leading-none text-muted-foreground">{session?.user?.email}</p>
-                    <p className="text-xs leading-none text-blue-600 mt-1">{userRole}</p>
+                    <Badge className={`text-xs mt-2 w-fit ${getRoleBadgeColor(userRole)}`}>
+                      {getRoleDisplayName(userRole)}
+                    </Badge>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/dashboard')}>
+                  <Home className="mr-2 h-4 w-4" />
+                  Dashboard
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push('/profile')}>
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </DropdownMenuItem>
+                {isContractorUser && (
+                  <DropdownMenuItem onClick={() => router.push('/contractor-portal')}>
+                    <HardHat className="mr-2 h-4 w-4" />
+                    Contractor Portal
+                  </DropdownMenuItem>
+                )}
+                {isLenderUser && (
+                  <DropdownMenuItem onClick={() => router.push('/lender-portal')}>
+                    <Landmark className="mr-2 h-4 w-4" />
+                    Lender Portal
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
@@ -194,8 +284,19 @@ export function DashboardNav() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="lg:hidden py-4 space-y-1 max-h-[70vh] overflow-y-auto">
+            {/* Quick Home Link */}
+            <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+              <Button
+                variant="ghost"
+                className="w-full justify-start flex items-center space-x-3 bg-blue-50 text-blue-700 mb-2"
+              >
+                <Home className="w-5 h-5" />
+                <span>Back to Dashboard</span>
+              </Button>
+            </Link>
+            
             <p className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase">Main</p>
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
               return (
@@ -211,7 +312,7 @@ export function DashboardNav() {
               );
             })}
             <p className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase mt-4">Portals & Tools</p>
-            {secondaryNavigation.map((item) => {
+            {filteredSecondaryNav.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
               return (
@@ -226,6 +327,34 @@ export function DashboardNav() {
                 </Link>
               );
             })}
+            
+            {/* Admin Section for Mobile */}
+            {isAdmin && (
+              <>
+                <p className="px-3 py-2 text-xs font-semibold text-purple-600 uppercase mt-4 flex items-center gap-1">
+                  <Shield className="w-3 h-3" />
+                  Admin Tools
+                </p>
+                <Link href="/analytics" onClick={() => setMobileMenuOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start flex items-center space-x-3 text-purple-700"
+                  >
+                    <BarChart3 className="w-5 h-5" />
+                    <span>System Analytics</span>
+                  </Button>
+                </Link>
+                <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start flex items-center space-x-3 text-purple-700"
+                  >
+                    <Brain className="w-5 h-5" />
+                    <span>Run Simulations</span>
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>

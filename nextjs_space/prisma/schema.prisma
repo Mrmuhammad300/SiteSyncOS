@@ -10,6 +10,7 @@ datasource db {
 }
 
 enum UserRole {
+  SuperAdmin
   Admin
   ProjectManager
   Superintendent
