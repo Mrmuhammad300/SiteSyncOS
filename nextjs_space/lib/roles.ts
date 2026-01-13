@@ -30,25 +30,25 @@ export const roleHierarchy: Record<string, number> = {
 };
 
 // Master admin roles (full system access)
-export const MASTER_ADMIN_ROLES = [UserRoles.SuperAdmin, UserRoles.Admin];
+export const MASTER_ADMIN_ROLES: string[] = [UserRoles.SuperAdmin, UserRoles.Admin];
 
 // Management roles (can manage projects and users)
-export const MANAGEMENT_ROLES = [UserRoles.SuperAdmin, UserRoles.Admin, UserRoles.Owner, UserRoles.ProjectManager];
+export const MANAGEMENT_ROLES: string[] = [UserRoles.SuperAdmin, UserRoles.Admin, UserRoles.Owner, UserRoles.ProjectManager];
 
 // Contractor roles
-export const CONTRACTOR_ROLES = [UserRoles.Subcontractor];
+export const CONTRACTOR_ROLES: string[] = [UserRoles.Subcontractor];
 
 // Field roles
-export const FIELD_ROLES = [UserRoles.Superintendent, UserRoles.FieldStaff, UserRoles.Subcontractor];
+export const FIELD_ROLES: string[] = [UserRoles.Superintendent, UserRoles.FieldStaff, UserRoles.Subcontractor];
 
 // Check if user has master admin access
 export function isMasterAdmin(role?: string | null): boolean {
-  return !!role && MASTER_ADMIN_ROLES.includes(role as UserRole);
+  return !!role && MASTER_ADMIN_ROLES.includes(role);
 }
 
 // Check if user has management access
 export function isManagement(role?: string | null): boolean {
-  return !!role && MANAGEMENT_ROLES.includes(role as UserRole);
+  return !!role && MANAGEMENT_ROLES.includes(role);
 }
 
 // Check if user is a contractor
