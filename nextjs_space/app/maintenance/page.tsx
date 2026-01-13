@@ -43,11 +43,11 @@ export default function MaintenancePage() {
   const router = useRouter();
   const [workOrders, setWorkOrders] = useState<MaintenanceWorkOrder[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [selectedProperty, setSelectedProperty] = useState<string>('');
+  const [selectedProperty, setSelectedProperty] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [priorityFilter, setPriorityFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -76,9 +76,9 @@ export default function MaintenancePage() {
     try {
       let url = '/api/maintenance';
       const params = new URLSearchParams();
-      if (selectedProperty) params.append('propertyId', selectedProperty);
-      if (statusFilter) params.append('status', statusFilter);
-      if (priorityFilter) params.append('priority', priorityFilter);
+      if (selectedProperty && selectedProperty !== 'all') params.append('propertyId', selectedProperty);
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
+      if (priorityFilter && priorityFilter !== 'all') params.append('priority', priorityFilter);
       if (params.toString()) url += `?${params.toString()}`;
 
       const res = await fetch(url);
@@ -299,7 +299,7 @@ export default function MaintenancePage() {
             <SelectValue placeholder="All Properties" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Properties</SelectItem>
+            <SelectItem value="all">All Properties</SelectItem>
             {properties.map(p => (
               <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
             ))}
@@ -310,7 +310,7 @@ export default function MaintenancePage() {
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="OPEN">Open</SelectItem>
             <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
             <SelectItem value="ON_HOLD">On Hold</SelectItem>
@@ -322,7 +322,7 @@ export default function MaintenancePage() {
             <SelectValue placeholder="All Priority" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Priority</SelectItem>
+            <SelectItem value="all">All Priority</SelectItem>
             <SelectItem value="LOW">Low</SelectItem>
             <SelectItem value="MEDIUM">Medium</SelectItem>
             <SelectItem value="HIGH">High</SelectItem>

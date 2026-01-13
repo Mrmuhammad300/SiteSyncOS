@@ -39,10 +39,10 @@ export default function TenantManagementPage() {
   const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [selectedProperty, setSelectedProperty] = useState<string>('');
+  const [selectedProperty, setSelectedProperty] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -71,8 +71,8 @@ export default function TenantManagementPage() {
     try {
       let url = '/api/tenants';
       const params = new URLSearchParams();
-      if (selectedProperty) params.append('propertyId', selectedProperty);
-      if (statusFilter) params.append('status', statusFilter);
+      if (selectedProperty && selectedProperty !== 'all') params.append('propertyId', selectedProperty);
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
       if (params.toString()) url += `?${params.toString()}`;
 
       const res = await fetch(url);
@@ -247,7 +247,7 @@ export default function TenantManagementPage() {
             <SelectValue placeholder="All Properties" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Properties</SelectItem>
+            <SelectItem value="all">All Properties</SelectItem>
             {properties.map(p => (
               <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
             ))}
@@ -258,7 +258,7 @@ export default function TenantManagementPage() {
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="PROSPECT">Prospect</SelectItem>
             <SelectItem value="APPLICANT">Applicant</SelectItem>
             <SelectItem value="ACTIVE">Active</SelectItem>
