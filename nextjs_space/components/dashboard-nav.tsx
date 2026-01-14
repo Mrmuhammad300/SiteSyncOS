@@ -12,6 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from './ui/dropdown-menu';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
@@ -42,32 +43,60 @@ import {
   Shield,
   Brain,
   Home,
+  Layers,
+  Database,
+  Lock,
+  Zap,
+  TrendingUp,
+  FileCheck,
+  Briefcase,
 } from 'lucide-react';
 import { isMasterAdmin, isManagement, isContractor, isLender, getRoleDisplayName, getRoleBadgeColor } from '@/lib/roles';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+// STRATOS Module Structure
+// Stratos Vault™ - Acquisition Module (LOIs, Approvals, Properties)
+const vaultNavigation = [
+  { name: 'Properties', href: '/properties', icon: Building2 },
+  { name: 'ROI Calculator', href: '/roi-calculator', icon: TrendingUp },
+  { name: 'Lender Portal', href: '/lender-portal', icon: Landmark },
+];
+
+// Stratos Build™ - Build Module (Project Milestones)
+const buildNavigation = [
   { name: 'Projects', href: '/projects', icon: FolderKanban },
   { name: 'Gantt', href: '/gantt', icon: Calendar },
-  { name: 'Budgeting', href: '/budgeting', icon: Wallet },
-  { name: 'Draw Requests', href: '/draw-requests', icon: Receipt },
   { name: 'RFIs', href: '/rfis', icon: MessageSquare },
   { name: 'Submittals', href: '/submittals', icon: ClipboardCheck },
   { name: 'Change Orders', href: '/change-orders', icon: DollarSign },
-  { name: 'Properties', href: '/properties', icon: Building2 },
+  { name: 'Punch List', href: '/punch-items', icon: CheckCircle },
+  { name: 'Daily Reports', href: '/daily-reports', icon: FileText },
+  { name: 'Design Services', href: '/design-services', icon: Palette },
+];
+
+// Stratos Ops™ - Operations Module (Invoices, Expenses)
+const opsNavigation = [
+  { name: 'Budgeting', href: '/budgeting', icon: Wallet },
+  { name: 'Draw Requests', href: '/draw-requests', icon: Receipt },
   { name: 'Tenants', href: '/tenant-management', icon: Users },
   { name: 'Maintenance', href: '/maintenance', icon: Wrench },
+  { name: 'Documents', href: '/documents', icon: FileStack },
+];
+
+// Portals
+const portalNavigation = [
+  { name: 'Contractor Portal', href: '/contractor-portal', icon: HardHat },
+];
+
+// Combined navigation for backward compatibility
+const navigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  ...vaultNavigation,
+  ...buildNavigation,
+  ...opsNavigation,
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ];
 
-const secondaryNavigation = [
-  { name: 'Contractor Portal', href: '/contractor-portal', icon: HardHat },
-  { name: 'Lender Portal', href: '/lender-portal', icon: Landmark },
-  { name: 'Design Services', href: '/design-services', icon: Palette },
-  { name: 'Daily Reports', href: '/daily-reports', icon: FileText },
-  { name: 'Documents', href: '/documents', icon: FileStack },
-  { name: 'Punch List', href: '/punch-items', icon: CheckCircle },
-];
+const secondaryNavigation = portalNavigation;
 
 export function DashboardNav() {
   const pathname = usePathname();
@@ -122,12 +151,12 @@ export function DashboardNav() {
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
           <Link href="/dashboard" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center group-hover:shadow-lg transition-shadow">
-              <HardHat className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-slate-800 to-blue-600 rounded-lg flex items-center justify-center group-hover:shadow-lg transition-shadow">
+              <Layers className="w-6 h-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
-                BuildOS
+              <span className="text-xl font-bold tracking-wider bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">
+                STRATOS
               </span>
             </div>
           </Link>

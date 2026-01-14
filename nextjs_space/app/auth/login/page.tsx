@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { HardHat, Loader2, Chrome } from 'lucide-react';
+import { Layers, Loader2, Chrome } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,14 +42,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-orange-50">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-xl">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-orange-500 rounded-full flex items-center justify-center mb-4">
-            <HardHat className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-blue-600 rounded-xl flex items-center justify-center mb-4">
+            <Layers className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-          <p className="text-gray-600 mt-2 text-center">Sign in to your BuildOS account</p>
+          <h1 className="text-3xl font-bold tracking-wider text-gray-900">STRATOS</h1>
+          <p className="text-gray-600 mt-2 text-center">Unified Construction Intelligence Platform</p>
+          <div className="flex gap-2 mt-3">
+            <span className="text-xs px-2 py-1 bg-slate-100 rounded-full text-slate-600">Vault™</span>
+            <span className="text-xs px-2 py-1 bg-blue-100 rounded-full text-blue-600">Build™</span>
+            <span className="text-xs px-2 py-1 bg-emerald-100 rounded-full text-emerald-600">Ops™</span>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -89,7 +94,7 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            className="w-full h-11 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+            className="w-full h-11 bg-gradient-to-r from-slate-800 to-blue-600 hover:from-slate-900 hover:to-blue-700"
             disabled={loading}
           >
             {loading ? (

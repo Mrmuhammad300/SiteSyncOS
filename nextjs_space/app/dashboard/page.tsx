@@ -36,6 +36,14 @@ import {
   PieChart,
   Clock,
   Home,
+  Layers,
+  Building2,
+  Wallet,
+  Wrench,
+  Database,
+  Lock,
+  Sparkles,
+  Network,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { isMasterAdmin, isManagement, isContractor, isLender, getRoleDisplayName, getRoleBadgeColor } from '@/lib/roles';
@@ -252,7 +260,7 @@ export default function DashboardPage() {
                 </Badge>
               )}
             </div>
-            <p className="text-gray-600">Manage your construction projects efficiently</p>
+            <p className="text-gray-600">Unified Construction Intelligence Platform</p>
           </div>
           
           {/* Admin-only Quick Actions */}
@@ -468,6 +476,197 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* STRATOS Modules */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="mb-8"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Layers className="w-5 h-5 text-slate-600" />
+          <h2 className="text-lg font-semibold text-gray-900">STRATOS Modules</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Stratos Vault™ */}
+          <Card className="border-2 border-slate-200 hover:border-slate-400 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-slate-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Stratos Vault™</CardTitle>
+                  <CardDescription className="text-xs">Acquisition Module</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Link href="/properties" className="flex items-center justify-between p-2 rounded hover:bg-slate-50 text-sm">
+                  <span>Properties</span>
+                  <ArrowRight className="w-4 h-4 text-slate-400" />
+                </Link>
+                <Link href="/roi-calculator" className="flex items-center justify-between p-2 rounded hover:bg-slate-50 text-sm">
+                  <span>ROI Calculator</span>
+                  <ArrowRight className="w-4 h-4 text-slate-400" />
+                </Link>
+                <Link href="/lender-portal" className="flex items-center justify-between p-2 rounded hover:bg-slate-50 text-sm">
+                  <span>Lender Portal</span>
+                  <ArrowRight className="w-4 h-4 text-slate-400" />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stratos Build™ */}
+          <Card className="border-2 border-blue-200 hover:border-blue-400 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <FolderKanban className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Stratos Build™</CardTitle>
+                  <CardDescription className="text-xs">Project Milestones</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Link href="/projects" className="flex items-center justify-between p-2 rounded hover:bg-blue-50 text-sm">
+                  <span>Projects</span>
+                  <ArrowRight className="w-4 h-4 text-blue-400" />
+                </Link>
+                <Link href="/gantt" className="flex items-center justify-between p-2 rounded hover:bg-blue-50 text-sm">
+                  <span>Timeline / Gantt</span>
+                  <ArrowRight className="w-4 h-4 text-blue-400" />
+                </Link>
+                <Link href="/rfis" className="flex items-center justify-between p-2 rounded hover:bg-blue-50 text-sm">
+                  <span>RFIs & Submittals</span>
+                  <ArrowRight className="w-4 h-4 text-blue-400" />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stratos Ops™ */}
+          <Card className="border-2 border-emerald-200 hover:border-emerald-400 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                  <Wallet className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Stratos Ops™</CardTitle>
+                  <CardDescription className="text-xs">Invoices & Expenses</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Link href="/budgeting" className="flex items-center justify-between p-2 rounded hover:bg-emerald-50 text-sm">
+                  <span>Budgeting</span>
+                  <ArrowRight className="w-4 h-4 text-emerald-400" />
+                </Link>
+                <Link href="/draw-requests" className="flex items-center justify-between p-2 rounded hover:bg-emerald-50 text-sm">
+                  <span>Draw Requests</span>
+                  <ArrowRight className="w-4 h-4 text-emerald-400" />
+                </Link>
+                <Link href="/maintenance" className="flex items-center justify-between p-2 rounded hover:bg-emerald-50 text-sm">
+                  <span>Maintenance</span>
+                  <ArrowRight className="w-4 h-4 text-emerald-400" />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </motion.div>
+
+      {/* Zenflow & Quantum Ledger Integration */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.28 }}
+        className="mb-8"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Zenflow AI */}
+          <Card className="border border-cyan-200 bg-gradient-to-br from-cyan-50/50 to-blue-50/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      ZENFLOW
+                      <Badge variant="outline" className="text-xs bg-cyan-50 text-cyan-700 border-cyan-200">AI</Badge>
+                    </CardTitle>
+                    <CardDescription className="text-xs">AI Insights & Risk Analysis</CardDescription>
+                  </div>
+                </div>
+                <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">Coming Soon</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 rounded-lg bg-white/60">
+                  <TrendingUp className="w-5 h-5 mx-auto text-cyan-600 mb-1" />
+                  <p className="text-xs text-muted-foreground">Predictive Alerts</p>
+                </div>
+                <div className="p-3 rounded-lg bg-white/60">
+                  <LineChart className="w-5 h-5 mx-auto text-cyan-600 mb-1" />
+                  <p className="text-xs text-muted-foreground">Cash Flow Forecasts</p>
+                </div>
+                <div className="p-3 rounded-lg bg-white/60">
+                  <Target className="w-5 h-5 mx-auto text-cyan-600 mb-1" />
+                  <p className="text-xs text-muted-foreground">Risk Assessment</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quantum Ledger */}
+          <Card className="border border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex items-center justify-center">
+                    <Database className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      QUANTUM LEDGER
+                      <Lock className="w-3 h-3 text-slate-500" />
+                    </CardTitle>
+                    <CardDescription className="text-xs">Unified Financial Infrastructure</CardDescription>
+                  </div>
+                </div>
+                <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">Coming Soon</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 rounded-lg bg-white/60">
+                  <Shield className="w-5 h-5 mx-auto text-slate-600 mb-1" />
+                  <p className="text-xs text-muted-foreground">Capital Governance</p>
+                </div>
+                <div className="p-3 rounded-lg bg-white/60">
+                  <Network className="w-5 h-5 mx-auto text-slate-600 mb-1" />
+                  <p className="text-xs text-muted-foreground">Audit Trail</p>
+                </div>
+                <div className="p-3 rounded-lg bg-white/60">
+                  <FileText className="w-5 h-5 mx-auto text-slate-600 mb-1" />
+                  <p className="text-xs text-muted-foreground">Compliance Engine</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </motion.div>
 
       {/* Admin Control Panel */}
       {isAdmin && (

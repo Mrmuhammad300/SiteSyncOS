@@ -353,7 +353,7 @@ export default function AccountingIntegrationsPage() {
                 No Integrations Yet
               </h3>
               <p className="text-sm text-gray-600 max-w-sm mb-6">
-                Connect your accounting software to automatically sync financial data with BuildOS
+                Connect your accounting software to automatically sync financial data with STRATOS
               </p>
               <Button
                 onClick={() => setDialogOpen(true)}

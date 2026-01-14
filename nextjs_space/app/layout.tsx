@@ -9,8 +9,8 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
-  title: 'BuildOS - Construction Management Platform',
-  description: 'Advanced construction project management and collaboration platform powered by AI',
+  title: 'STRATOS - Unified Construction Intelligence Platform',
+  description: 'Enterprise construction management powered by Zenflow AI and Quantum Ledger. Stratos Vault™ | Stratos Build™ | Stratos Ops™',
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',

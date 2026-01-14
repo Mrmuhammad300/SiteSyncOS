@@ -1,6 +1,6 @@
-# BuildOS
+# STRATOS
 
-BuildOS is an advanced construction management platform powered by AI, built with Next.js, Prisma, PostgreSQL, and Radix UI. Streamline your construction projects with intelligent automation, real-time collaboration, and comprehensive project oversight.
+STRATOS is an advanced construction management platform powered by AI, built with Next.js, Prisma, PostgreSQL, and Radix UI. Streamline your construction projects with intelligent automation, real-time collaboration, and comprehensive project oversight.
 
 ## 🚀 Features
 
@@ -217,5 +217,5 @@ For issues or questions, contact the development team.
 
 ---
 
-**BuildOS - Building the Future of Construction Management**
+**STRATOS - Building the Future of Construction Management**
 **Powered by AI • Built with ❤️ using Next.js and modern web technologies**

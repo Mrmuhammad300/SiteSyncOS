@@ -1,8 +1,8 @@
-# BuildOS Webhook Integration Guide
+# STRATOS Webhook Integration Guide
 
 ## Overview
 
-This guide explains how to integrate your BuildOS Platform with n8n (or any other automation tool) to automatically create change orders via webhook.
+This guide explains how to integrate your STRATOS Platform with n8n (or any other automation tool) to automatically create change orders via webhook.
 
 ## Webhook Endpoint
 

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { HardHat, Loader2, Chrome } from 'lucide-react';
+import { Layers, Loader2, Chrome } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -81,14 +81,14 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-orange-50 py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 py-12 px-4">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-xl">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-orange-500 rounded-full flex items-center justify-center mb-4">
-            <HardHat className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-blue-600 rounded-xl flex items-center justify-center mb-4">
+            <Layers className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
-          <p className="text-gray-600 mt-2 text-center">Join BuildOS platform</p>
+          <h1 className="text-3xl font-bold tracking-wider text-gray-900">STRATOS</h1>
+          <p className="text-gray-600 mt-2 text-center">Join the Unified Construction Intelligence Platform</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -185,7 +185,7 @@ export default function SignupPage() {
 
           <Button
             type="submit"
-            className="w-full h-11 bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+            className="w-full h-11 bg-gradient-to-r from-slate-800 to-blue-600 hover:from-slate-900 hover:to-blue-700"
             disabled={loading}
           >
             {loading ? (
