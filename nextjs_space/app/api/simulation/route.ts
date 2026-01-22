@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
     }
 
     const userRole = (session.user as any).role;
-    if (!['SuperAdmin', 'Admin'].includes(userRole)) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    if (!['SuperAdmin', 'Admin', 'ProjectManager'].includes(userRole)) {
+      return NextResponse.json({ error: 'Admin or Project Manager access required' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -153,8 +153,8 @@ export async function GET(request: NextRequest) {
     }
 
     const userRole = (session.user as any).role;
-    if (!['SuperAdmin', 'Admin'].includes(userRole)) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    if (!['SuperAdmin', 'Admin', 'ProjectManager'].includes(userRole)) {
+      return NextResponse.json({ error: 'Admin or Project Manager access required' }, { status: 403 });
     }
 
     // Return simulation templates

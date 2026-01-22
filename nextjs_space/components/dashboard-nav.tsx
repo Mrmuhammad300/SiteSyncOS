@@ -87,13 +87,19 @@ const portalNavigation = [
   { name: 'Contractor Portal', href: '/contractor-portal', icon: HardHat },
 ];
 
+// Intelligence & Planning
+const intelligenceNavigation = [
+  { name: 'Scenarios', href: '/scenarios', icon: Brain },
+  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+];
+
 // Combined navigation for backward compatibility
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   ...vaultNavigation,
   ...buildNavigation,
   ...opsNavigation,
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  ...intelligenceNavigation,
 ];
 
 const secondaryNavigation = portalNavigation;
