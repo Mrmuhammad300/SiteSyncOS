@@ -87,6 +87,8 @@ export default function DashboardPage() {
   
   // Simulation state
   const [showSimulation, setShowSimulation] = useState(false);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [simulationParams, setSimulationParams] = useState({
     budgetVariance: 0,
     scheduleDelay: 0,
@@ -102,9 +104,10 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, projectsRes] = await Promise.all([
+      const [statsRes, projectsRes, allProjectsRes] = await Promise.all([
         fetch('/api/dashboard/stats'),
         fetch('/api/projects?limit=5'),
+        fetch('/api/projects?limit=100'),
       ]);
 
       if (statsRes.ok) {
@@ -116,6 +119,11 @@ export default function DashboardPage() {
         const projectsData = await projectsRes.json();
         setRecentProjects(projectsData?.projects ?? []);
       }
+
+      if (allProjectsRes.ok) {
+        const allProjectsData = await allProjectsRes.json();
+        setAllProjects(allProjectsData?.projects ?? []);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -125,54 +133,63 @@ export default function DashboardPage() {
 
   const runSimulation = async () => {
     setRunningSimulation(true);
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const baseBudget = stats?.totalBudget || 10000000;
-    const budgetImpact = baseBudget * (simulationParams.budgetVariance / 100);
-    const timelineImpact = simulationParams.scheduleDelay;
-    
-    const riskMultipliers: Record<string, number> = {
-      low: 0.8,
-      medium: 1.0,
-      high: 1.3,
-      critical: 1.6
-    };
-    
-    const riskMultiplier = riskMultipliers[simulationParams.riskFactor] || 1.0;
-    const resourceImpact = simulationParams.resourceChange * 0.02;
-    
-    const projectedBudget = baseBudget + budgetImpact + (baseBudget * resourceImpact * riskMultiplier);
-    const projectedTimeline = Math.max(0, 12 + timelineImpact + Math.round(riskMultiplier * 2));
-    
-    const recommendations: string[] = [];
-    if (simulationParams.budgetVariance > 10) {
-      recommendations.push('Consider value engineering to reduce costs');
+    try {
+      const res = await fetch('/api/simulation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          budgetVariance: simulationParams.budgetVariance,
+          scheduleDelay: simulationParams.scheduleDelay,
+          resourceChange: simulationParams.resourceChange,
+          riskFactor: simulationParams.riskFactor,
+          projectId: selectedProjectId !== 'all' ? selectedProjectId : undefined,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setSimulationResults({
+          scenario: data.scenario,
+          projectedBudget: data.projections.budget,
+          projectedTimeline: data.projections.timeline,
+          riskLevel: data.riskAssessment.level,
+          recommendations: data.recommendations,
+        });
+      } else {
+        // Fallback to local calculation if API fails
+        const baseBudget = selectedProjectId !== 'all' 
+          ? (allProjects.find(p => p.id === selectedProjectId)?.budget || 10000000)
+          : (stats?.totalBudget || 10000000);
+        const budgetImpact = baseBudget * (simulationParams.budgetVariance / 100);
+        const riskMultipliers: Record<string, number> = { low: 0.8, medium: 1.0, high: 1.3, critical: 1.6 };
+        const riskMultiplier = riskMultipliers[simulationParams.riskFactor] || 1.0;
+        const resourceImpact = simulationParams.resourceChange * 0.02;
+        const projectedBudget = baseBudget + budgetImpact + (baseBudget * resourceImpact * riskMultiplier);
+        const projectedTimeline = Math.max(0, 12 + simulationParams.scheduleDelay + Math.round(riskMultiplier * 2));
+        
+        const recommendations: string[] = [];
+        if (simulationParams.budgetVariance > 10) recommendations.push('Consider value engineering to reduce costs');
+        if (simulationParams.scheduleDelay > 2) recommendations.push('Implement schedule compression techniques');
+        if (simulationParams.resourceChange < -10) recommendations.push('Review resource allocation for critical path activities');
+        if (['high', 'critical'].includes(simulationParams.riskFactor)) {
+          recommendations.push('Increase contingency reserves');
+          recommendations.push('Implement additional risk monitoring measures');
+        }
+        if (recommendations.length === 0) recommendations.push('Current parameters within acceptable tolerances');
+        
+        setSimulationResults({
+          scenario: `Budget ${simulationParams.budgetVariance >= 0 ? '+' : ''}${simulationParams.budgetVariance}%, Schedule ${simulationParams.scheduleDelay >= 0 ? '+' : ''}${simulationParams.scheduleDelay} months, Risk: ${simulationParams.riskFactor}`,
+          projectedBudget,
+          projectedTimeline,
+          riskLevel: simulationParams.riskFactor,
+          recommendations,
+        });
+      }
+    } catch (error) {
+      console.error('Simulation error:', error);
+    } finally {
+      setRunningSimulation(false);
     }
-    if (simulationParams.scheduleDelay > 2) {
-      recommendations.push('Implement schedule compression techniques');
-    }
-    if (simulationParams.resourceChange < -10) {
-      recommendations.push('Review resource allocation for critical path activities');
-    }
-    if (simulationParams.riskFactor === 'high' || simulationParams.riskFactor === 'critical') {
-      recommendations.push('Increase contingency reserves');
-      recommendations.push('Implement additional risk monitoring measures');
-    }
-    if (recommendations.length === 0) {
-      recommendations.push('Current parameters within acceptable tolerances');
-    }
-    
-    setSimulationResults({
-      scenario: `Budget ${simulationParams.budgetVariance >= 0 ? '+' : ''}${simulationParams.budgetVariance}%, ` +
-        `Schedule ${simulationParams.scheduleDelay >= 0 ? '+' : ''}${simulationParams.scheduleDelay} months, ` +
-        `Risk: ${simulationParams.riskFactor}`,
-      projectedBudget,
-      projectedTimeline,
-      riskLevel: simulationParams.riskFactor,
-      recommendations,
-    });
-    setRunningSimulation(false);
   };
 
   const statCards = [
@@ -286,6 +303,37 @@ export default function DashboardPage() {
                   
                   <div className="grid grid-cols-2 gap-6 py-4">
                     <div className="space-y-6">
+                      {/* Project Selection Dropdown */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <FolderKanban className="w-4 h-4" />
+                          Target Project
+                        </Label>
+                        <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a project" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Projects (Portfolio)</SelectItem>
+                            {allProjects.map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                <span className="flex items-center gap-2">
+                                  {project.name}
+                                  <span className="text-xs text-muted-foreground">
+                                    ${((project.budget || 0) / 1000000).toFixed(1)}M
+                                  </span>
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedProjectId !== 'all' 
+                            ? `Running scenario on: ${allProjects.find(p => p.id === selectedProjectId)?.name}`
+                            : 'Run scenario across all projects'}
+                        </p>
+                      </div>
+                      
                       <div className="space-y-2">
                         <Label className="flex items-center justify-between">
                           <span>Budget Variance (%)</span>
