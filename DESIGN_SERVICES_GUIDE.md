@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Design Services module integrates your STRATOS Platform with an external AI Design & Rendering Platform for automated architectural design tasks. This guide explains how the integration works and how to use it.
+The Design Services module integrates your SiteSync OS Platform with an external AI Design & Rendering Platform for automated architectural design tasks. This guide explains how the integration works and how to use it.
 
 ## External AI Platform
 

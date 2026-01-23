@@ -525,7 +525,7 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* STRATOS Modules */}
+      {/* SiteSync OS Modules */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -534,10 +534,10 @@ export default function DashboardPage() {
       >
         <div className="flex items-center gap-2 mb-4">
           <Layers className="w-5 h-5 text-slate-600" />
-          <h2 className="text-lg font-semibold text-gray-900">STRATOS Modules</h2>
+          <h2 className="text-lg font-semibold text-gray-900">SiteSync OS Modules</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Stratos Vault™ */}
+          {/* SiteSync Vault™ */}
           <Card className="border-2 border-slate-200 hover:border-slate-400 transition-colors">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
@@ -545,7 +545,7 @@ export default function DashboardPage() {
                   <Building2 className="w-5 h-5 text-slate-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">Stratos Vault™</CardTitle>
+                  <CardTitle className="text-base">SiteSync Vault™</CardTitle>
                   <CardDescription className="text-xs">Acquisition Module</CardDescription>
                 </div>
               </div>
@@ -568,7 +568,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Stratos Build™ */}
+          {/* SiteSync Build™ */}
           <Card className="border-2 border-blue-200 hover:border-blue-400 transition-colors">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
@@ -576,7 +576,7 @@ export default function DashboardPage() {
                   <FolderKanban className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">Stratos Build™</CardTitle>
+                  <CardTitle className="text-base">SiteSync Build™</CardTitle>
                   <CardDescription className="text-xs">Project Milestones</CardDescription>
                 </div>
               </div>
@@ -599,7 +599,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Stratos Ops™ */}
+          {/* SiteSync Ops™ */}
           <Card className="border-2 border-emerald-200 hover:border-emerald-400 transition-colors">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
@@ -607,7 +607,7 @@ export default function DashboardPage() {
                   <Wallet className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-base">Stratos Ops™</CardTitle>
+                  <CardTitle className="text-base">SiteSync Ops™</CardTitle>
                   <CardDescription className="text-xs">Invoices & Expenses</CardDescription>
                 </div>
               </div>

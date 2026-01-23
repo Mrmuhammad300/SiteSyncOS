@@ -105,11 +105,11 @@ async function sendNotificationEmail(
       },
       body: JSON.stringify({
         to: user.email,
-        subject: `BuildOS - ${title}`,
+        subject: `SiteSync OS - ${title}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
-              <h1 style="color: white; margin: 0;">BuildOS</h1>
+              <h1 style="color: white; margin: 0;">SiteSync OS</h1>
             </div>
             <div style="padding: 30px; background-color: #f9fafb;">
               <h2 style="color: #1f2937; margin-top: 0;">${title}</h2>
@@ -120,7 +120,7 @@ async function sendNotificationEmail(
                 </div>
               ` : ''}
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;" />
-              <p style="color: #6b7280; font-size: 14px;">You received this email because you have notifications enabled in your BuildOS account.</p>
+              <p style="color: #6b7280; font-size: 14px;">You received this email because you have notifications enabled in your SiteSync OS account.</p>
               <p style="color: #6b7280; font-size: 14px;">To manage your notification preferences, visit your <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/profile/notifications" style="color: #667eea;">account settings</a>.</p>
             </div>
           </div>

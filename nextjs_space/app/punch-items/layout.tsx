@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Punch List | STRATOS',
+  title: 'Punch List | SiteSync OS',
   description: 'Manage construction project punch items',
 };
 

@@ -53,15 +53,15 @@ import {
 } from 'lucide-react';
 import { isMasterAdmin, isManagement, isContractor, isLender, getRoleDisplayName, getRoleBadgeColor } from '@/lib/roles';
 
-// STRATOS Module Structure
-// Stratos Vault™ - Acquisition Module (LOIs, Approvals, Properties)
+// SiteSync OS Module Structure
+// SiteSync Vault™ - Acquisition Module (LOIs, Approvals, Properties)
 const vaultNavigation = [
   { name: 'Properties', href: '/properties', icon: Building2 },
   { name: 'ROI Calculator', href: '/roi-calculator', icon: TrendingUp },
   { name: 'Lender Portal', href: '/lender-portal', icon: Landmark },
 ];
 
-// Stratos Build™ - Build Module (Project Milestones)
+// SiteSync Build™ - Build Module (Project Milestones)
 const buildNavigation = [
   { name: 'Projects', href: '/projects', icon: FolderKanban },
   { name: 'Gantt', href: '/gantt', icon: Calendar },
@@ -73,7 +73,7 @@ const buildNavigation = [
   { name: 'Design Services', href: '/design-services', icon: Palette },
 ];
 
-// Stratos Ops™ - Operations Module (Invoices, Expenses)
+// SiteSync Ops™ - Operations Module (Invoices, Expenses)
 const opsNavigation = [
   { name: 'Budgeting', href: '/budgeting', icon: Wallet },
   { name: 'Draw Requests', href: '/draw-requests', icon: Receipt },
@@ -162,7 +162,7 @@ export function DashboardNav() {
             </div>
             <div className="hidden sm:block">
               <span className="text-xl font-bold tracking-wider bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">
-                STRATOS
+                SiteSync OS
               </span>
             </div>
           </Link>

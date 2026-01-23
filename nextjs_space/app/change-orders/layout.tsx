@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Change Orders | STRATOS',
+  title: 'Change Orders | SiteSync OS',
   description: 'Manage construction project change orders',
 };
 

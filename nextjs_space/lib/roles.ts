@@ -1,4 +1,4 @@
-// Role-based access control utilities for BuildOS
+// Role-based access control utilities for SiteSync OS
 
 export const UserRoles = {
   SuperAdmin: 'SuperAdmin',

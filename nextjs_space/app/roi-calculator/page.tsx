@@ -125,7 +125,7 @@ export default function ROICalculatorPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">ROI Calculator</h1>
-              <p className="text-gray-600">Calculate potential savings with STRATOS</p>
+              <p className="text-gray-600">Calculate potential savings with SiteSync OS</p>
             </div>
           </div>
         </div>
@@ -364,7 +364,7 @@ export default function ROICalculatorPage() {
                             {formatPercentage(results.roiPercentage, 2)} ROI
                           </div>
                           <p className="text-sm text-gray-600 mt-2">
-                            Estimated savings with STRATOS
+                            Estimated savings with SiteSync OS
                           </p>
                         </div>
                       </CardContent>
@@ -452,7 +452,7 @@ export default function ROICalculatorPage() {
                         <div className="flex items-start space-x-2">
                           <DollarSign className="w-4 h-4 text-green-600 mt-0.5" />
                           <p className="text-sm text-gray-700">
-                            STRATOS can save up to <strong>{formatPercentage(results.roiPercentage, 1)}</strong> of your project cost
+                            SiteSync OS can save up to <strong>{formatPercentage(results.roiPercentage, 1)}</strong> of your project cost
                           </p>
                         </div>
                         <div className="flex items-start space-x-2">
@@ -478,7 +478,7 @@ export default function ROICalculatorPage() {
                         Calculate Your ROI
                       </h3>
                       <p className="text-sm text-gray-600 max-w-sm">
-                        Fill in your project details to see how much you can save with STRATOS platform
+                        Fill in your project details to see how much you can save with SiteSync OS platform
                       </p>
                     </CardContent>
                   </Card>

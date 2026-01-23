@@ -1,6 +1,6 @@
 /**
  * ROI Calculator Utility Functions
- * Implements BuildOS ROI calculation logic based on industry-standard metrics
+ * Implements SiteSync OS ROI calculation logic based on industry-standard metrics
  */
 
 export interface ROIInputs {
@@ -41,7 +41,7 @@ export interface ROIBreakdown extends ROISavings {
 /**
  * Calculate rework cost savings
  * Industry baseline: Rework = 4–6% of construction cost
- * BuildOS reduces this by 25–40% via version control, validation, and field photo alignment
+ * SiteSync OS reduces this by 25–40% via version control, validation, and field photo alignment
  */
 export function calculateReworkSavings(
   totalProjectCost: number,
@@ -52,7 +52,7 @@ export function calculateReworkSavings(
   
   const reworkCost = totalProjectCost * reworkRate;
   
-  // BuildOS reduces rework by 25-40%, using conservative 30% average
+  // SiteSync OS reduces rework by 25-40%, using conservative 30% average
   const reductionPercent = 0.30;
   const savings = reworkCost * reductionPercent;
   
@@ -78,7 +78,7 @@ export function calculateTakeoffSavings(
   // Total hours spent on takeoffs
   const totalTakeoffHours = numberOfDrawingRevisions * avgHoursPerTakeoff;
   
-  // BuildOS saves 30-50% of time, using 40% average
+  // SiteSync OS saves 30-50% of time, using 40% average
   const timeSavingsPercent = 0.40;
   const hoursSaved = totalTakeoffHours * timeSavingsPercent;
   
@@ -94,14 +94,14 @@ export function calculateTakeoffSavings(
 /**
  * Calculate schedule compression savings
  * Every week saved ≈ 0.5–1% of project cost (carrying + overhead)
- * BuildOS can save 1-3 weeks on average projects
+ * SiteSync OS can save 1-3 weeks on average projects
  */
 export function calculateScheduleSavings(
   totalProjectCost: number,
   scheduleSlippageWeeks: number,
   projectDurationMonths: number
 ): { savings: number; weeksSaved: number } {
-  // Estimate weeks that can be saved with BuildOS
+  // Estimate weeks that can be saved with SiteSync OS
   // If there's slippage, we can prevent it
   // If no slippage, we can still accelerate by 1-2 weeks typically
   const baseWeeksSaved = Math.max(1, Math.min(3, scheduleSlippageWeeks));
@@ -118,7 +118,7 @@ export function calculateScheduleSavings(
 
 /**
  * Calculate claims & change order risk avoidance savings
- * BuildOS reduces risk by 20-40% through better documentation and communication
+ * SiteSync OS reduces risk by 20-40% through better documentation and communication
  */
 export function calculateClaimsRiskSavings(
   totalProjectCost: number,
@@ -141,7 +141,7 @@ export function calculateClaimsRiskSavings(
   
   const expectedClaimsCost = totalProjectCost * claimsCostRate * riskProbability;
   
-  // BuildOS reduces this risk by 20-40%, using 30% average
+  // SiteSync OS reduces this risk by 20-40%, using 30% average
   const riskReduction = 0.30;
   const savings = expectedClaimsCost * riskReduction;
   
@@ -153,7 +153,7 @@ export function calculateClaimsRiskSavings(
 }
 
 /**
- * Calculate comprehensive ROI for BuildOS platform
+ * Calculate comprehensive ROI for SiteSync OS platform
  */
 export function calculateROI(inputs: ROIInputs): ROIBreakdown {
   // 1. Rework Reduction

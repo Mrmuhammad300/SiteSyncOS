@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Scenarios | STRATOS',
+  title: 'Scenarios | SiteSync OS',
   description: 'Run live what-if scenarios on your projects',
 };
 

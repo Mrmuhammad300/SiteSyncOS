@@ -48,7 +48,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-blue-600 rounded-xl flex items-center justify-center mb-4">
             <Layers className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold tracking-wider text-gray-900">STRATOS</h1>
+          <h1 className="text-3xl font-bold tracking-wider text-gray-900">SiteSync OS</h1>
           <p className="text-gray-600 mt-2 text-center">Unified Construction Intelligence Platform</p>
           <div className="flex gap-2 mt-3">
             <span className="text-xs px-2 py-1 bg-slate-100 rounded-full text-slate-600">Vault™</span>

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Submittals | STRATOS',
+  title: 'Submittals | SiteSync OS',
   description: 'Manage construction submittals',
 };
 
