@@ -80,6 +80,23 @@ enum WeatherCondition {
   Wind
 }
 
+// GIS Risk Zone Classifications
+enum RiskZone {
+  Low
+  Moderate
+  High
+  Severe
+}
+
+enum HazardType {
+  Flood
+  Wildfire
+  Earthquake
+  Hurricane
+  Tornado
+  None
+}
+
 model User {
   id                String           @id @default(cuid())
   email             String           @unique
@@ -179,6 +196,16 @@ model Project {
   city                String?
   state               String?
   zipCode             String?
+  
+  // GIS Coordinates & Risk Data
+  latitude            Float?
+  longitude           Float?
+  riskZone            RiskZone?
+  floodZone           String?
+  hazardTypes         String?        // Comma-separated HazardType values
+  riskScore           Int?           // 0-100 risk assessment score
+  lastRiskAssessment  DateTime?
+  
   startDate           DateTime
   estimatedCompletion DateTime
   actualCompletion    DateTime?
@@ -669,6 +696,16 @@ model Property {
   city                    String
   state                   String
   zip                     String
+  
+  // GIS Coordinates & Risk Data
+  latitude                Float?
+  longitude               Float?
+  riskZone                RiskZone?
+  floodZone               String?
+  hazardTypes             String?           // Comma-separated HazardType values
+  riskScore               Int?              // 0-100 risk assessment score
+  lastRiskAssessment      DateTime?
+  
   assetType               AssetType
   developmentStage        DevelopmentStage
   units                   Int?

@@ -50,6 +50,7 @@ import {
   TrendingUp,
   FileCheck,
   Briefcase,
+  Globe,
 } from 'lucide-react';
 import { isMasterAdmin, isManagement, isContractor, isLender, getRoleDisplayName, getRoleBadgeColor } from '@/lib/roles';
 
@@ -89,6 +90,7 @@ const portalNavigation = [
 
 // Intelligence & Planning
 const intelligenceNavigation = [
+  { name: 'GIS Intelligence', href: '/gis', icon: Globe },
   { name: 'Scenarios', href: '/scenarios', icon: Brain },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ];
