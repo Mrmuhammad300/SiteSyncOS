@@ -1,8 +1,8 @@
-# BuildOS White Paper - Enterprise Pricing Update
+# SiteSync OS White Paper - Enterprise Pricing Update
 
 ## Overview
 
-The BuildOS white paper has been updated to reflect **enterprise-grade pricing strategy** that positions the platform as mission-critical infrastructure rather than commodity software.
+The SiteSync OS white paper has been updated to reflect **enterprise-grade pricing strategy** that positions the platform as mission-critical infrastructure rather than commodity software.
 
 ## Key Changes
 
@@ -23,7 +23,7 @@ The BuildOS white paper has been updated to reflect **enterprise-grade pricing s
 
 Replaced "Subscription Model and Pricing" with comprehensive enterprise pricing framework:
 
-#### How Buyers Evaluate BuildOS
+#### How Buyers Evaluate SiteSync OS
 
 **General Contractors:**
 - Does this reduce rework and protect from claims?
@@ -35,7 +35,7 @@ Replaced "Subscription Model and Pricing" with comprehensive enterprise pricing 
 - Does this de-risk exit strategy?
 - Can this replace consultants and spreadsheets?
 
-**BuildOS Answer:**
+**SiteSync OS Answer:**
 *"We are not a tool. We are risk reduction + capital intelligence."*
 
 ### 3. Three Pricing Models
@@ -87,11 +87,11 @@ Based on:
 | Bluebeam | $300-$400/user | Financial intelligence, AI, project management |
 | Procore | $10k-$50k/year | Strong financial modeling, fast setup |
 | Consultants | $50k-$250k/project | Continuous intelligence, real-time data |
-| **BuildOS** | **$2,400-$12,000/project** | **Nothing—unified infrastructure** |
+| **SiteSync OS** | **$2,400-$12,000/project** | **Nothing—unified infrastructure** |
 
 ### 5. Market Positioning Language
 
-**We Position BuildOS As:**
+**We Position SiteSync OS As:**
 
 - **Project Intelligence Platform** (not "software")
 - **Construction Operating System** (mission-critical)
@@ -99,7 +99,7 @@ Based on:
 
 **Positioning Statement:**
 
-> "BuildOS replaces drawings, spreadsheets, and financial blind spots with one trusted system that protects both execution and capital."
+> "SiteSync OS replaces drawings, spreadsheets, and financial blind spots with one trusted system that protects both execution and capital."
 
 ### 6. Launch & Scaling Strategy
 
@@ -173,7 +173,7 @@ Based on:
 
 ### New Content:
 
-- How buyers evaluate BuildOS (GC vs. Developer perspective)
+- How buyers evaluate SiteSync OS (GC vs. Developer perspective)
 - Three distinct pricing models with use cases
 - Competitive positioning table
 - "Why This Pricing Is Defensible" section
@@ -192,10 +192,10 @@ Based on:
 ### For Sales Conversations:
 
 **Old Approach:**
-"BuildOS is affordable construction software at $100/user/month."
+"SiteSync OS is affordable construction software at $100/user/month."
 
 **New Approach:**
-"BuildOS is project intelligence infrastructure that protects execution and capital. For a $25M project, that's $5,000-$7,500 per year—less than the cost of a single change order dispute."
+"SiteSync OS is project intelligence infrastructure that protects execution and capital. For a $25M project, that's $5,000-$7,500 per year—less than the cost of a single change order dispute."
 
 ### For Investor Presentations:
 
@@ -210,8 +210,8 @@ Based on:
 
 ## Document Details
 
-**Updated File:** `BuildOS_Whitepaper.pdf`  
-**Location:** `/home/ubuntu/construction_crm_platform/BuildOS_Whitepaper.pdf`  
+**Updated File:** `SiteSync OS_Whitepaper.pdf`  
+**Location:** `/home/ubuntu/construction_crm_platform/SiteSync OS_Whitepaper.pdf`  
 **Size:** 545 KB  
 **Pages:** 61 pages (increased from 60 due to expanded pricing section)  
 **Date:** January 9, 2025
@@ -228,4 +228,4 @@ Based on:
 
 **Status:** ✅ White paper updated with enterprise-grade pricing strategy  
 **Ready For:** Investor presentations, enterprise sales conversations, strategic partnerships  
-**Key Message:** BuildOS is mission-critical infrastructure, not commodity software
+**Key Message:** SiteSync OS is mission-critical infrastructure, not commodity software

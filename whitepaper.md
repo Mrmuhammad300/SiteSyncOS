@@ -1,7 +1,7 @@
 ---
-title: "BuildOS: The Future of Construction Project Management"
+title: "SiteSync OS: The Future of Construction Project Management"
 subtitle: "AI-Powered Collaboration Platform"
-author: "BuildOS Technologies"
+author: "SiteSync OS Technologies"
 date: "January 2026"
 geometry: margin=1in
 fontsize: 11pt
@@ -20,7 +20,7 @@ header-includes: |
   \definecolor{buildosorange}{HTML}{f97316}
   \pagestyle{fancy}
   \fancyhead[L]{\includegraphics[height=0.5cm]{logo.jpg}}
-  \fancyhead[R]{\textcolor{buildosblue}{\textbf{BuildOS Platform}}}
+  \fancyhead[R]{\textcolor{buildosblue}{\textbf{SiteSync OS Platform}}}
   \fancyfoot[C]{\thepage}
   \renewcommand{\headrulewidth}{0.4pt}
   \renewcommand{\footrulewidth}{0.4pt}
@@ -31,7 +31,7 @@ header-includes: |
 
 \vspace{1cm}
 
-{\Huge \textcolor{buildosblue}{\textbf{BuildOS}}}
+{\Huge \textcolor{buildosblue}{\textbf{SiteSync OS}}}
 
 \vspace{0.5cm}
 
@@ -63,11 +63,11 @@ header-includes: |
 
 # Executive Summary {#executive-summary}
 
-BuildOS represents the next generation of construction project management software, combining cutting-edge artificial intelligence with comprehensive workflow automation to deliver unprecedented efficiency gains for the construction industry. In an industry plagued by delays, cost overruns, and fragmented communication, BuildOS offers a unified, intelligent platform that transforms how construction projects are planned, executed, and delivered.
+SiteSync OS represents the next generation of construction project management software, combining cutting-edge artificial intelligence with comprehensive workflow automation to deliver unprecedented efficiency gains for the construction industry. In an industry plagued by delays, cost overruns, and fragmented communication, SiteSync OS offers a unified, intelligent platform that transforms how construction projects are planned, executed, and delivered.
 
-## The BuildOS Value Proposition
+## The SiteSync OS Value Proposition
 
-BuildOS is not just another project management tool—it's a complete digital transformation platform for construction firms. Our AI-powered system delivers measurable results:
+SiteSync OS is not just another project management tool—it's a complete digital transformation platform for construction firms. Our AI-powered system delivers measurable results:
 
 - **35% reduction in project delays** through real-time collaboration and automated workflows
 - **20% average cost savings** via intelligent change order management and financial analytics
@@ -76,13 +76,13 @@ BuildOS is not just another project management tool—it's a complete digital tr
 
 ## Target Market & Opportunity
 
-BuildOS serves the entire construction ecosystem, from commercial construction firms and residential developers to general contractors and specialty subcontractors. With the construction software market valued at $12 billion and growing at 10% annually, BuildOS is positioned to capture significant market share by addressing the critical pain points that plague the industry.
+SiteSync OS serves the entire construction ecosystem, from commercial construction firms and residential developers to general contractors and specialty subcontractors. With the construction software market valued at $12 billion and growing at 10% annually, SiteSync OS is positioned to capture significant market share by addressing the critical pain points that plague the industry.
 
 Our platform is designed for organizations of all sizes, from small regional contractors managing individual projects to large enterprise firms and institutional developers coordinating billions in capital deployment. The project-based pricing model ($2,400-$12,000 per project per year) aligns with how construction firms budget and allows costs to be passed through to project owners, while portfolio licensing ($25k-$150k annually) serves developers managing multiple assets.
 
 ## Competitive Edge & Innovation
 
-What sets BuildOS apart is our integrated approach to construction management. While competitors offer point solutions for specific workflows, BuildOS provides:
+What sets SiteSync OS apart is our integrated approach to construction management. While competitors offer point solutions for specific workflows, SiteSync OS provides:
 
 1. **Unified Platform Architecture**: All construction workflows—from RFIs and submittals to change orders and daily reports—operate within a single, cohesive system with 77 routes and 53 API endpoints.
 
@@ -92,9 +92,9 @@ What sets BuildOS apart is our integrated approach to construction management. W
 
 4. **Intelligent Automation**: n8n webhook integrations and automated workflows eliminate manual data entry and accelerate approval processes, freeing teams to focus on high-value activities.
 
-5. **Modern Technology Stack**: Built on Next.js 14, TypeScript, and Prisma ORM with cloud-native architecture, BuildOS delivers enterprise-grade performance, security, and scalability that legacy systems cannot match.
+5. **Modern Technology Stack**: Built on Next.js 14, TypeScript, and Prisma ORM with cloud-native architecture, SiteSync OS delivers enterprise-grade performance, security, and scalability that legacy systems cannot match.
 
-BuildOS is more than software—it's a strategic advantage that enables construction firms to win more bids, deliver projects faster, and maximize profitability in an increasingly competitive market.
+SiteSync OS is more than software—it's a strategic advantage that enables construction firms to win more bids, deliver projects faster, and maximize profitability in an increasingly competitive market.
 
 \newpage
 
@@ -143,45 +143,45 @@ Financial tracking is often disconnected from project operations. Accounting sys
 
 For construction firms that continue operating with legacy systems and manual processes, the competitive disadvantage grows larger each year. Firms that embrace digital transformation are winning more bids, delivering projects faster, and achieving higher profit margins. Those that don't risk being left behind in an increasingly competitive market where clients demand transparency, efficiency, and predictable outcomes.
 
-The industry needs a comprehensive solution that addresses these challenges holistically—not another point solution that solves one problem while leaving others unaddressed. BuildOS was designed specifically to meet this need.
+The industry needs a comprehensive solution that addresses these challenges holistically—not another point solution that solves one problem while leaving others unaddressed. SiteSync OS was designed specifically to meet this need.
 
 \newpage
 
-# The BuildOS Solution {#buildos-solution}
+# The SiteSync OS Solution {#buildos-solution}
 
-BuildOS reimagines construction project management from the ground up, delivering a unified platform that connects every stakeholder, workflow, and data point across the construction lifecycle. Rather than forcing teams to adapt to rigid software, BuildOS adapts to how construction teams actually work, eliminating friction and accelerating productivity.
+SiteSync OS reimagines construction project management from the ground up, delivering a unified platform that connects every stakeholder, workflow, and data point across the construction lifecycle. Rather than forcing teams to adapt to rigid software, SiteSync OS adapts to how construction teams actually work, eliminating friction and accelerating productivity.
 
 ## A Unified Platform for All Construction Workflows
 
-At its core, BuildOS provides a single, integrated environment where all project information lives and all workflows execute. Teams no longer need to switch between applications, search through email threads, or reconcile data across systems. Everything they need is accessible from one intuitive interface, whether they're in the office, in the field, or meeting with clients.
+At its core, SiteSync OS provides a single, integrated environment where all project information lives and all workflows execute. Teams no longer need to switch between applications, search through email threads, or reconcile data across systems. Everything they need is accessible from one intuitive interface, whether they're in the office, in the field, or meeting with clients.
 
 This unified approach delivers immediate benefits: faster onboarding for new team members, reduced software licensing costs, elimination of data synchronization issues, and the ability to generate comprehensive insights from integrated data.
 
 ## Core Modules Overview
 
-BuildOS encompasses 11 comprehensive modules that cover every aspect of construction project management:
+SiteSync OS encompasses 11 comprehensive modules that cover every aspect of construction project management:
 
 ### Project Management & Tracking
 
-The foundation of BuildOS is robust project management functionality that provides complete visibility into project status, schedules, budgets, and team activities. Project managers can create detailed project profiles, assign team members with role-based permissions, track milestones and deliverables, and monitor progress against baseline plans.
+The foundation of SiteSync OS is robust project management functionality that provides complete visibility into project status, schedules, budgets, and team activities. Project managers can create detailed project profiles, assign team members with role-based permissions, track milestones and deliverables, and monitor progress against baseline plans.
 
 Real-time dashboards provide at-a-glance status updates, highlighting projects that need attention and surfacing potential risks before they become problems. Customizable views allow each team member to see the information most relevant to their role, from high-level portfolio summaries for executives to detailed task lists for field workers.
 
 ### RFIs (Request for Information) Management
 
-RFIs are critical for resolving ambiguities and obtaining clarifications during construction. BuildOS streamlines the entire RFI lifecycle with automated workflows that route requests to the appropriate parties, track response times, and maintain a complete audit trail.
+RFIs are critical for resolving ambiguities and obtaining clarifications during construction. SiteSync OS streamlines the entire RFI lifecycle with automated workflows that route requests to the appropriate parties, track response times, and maintain a complete audit trail.
 
 The system automatically notifies stakeholders when RFIs are submitted, reviewed, or answered, ensuring nothing falls through the cracks. Advanced search and filtering capabilities make it easy to find relevant RFIs from current or past projects, reducing duplicated effort and accelerating resolution times.
 
 ### Submittals & Document Control
 
-Managing submittals—shop drawings, product data, samples, and other documents requiring approval—is simplified with BuildOS's comprehensive document control system. Teams can upload documents, route them through multi-stage approval workflows, track revisions, and maintain version control automatically.
+Managing submittals—shop drawings, product data, samples, and other documents requiring approval—is simplified with SiteSync OS's comprehensive document control system. Teams can upload documents, route them through multi-stage approval workflows, track revisions, and maintain version control automatically.
 
 Integration with AWS S3 provides secure, scalable document storage with fast access from anywhere. Automated notifications keep approval processes moving, while detailed logs provide complete traceability for compliance and audit purposes.
 
 ### Change Order Automation
 
-BuildOS transforms change order management from a manual, time-consuming process into an automated workflow that accelerates approvals and provides real-time financial visibility. Teams can create change order requests directly from RFIs or field observations, automatically calculating cost and schedule impacts.
+SiteSync OS transforms change order management from a manual, time-consuming process into an automated workflow that accelerates approvals and provides real-time financial visibility. Teams can create change order requests directly from RFIs or field observations, automatically calculating cost and schedule impacts.
 
 The system routes change orders through configurable approval chains, tracks status in real-time, and updates project budgets automatically upon approval. Integration with n8n webhooks enables advanced automation scenarios, such as triggering external workflows or notifying accounting systems.
 
@@ -193,13 +193,13 @@ Historical daily reports become a valuable project record, useful for resolving 
 
 ### Punch List Management
 
-As projects near completion, BuildOS's punch list module helps teams systematically identify, track, and resolve outstanding items. Punch items can be assigned to specific trades, prioritized by severity, and tracked through resolution with photo documentation.
+As projects near completion, SiteSync OS's punch list module helps teams systematically identify, track, and resolve outstanding items. Punch items can be assigned to specific trades, prioritized by severity, and tracked through resolution with photo documentation.
 
 Automated reminders ensure punch items don't languish, while reporting capabilities provide clear visibility into completion status for owners and project managers.
 
 ### Time & Material Tracking
 
-Accurate time and material tracking is essential for cost control and billing. BuildOS enables field workers to log time against specific projects and cost codes, while project managers can track material usage and equipment hours.
+Accurate time and material tracking is essential for cost control and billing. SiteSync OS enables field workers to log time against specific projects and cost codes, while project managers can track material usage and equipment hours.
 
 This data feeds directly into financial analytics, providing real-time labor and material cost visibility. For time-and-materials contracts, the system can automatically generate billing reports based on tracked time and materials.
 
@@ -211,7 +211,7 @@ Automated maintenance reminders help prevent breakdowns, while utilization analy
 
 ### Financial Analytics & ROI Calculator
 
-BuildOS provides comprehensive financial analytics that give executives unprecedented visibility into project profitability, cash flow, and portfolio performance. The platform includes:
+SiteSync OS provides comprehensive financial analytics that give executives unprecedented visibility into project profitability, cash flow, and portfolio performance. The platform includes:
 
 - Real-time budget vs. actual tracking with variance analysis
 - Multi-year cash flow projections with IRR and NPV calculations
@@ -220,23 +220,23 @@ BuildOS provides comprehensive financial analytics that give executives unpreced
 - Change order financial impact analysis
 - Portfolio-level financial dashboards
 
-The built-in ROI calculator helps firms quantify the value of BuildOS by tracking efficiency gains, cost savings, and productivity improvements.
+The built-in ROI calculator helps firms quantify the value of SiteSync OS by tracking efficiency gains, cost savings, and productivity improvements.
 
 ### AI-Powered Design Services Integration
 
-BuildOS's unique integration with external AI design platforms enables automated architectural rendering and design task generation. When design work is needed, the system can automatically create design requests, route them to AI design services, and receive completed work through callback webhooks.
+SiteSync OS's unique integration with external AI design platforms enables automated architectural rendering and design task generation. When design work is needed, the system can automatically create design requests, route them to AI design services, and receive completed work through callback webhooks.
 
 This integration accelerates design iterations, reduces costs, and enables construction firms to offer enhanced design services to clients without maintaining large in-house design teams.
 
 ### Real-time Notifications & Activity Tracking
 
-Every action in BuildOS generates activity logs and can trigger notifications to relevant stakeholders. Teams stay informed about RFI responses, submittal approvals, change order status, and other critical events without constantly checking the system.
+Every action in SiteSync OS generates activity logs and can trigger notifications to relevant stakeholders. Teams stay informed about RFI responses, submittal approvals, change order status, and other critical events without constantly checking the system.
 
 Configurable notification preferences ensure team members receive important updates without being overwhelmed by noise. The activity feed provides a complete audit trail for compliance and dispute resolution.
 
 ## Key Differentiators
 
-What truly sets BuildOS apart from competitors is the combination of comprehensive functionality, modern technology, and intelligent automation:
+What truly sets SiteSync OS apart from competitors is the combination of comprehensive functionality, modern technology, and intelligent automation:
 
 - **AI Integration**: Unique AI-powered design services and intelligent workflow automation capabilities not found in traditional construction software
 - **Automated Workflows**: n8n webhook integrations and configurable automation eliminate manual processes and accelerate approvals
@@ -245,19 +245,19 @@ What truly sets BuildOS apart from competitors is the combination of comprehensi
 - **Modern Architecture**: Cloud-native design with 77 routes, 53 API endpoints, and mobile-responsive interface built on cutting-edge technology
 - **Extensibility**: RESTful API architecture enables integration with existing systems and third-party tools
 
-BuildOS is not just a tool—it's a complete digital transformation platform that enables construction firms to operate at a level of efficiency and sophistication previously unattainable.
+SiteSync OS is not just a tool—it's a complete digital transformation platform that enables construction firms to operate at a level of efficiency and sophistication previously unattainable.
 
 \newpage
 
 # AI-Powered Innovation {#ai-innovation}
 
-Artificial intelligence is not a buzzword at BuildOS—it's a fundamental component of how the platform delivers value. While many construction software vendors are just beginning to explore AI capabilities, BuildOS has integrated AI deeply into its core workflows, providing tangible benefits that directly impact project outcomes.
+Artificial intelligence is not a buzzword at SiteSync OS—it's a fundamental component of how the platform delivers value. While many construction software vendors are just beginning to explore AI capabilities, SiteSync OS has integrated AI deeply into its core workflows, providing tangible benefits that directly impact project outcomes.
 
 ## Integrated AI Design Services
 
-BuildOS's most distinctive AI capability is its integration with external AI design platforms for architectural rendering and design task automation. This integration transforms how construction firms handle design work:
+SiteSync OS's most distinctive AI capability is its integration with external AI design platforms for architectural rendering and design task automation. This integration transforms how construction firms handle design work:
 
-When a project requires architectural renderings, design modifications, or visualization work, users can create design requests directly within BuildOS. The system automatically generates structured design tasks with detailed specifications, project context, and reference materials. These tasks are routed to AI design platforms via secure webhook integrations, where advanced AI models process the requests.
+When a project requires architectural renderings, design modifications, or visualization work, users can create design requests directly within SiteSync OS. The system automatically generates structured design tasks with detailed specifications, project context, and reference materials. These tasks are routed to AI design platforms via secure webhook integrations, where advanced AI models process the requests.
 
 The AI design platform performs tasks such as:
 - Generating photorealistic architectural renderings from sketches or descriptions
@@ -266,7 +266,7 @@ The AI design platform performs tasks such as:
 - Rendering different material and finish options
 - Generating site plan visualizations
 
-Once the AI completes the design work, results are automatically posted back to BuildOS through callback webhooks. The completed designs are attached to the original request, notifications are sent to relevant stakeholders, and the work is ready for review—all without manual intervention.
+Once the AI completes the design work, results are automatically posted back to SiteSync OS through callback webhooks. The completed designs are attached to the original request, notifications are sent to relevant stakeholders, and the work is ready for review—all without manual intervention.
 
 This integration provides several advantages:
 - **Speed**: AI-generated designs are available in hours rather than days or weeks
@@ -277,7 +277,7 @@ This integration provides several advantages:
 
 ## Automated Task Generation and Workflow Routing
 
-BuildOS uses intelligent automation to eliminate manual workflow management. When certain events occur—such as an RFI being submitted, a change order being approved, or a submittal requiring review—the system automatically:
+SiteSync OS uses intelligent automation to eliminate manual workflow management. When certain events occur—such as an RFI being submitted, a change order being approved, or a submittal requiring review—the system automatically:
 
 - Identifies the appropriate stakeholders based on project roles and responsibilities
 - Routes tasks to the right people with appropriate priority levels
@@ -289,7 +289,7 @@ This intelligent routing ensures that work flows smoothly through the organizati
 
 ## Intelligent Analytics and Predictive Insights
 
-BuildOS analyzes project data to surface insights that would be difficult or impossible to identify manually:
+SiteSync OS analyzes project data to surface insights that would be difficult or impossible to identify manually:
 
 - **Risk Detection**: Identifies projects showing early warning signs of delays or cost overruns based on patterns in historical data
 - **Resource Optimization**: Analyzes equipment utilization and workforce allocation to recommend optimal resource deployment
@@ -301,7 +301,7 @@ These insights are presented through intuitive dashboards and automated reports,
 
 ## Natural Language Processing for Document Analysis
 
-BuildOS incorporates natural language processing capabilities to extract value from unstructured project documents:
+SiteSync OS incorporates natural language processing capabilities to extract value from unstructured project documents:
 
 - Automatically categorizes and tags uploaded documents based on content
 - Extracts key information from contracts, specifications, and correspondence
@@ -313,7 +313,7 @@ This capability transforms document management from a filing exercise into an in
 
 ## Smart Notifications and Priority Management
 
-Not all notifications are equally important, and BuildOS uses intelligent algorithms to prioritize information delivery:
+Not all notifications are equally important, and SiteSync OS uses intelligent algorithms to prioritize information delivery:
 
 - Learns from user behavior to understand which notifications are most important to each individual
 - Adjusts notification frequency and channels based on urgency and user preferences
@@ -325,21 +325,21 @@ This intelligent approach ensures teams stay informed without being overwhelmed,
 
 ## The AI Advantage
 
-BuildOS's AI capabilities provide a significant competitive advantage for construction firms. Projects move faster because routine tasks are automated and design work is accelerated. Costs are lower because AI handles work that would otherwise require manual effort or expensive external services. Quality improves because AI-powered analytics identify issues early when they're easier and cheaper to address.
+SiteSync OS's AI capabilities provide a significant competitive advantage for construction firms. Projects move faster because routine tasks are automated and design work is accelerated. Costs are lower because AI handles work that would otherwise require manual effort or expensive external services. Quality improves because AI-powered analytics identify issues early when they're easier and cheaper to address.
 
-As AI technology continues to advance, BuildOS is positioned to incorporate new capabilities rapidly, ensuring customers always have access to the latest innovations in construction technology.
+As AI technology continues to advance, SiteSync OS is positioned to incorporate new capabilities rapidly, ensuring customers always have access to the latest innovations in construction technology.
 
 \newpage
 
 # Technology Architecture {#technology-architecture}
 
-BuildOS is built on a modern, cloud-native technology stack that delivers enterprise-grade performance, security, and scalability. Every architectural decision was made with the specific needs of construction firms in mind, balancing power and flexibility with ease of use and reliability.
+SiteSync OS is built on a modern, cloud-native technology stack that delivers enterprise-grade performance, security, and scalability. Every architectural decision was made with the specific needs of construction firms in mind, balancing power and flexibility with ease of use and reliability.
 
 ## Modern Tech Stack
 
 ### Next.js 14 Framework
 
-BuildOS is built on Next.js 14, the latest version of the industry-leading React framework. Next.js provides several critical advantages:
+SiteSync OS is built on Next.js 14, the latest version of the industry-leading React framework. Next.js provides several critical advantages:
 
 - **Server-Side Rendering (SSR)**: Pages load quickly with content rendered on the server, improving performance and SEO
 - **API Routes**: Built-in API functionality enables clean separation between frontend and backend logic
@@ -347,13 +347,13 @@ BuildOS is built on Next.js 14, the latest version of the industry-leading React
 - **Automatic Code Splitting**: Only the code needed for each page is loaded, optimizing performance
 - **Built-in Optimization**: Automatic image optimization, font optimization, and other performance enhancements
 
-The framework's maturity and extensive ecosystem ensure BuildOS can evolve rapidly while maintaining stability.
+The framework's maturity and extensive ecosystem ensure SiteSync OS can evolve rapidly while maintaining stability.
 
 ### TypeScript for Type Safety
 
 The entire codebase is written in TypeScript, providing compile-time type checking that catches errors before they reach production. TypeScript's strong typing improves code quality, makes refactoring safer, and provides excellent developer experience with intelligent code completion and inline documentation.
 
-For a complex application like BuildOS with 77 routes and 53 API endpoints, TypeScript's type safety is essential for maintaining code quality as the platform grows.
+For a complex application like SiteSync OS with 77 routes and 53 API endpoints, TypeScript's type safety is essential for maintaining code quality as the platform grows.
 
 ### Prisma ORM for Database Management
 
@@ -365,7 +365,7 @@ Prisma provides a modern, type-safe database layer that makes working with data 
 - **Performance**: Optimized query generation and connection pooling ensure fast data access
 - **Multi-Database Support**: Can work with PostgreSQL, MySQL, SQL Server, and other databases
 
-BuildOS's comprehensive data model—including Projects, RFIs, Submittals, Change Orders, Daily Reports, Documents, Punch Items, Time Tracking, Equipment, Properties, and Design Requests—is managed entirely through Prisma.
+SiteSync OS's comprehensive data model—including Projects, RFIs, Submittals, Change Orders, Daily Reports, Documents, Punch Items, Time Tracking, Equipment, Properties, and Design Requests—is managed entirely through Prisma.
 
 ## Cloud-Native Architecture
 
@@ -379,11 +379,11 @@ All project documents, photos, and files are stored in Amazon S3, providing:
 - **Security**: Encryption at rest and in transit protects sensitive project data
 - **Cost-Effectiveness**: Pay only for storage actually used
 
-S3 integration is seamless—users simply upload files through the BuildOS interface, and the system handles all storage, retrieval, and security automatically.
+S3 integration is seamless—users simply upload files through the SiteSync OS interface, and the system handles all storage, retrieval, and security automatically.
 
 ### Scalable PostgreSQL Database
 
-BuildOS uses PostgreSQL, the world's most advanced open-source relational database. PostgreSQL provides:
+SiteSync OS uses PostgreSQL, the world's most advanced open-source relational database. PostgreSQL provides:
 
 - **ACID Compliance**: Transactions are reliable and data integrity is guaranteed
 - **Advanced Features**: Support for JSON data, full-text search, and complex queries
@@ -397,7 +397,7 @@ The database can be deployed on managed services like AWS RDS or Azure Database 
 
 ### NextAuth.js Authentication
 
-BuildOS uses NextAuth.js for authentication, providing:
+SiteSync OS uses NextAuth.js for authentication, providing:
 
 - **Multiple Authentication Methods**: Support for email/password, OAuth providers, and SSO
 - **Session Management**: Secure session handling with automatic token refresh
@@ -407,7 +407,7 @@ BuildOS uses NextAuth.js for authentication, providing:
 
 ### Role-Based Access Control
 
-BuildOS implements comprehensive role-based access control (RBAC) with five distinct roles:
+SiteSync OS implements comprehensive role-based access control (RBAC) with five distinct roles:
 
 - **Admin**: Full system access, user management, and configuration
 - **Project Manager**: Project creation, team management, and approval authority
@@ -430,19 +430,19 @@ Multiple layers of security protect project data:
 
 ## RESTful API Architecture
 
-BuildOS exposes 53 RESTful API endpoints that enable:
+SiteSync OS exposes 53 RESTful API endpoints that enable:
 
-- **Third-Party Integrations**: Connect BuildOS with accounting systems, ERP platforms, and other tools
-- **Custom Applications**: Build custom interfaces or mobile apps on top of BuildOS data
-- **Automation**: Trigger BuildOS actions from external systems
+- **Third-Party Integrations**: Connect SiteSync OS with accounting systems, ERP platforms, and other tools
+- **Custom Applications**: Build custom interfaces or mobile apps on top of SiteSync OS data
+- **Automation**: Trigger SiteSync OS actions from external systems
 - **Data Export**: Extract data for analysis in external tools
-- **Webhook Callbacks**: Receive real-time notifications of BuildOS events
+- **Webhook Callbacks**: Receive real-time notifications of SiteSync OS events
 
 The API follows REST best practices with consistent endpoint naming, proper HTTP methods, comprehensive error handling, and detailed documentation.
 
 ## Real-Time Webhook Integrations
 
-BuildOS integrates with n8n, a powerful workflow automation platform, enabling sophisticated automation scenarios:
+SiteSync OS integrates with n8n, a powerful workflow automation platform, enabling sophisticated automation scenarios:
 
 - **Change Order Automation**: Automatically route change orders through external approval systems
 - **Design Services Integration**: Send design requests to AI platforms and receive results automatically
@@ -450,7 +450,7 @@ BuildOS integrates with n8n, a powerful workflow automation platform, enabling s
 - **Notification Routing**: Send notifications through Slack, Microsoft Teams, or SMS
 - **Custom Workflows**: Build any automation scenario your organization needs
 
-Webhooks are secured with secret tokens and support both outbound (BuildOS triggering external systems) and inbound (external systems updating BuildOS) scenarios.
+Webhooks are secured with secret tokens and support both outbound (SiteSync OS triggering external systems) and inbound (external systems updating SiteSync OS) scenarios.
 
 ## Mobile-Responsive Design with Radix UI
 
@@ -462,11 +462,11 @@ The user interface is built with Radix UI, a modern component library that provi
 - **Customization**: Easily themed to match your organization's branding
 - **Performance**: Lightweight components that load quickly
 
-Field workers can use BuildOS effectively on smartphones and tablets, while office staff benefit from rich desktop interfaces.
+Field workers can use SiteSync OS effectively on smartphones and tablets, while office staff benefit from rich desktop interfaces.
 
 ## Deployment and Scalability
 
-BuildOS can be deployed in multiple configurations:
+SiteSync OS can be deployed in multiple configurations:
 
 - **Cloud-Hosted SaaS**: Fully managed deployment with automatic updates and scaling
 - **On-Premise**: Deploy on your own infrastructure for maximum control
@@ -474,17 +474,17 @@ BuildOS can be deployed in multiple configurations:
 
 The architecture scales horizontally, allowing additional servers to be added as usage grows. Database read replicas can be deployed for improved performance, and CDN integration ensures fast page loads worldwide.
 
-With 77 active routes serving all construction workflows, BuildOS provides a comprehensive, performant, and secure platform that construction firms can rely on for their most critical operations.
+With 77 active routes serving all construction workflows, SiteSync OS provides a comprehensive, performant, and secure platform that construction firms can rely on for their most critical operations.
 
 \newpage
 
 # Key Features & Benefits {#features-benefits}
 
-BuildOS delivers value to every role in the construction organization, from field workers capturing daily activities to executives analyzing portfolio performance. The platform's comprehensive feature set addresses the specific needs of each stakeholder while maintaining the unified data model that makes cross-functional collaboration seamless.
+SiteSync OS delivers value to every role in the construction organization, from field workers capturing daily activities to executives analyzing portfolio performance. The platform's comprehensive feature set addresses the specific needs of each stakeholder while maintaining the unified data model that makes cross-functional collaboration seamless.
 
 ## For Project Managers
 
-Project managers are the linchpin of construction success, and BuildOS provides them with the tools they need to keep projects on track, on budget, and moving forward.
+Project managers are the linchpin of construction success, and SiteSync OS provides them with the tools they need to keep projects on track, on budget, and moving forward.
 
 ### Real-Time Dashboards
 
@@ -494,7 +494,7 @@ Drill-down capabilities allow project managers to investigate issues quickly. A 
 
 ### Automated Reporting
 
-Weekly and monthly reports that once required hours of manual compilation are now generated automatically. BuildOS pulls data from all project activities—daily reports, time tracking, change orders, RFIs—and produces comprehensive status reports with charts, tables, and narrative summaries.
+Weekly and monthly reports that once required hours of manual compilation are now generated automatically. SiteSync OS pulls data from all project activities—daily reports, time tracking, change orders, RFIs—and produces comprehensive status reports with charts, tables, and narrative summaries.
 
 Project managers can customize report templates to match client requirements or internal standards, then schedule automatic generation and distribution. This automation frees up hours each week for higher-value activities.
 
@@ -506,13 +506,13 @@ Smart filtering ensures project managers see what matters most. Routine updates 
 
 ### Collaboration Tools
 
-BuildOS facilitates seamless collaboration with team members, subcontractors, and clients. Comments and discussions are attached directly to relevant items—RFIs, submittals, change orders—keeping all communication in context and easily searchable.
+SiteSync OS facilitates seamless collaboration with team members, subcontractors, and clients. Comments and discussions are attached directly to relevant items—RFIs, submittals, change orders—keeping all communication in context and easily searchable.
 
 @mentions notify specific individuals when their input is needed. File attachments and photo annotations enable clear communication about complex issues. The complete conversation history is preserved for future reference and dispute resolution.
 
 ## For Field Teams
 
-Field workers need tools that are fast, mobile-friendly, and don't interfere with productive work. BuildOS delivers exactly that.
+Field workers need tools that are fast, mobile-friendly, and don't interfere with productive work. SiteSync OS delivers exactly that.
 
 ### Mobile-Friendly Daily Reports
 
@@ -534,11 +534,11 @@ Equipment location tracking helps teams find the equipment they need quickly, re
 
 ### Offline Capability
 
-Construction sites don't always have reliable internet connectivity. BuildOS's mobile interface works offline, allowing field teams to enter data even without network access. When connectivity is restored, data syncs automatically to the cloud, ensuring nothing is lost.
+Construction sites don't always have reliable internet connectivity. SiteSync OS's mobile interface works offline, allowing field teams to enter data even without network access. When connectivity is restored, data syncs automatically to the cloud, ensuring nothing is lost.
 
 ## For Executives
 
-Executives need high-level visibility into portfolio performance, financial health, and strategic metrics. BuildOS provides executive dashboards that deliver exactly this information.
+Executives need high-level visibility into portfolio performance, financial health, and strategic metrics. SiteSync OS provides executive dashboards that deliver exactly this information.
 
 ### Financial Analytics
 
@@ -548,7 +548,7 @@ Trend analysis shows how current performance compares to historical benchmarks a
 
 ### ROI Calculator
 
-The built-in ROI calculator helps executives quantify the value BuildOS delivers to the organization. The system tracks efficiency gains (time saved on reporting, faster RFI response, reduced rework), cost savings (lower software licensing, reduced administrative overhead), and productivity improvements (more projects managed per PM, faster project completion).
+The built-in ROI calculator helps executives quantify the value SiteSync OS delivers to the organization. The system tracks efficiency gains (time saved on reporting, faster RFI response, reduced rework), cost savings (lower software licensing, reduced administrative overhead), and productivity improvements (more projects managed per PM, faster project completion).
 
 These metrics are presented in financial terms—dollars saved, revenue enabled, profit margin improvement—making it easy to justify continued investment in the platform and demonstrate value to stakeholders.
 
@@ -570,13 +570,13 @@ Design professionals need tools that support their technical workflows while int
 
 ### AI Design Services
 
-Architects can leverage BuildOS's integrated AI design services to accelerate rendering and visualization work. Design requests created in BuildOS are automatically routed to AI platforms, with completed work returned directly to the project file.
+Architects can leverage SiteSync OS's integrated AI design services to accelerate rendering and visualization work. Design requests created in SiteSync OS are automatically routed to AI platforms, with completed work returned directly to the project file.
 
 This integration is particularly valuable for routine visualization work—rendering material options, generating site plan views, creating marketing visualizations—freeing architects to focus on complex design challenges that require human creativity and judgment.
 
 ### Submittal Workflows
 
-The submittal module streamlines the review and approval process for shop drawings, product data, and samples. Architects can review submittals directly in BuildOS, mark up documents with comments and annotations, and route items through multi-stage approval workflows.
+The submittal module streamlines the review and approval process for shop drawings, product data, and samples. Architects can review submittals directly in SiteSync OS, mark up documents with comments and annotations, and route items through multi-stage approval workflows.
 
 Version control ensures everyone is working with the latest approved documents. Automated notifications keep the submittal process moving, reducing delays caused by items sitting in review queues.
 
@@ -588,7 +588,7 @@ Document relationships (superseded versions, related RFIs, associated change ord
 
 ## Feature Highlight: Measurable Impact
 
-BuildOS delivers quantifiable improvements across key performance indicators:
+SiteSync OS delivers quantifiable improvements across key performance indicators:
 
 ![Key Performance Improvements](chart_metrics.png)
 
@@ -604,11 +604,11 @@ These improvements translate directly to bottom-line results: more projects deli
 
 # Real Estate & Financial Analysis {#financial-analysis}
 
-Construction firms increasingly need sophisticated financial analysis capabilities, particularly those involved in development projects or build-to-suit work. BuildOS includes comprehensive real estate financial analysis tools that rival specialized real estate software, providing construction firms with the analytical capabilities they need to evaluate opportunities, manage development projects, and maximize returns.
+Construction firms increasingly need sophisticated financial analysis capabilities, particularly those involved in development projects or build-to-suit work. SiteSync OS includes comprehensive real estate financial analysis tools that rival specialized real estate software, providing construction firms with the analytical capabilities they need to evaluate opportunities, manage development projects, and maximize returns.
 
 ## Comprehensive Property Profiling
 
-BuildOS enables detailed property profiling for development projects, capturing all relevant information in a structured format:
+SiteSync OS enables detailed property profiling for development projects, capturing all relevant information in a structured format:
 
 - **Property Details**: Location, size, zoning, land area, building area, and physical characteristics
 - **Asset Classification**: Property type (office, retail, multifamily, industrial, mixed-use) and development stage (pre-development, under construction, stabilized, disposition)
@@ -619,7 +619,7 @@ This comprehensive profiling provides the foundation for detailed financial anal
 
 ## Capital Stack Management
 
-Development projects typically involve complex capital structures with multiple funding sources. BuildOS's capital stack module tracks:
+Development projects typically involve complex capital structures with multiple funding sources. SiteSync OS's capital stack module tracks:
 
 - **Equity Layers**: Common equity, preferred equity, mezzanine financing with different return requirements and priority levels
 - **Debt Instruments**: Senior debt, construction loans, permanent financing with terms, rates, and covenants
@@ -630,7 +630,7 @@ The system calculates returns for each capital layer based on project performanc
 
 ## Multi-Year Cash Flow Projections
 
-BuildOS generates detailed cash flow projections spanning the entire project lifecycle, from acquisition through stabilization and eventual disposition:
+SiteSync OS generates detailed cash flow projections spanning the entire project lifecycle, from acquisition through stabilization and eventual disposition:
 
 ### Development Phase Modeling
 
@@ -656,7 +656,7 @@ BuildOS generates detailed cash flow projections spanning the entire project lif
 
 ## IRR and NPV Calculations
 
-BuildOS includes a custom implementation of Internal Rate of Return (IRR) calculation using Newton's method, providing accurate financial metrics:
+SiteSync OS includes a custom implementation of Internal Rate of Return (IRR) calculation using Newton's method, providing accurate financial metrics:
 
 - **Project-Level IRR**: Overall return on total project investment
 - **Equity IRR**: Return to equity investors after debt service
@@ -704,7 +704,7 @@ These portfolio views enable strategic capital allocation and risk management at
 
 ## Integration with Project Operations
 
-What sets BuildOS apart from standalone real estate financial software is the tight integration between financial analysis and project operations. Change orders automatically update financial projections. Daily reports feed actual costs into budget tracking. Time and material tracking provides real-time labor cost data.
+What sets SiteSync OS apart from standalone real estate financial software is the tight integration between financial analysis and project operations. Change orders automatically update financial projections. Daily reports feed actual costs into budget tracking. Time and material tracking provides real-time labor cost data.
 
 This integration eliminates the disconnect between project teams and financial analysts, ensuring everyone works from the same data and financial projections reflect operational reality.
 
@@ -714,15 +714,15 @@ The result is financial analysis that's not just accurate but actionable—enabl
 
 # Workflow Automation {#workflow-automation}
 
-Manual processes are the enemy of efficiency in construction. BuildOS eliminates manual work through comprehensive workflow automation that accelerates approvals, reduces errors, and frees teams to focus on high-value activities.
+Manual processes are the enemy of efficiency in construction. SiteSync OS eliminates manual work through comprehensive workflow automation that accelerates approvals, reduces errors, and frees teams to focus on high-value activities.
 
 ## n8n Webhook Integrations
 
-BuildOS integrates with n8n, a powerful open-source workflow automation platform, enabling sophisticated automation scenarios that extend far beyond the capabilities of traditional construction software.
+SiteSync OS integrates with n8n, a powerful open-source workflow automation platform, enabling sophisticated automation scenarios that extend far beyond the capabilities of traditional construction software.
 
 ### How Webhook Integration Works
 
-Webhooks are automated messages sent from BuildOS to external systems when specific events occur. For example, when a change order is approved in BuildOS, a webhook can automatically:
+Webhooks are automated messages sent from SiteSync OS to external systems when specific events occur. For example, when a change order is approved in SiteSync OS, a webhook can automatically:
 
 - Notify the accounting system to update the project budget
 - Send a message to the project Slack channel
@@ -734,13 +734,13 @@ This automation happens instantly and reliably, without any manual intervention.
 
 ### Bidirectional Communication
 
-BuildOS supports both outbound webhooks (BuildOS triggering external systems) and inbound webhooks (external systems updating BuildOS). This bidirectional communication enables true integration where data flows seamlessly between systems.
+SiteSync OS supports both outbound webhooks (SiteSync OS triggering external systems) and inbound webhooks (external systems updating SiteSync OS). This bidirectional communication enables true integration where data flows seamlessly between systems.
 
-For example, when a design is completed in an external AI platform, that platform can post the results back to BuildOS via webhook, automatically updating the design request status and attaching the completed files.
+For example, when a design is completed in an external AI platform, that platform can post the results back to SiteSync OS via webhook, automatically updating the design request status and attaching the completed files.
 
 ## Automated Change Order Processing
 
-Change orders are a critical workflow that benefits enormously from automation. BuildOS's change order automation includes:
+Change orders are a critical workflow that benefits enormously from automation. SiteSync OS's change order automation includes:
 
 ### Intelligent Routing
 
@@ -775,11 +775,11 @@ This automation reduces change order processing time from days or weeks to hours
 
 ## External AI Design Platform Integration
 
-BuildOS's integration with external AI design platforms demonstrates the power of webhook-based automation for complex workflows.
+SiteSync OS's integration with external AI design platforms demonstrates the power of webhook-based automation for complex workflows.
 
 ### Design Request Creation
 
-When a user creates a design request in BuildOS, they specify:
+When a user creates a design request in SiteSync OS, they specify:
 
 - Design type (rendering, visualization, modification, etc.)
 - Project context and requirements
@@ -788,19 +788,19 @@ When a user creates a design request in BuildOS, they specify:
 
 ### Automated Task Generation
 
-BuildOS automatically:
+SiteSync OS automatically:
 
 - Generates a structured design task with all necessary information
 - Packages reference materials and project context
 - Sends the task to the external AI design platform via webhook
-- Tracks the request status in BuildOS
+- Tracks the request status in SiteSync OS
 
 ### Callback System
 
 When the AI platform completes the design work:
 
-- The platform posts results back to BuildOS via callback webhook
-- BuildOS automatically attaches completed designs to the original request
+- The platform posts results back to SiteSync OS via callback webhook
+- SiteSync OS automatically attaches completed designs to the original request
 - Notifications are sent to the requester and relevant stakeholders
 - The design request status is updated to completed
 - The completed work is available for review and approval
@@ -809,7 +809,7 @@ This entire workflow—from request creation to completed design delivery—happ
 
 ### Security and Authentication
 
-All webhook communications are secured with secret tokens that authenticate the sender and prevent unauthorized access. BuildOS maintains separate secrets for different integrations:
+All webhook communications are secured with secret tokens that authenticate the sender and prevent unauthorized access. SiteSync OS maintains separate secrets for different integrations:
 
 - Change order webhook secret: Authenticates n8n change order automation
 - Design services webhook secret: Authenticates AI design platform communication
@@ -819,23 +819,23 @@ These secrets are managed securely and can be rotated without disrupting operati
 
 ## Custom Workflow Builder Capabilities
 
-While BuildOS includes pre-built automation for common workflows, the webhook architecture enables custom automation for organization-specific needs:
+While SiteSync OS includes pre-built automation for common workflows, the webhook architecture enables custom automation for organization-specific needs:
 
 ### Accounting System Integration
 
-Automatically sync financial data with QuickBooks, Xero, Sage, or other accounting systems. When costs are incurred in BuildOS, they're automatically posted to the accounting system with proper project codes and cost categories.
+Automatically sync financial data with QuickBooks, Xero, Sage, or other accounting systems. When costs are incurred in SiteSync OS, they're automatically posted to the accounting system with proper project codes and cost categories.
 
 ### Communication Platform Integration
 
-Send notifications to Slack, Microsoft Teams, or other communication platforms. Teams can receive project updates in their preferred communication tools without constantly checking BuildOS.
+Send notifications to Slack, Microsoft Teams, or other communication platforms. Teams can receive project updates in their preferred communication tools without constantly checking SiteSync OS.
 
 ### Document Management Integration
 
-Automatically file documents in SharePoint, Box, or other document management systems. When documents are uploaded to BuildOS, they're automatically copied to the organization's document repository with proper metadata and folder structure.
+Automatically file documents in SharePoint, Box, or other document management systems. When documents are uploaded to SiteSync OS, they're automatically copied to the organization's document repository with proper metadata and folder structure.
 
 ### ERP Integration
 
-For construction firms using enterprise resource planning (ERP) systems, webhooks enable bidirectional data flow between BuildOS and the ERP. Project data, resource allocation, and financial information stay synchronized across systems.
+For construction firms using enterprise resource planning (ERP) systems, webhooks enable bidirectional data flow between SiteSync OS and the ERP. Project data, resource allocation, and financial information stay synchronized across systems.
 
 ### Custom Business Logic
 
@@ -848,26 +848,26 @@ Organizations can build custom automation that reflects their unique business pr
 
 ## Benefits of Workflow Automation
 
-The automation capabilities in BuildOS deliver measurable benefits:
+The automation capabilities in SiteSync OS deliver measurable benefits:
 
 - **Speed**: Automated workflows execute in seconds rather than hours or days
 - **Reliability**: Automation never forgets a step or misses a notification
 - **Consistency**: Every workflow executes exactly the same way every time
 - **Scalability**: Automation handles increased volume without additional staff
 - **Visibility**: Automated logging provides complete audit trails
-- **Integration**: Webhooks connect BuildOS with the rest of your technology ecosystem
+- **Integration**: Webhooks connect SiteSync OS with the rest of your technology ecosystem
 
-By eliminating manual processes and connecting systems, BuildOS enables construction firms to operate with a level of efficiency and sophistication that was previously unattainable. Teams spend less time on administrative tasks and more time on productive work that drives project success.
+By eliminating manual processes and connecting systems, SiteSync OS enables construction firms to operate with a level of efficiency and sophistication that was previously unattainable. Teams spend less time on administrative tasks and more time on productive work that drives project success.
 
 \newpage
 
 # Security & Compliance {#security-compliance}
 
-Construction projects involve sensitive financial information, proprietary designs, confidential client data, and competitive bid information. BuildOS is designed from the ground up with enterprise-grade security that protects this critical data while maintaining the accessibility and ease of use that teams need to be productive.
+Construction projects involve sensitive financial information, proprietary designs, confidential client data, and competitive bid information. SiteSync OS is designed from the ground up with enterprise-grade security that protects this critical data while maintaining the accessibility and ease of use that teams need to be productive.
 
 ## Enterprise-Grade Authentication
 
-BuildOS uses NextAuth.js, an industry-leading authentication solution, to provide secure, flexible user authentication.
+SiteSync OS uses NextAuth.js, an industry-leading authentication solution, to provide secure, flexible user authentication.
 
 ### Multiple Authentication Methods
 
@@ -890,7 +890,7 @@ User sessions are managed securely with:
 
 ### Password Security
 
-When using password authentication, BuildOS enforces security best practices:
+When using password authentication, SiteSync OS enforces security best practices:
 
 - **Strong Password Requirements**: Configurable complexity rules ensure passwords are difficult to guess
 - **Password Hashing**: Passwords are hashed using bcrypt with appropriate work factors
@@ -900,7 +900,7 @@ When using password authentication, BuildOS enforces security best practices:
 
 ## Role-Based Access Control (RBAC)
 
-BuildOS implements comprehensive role-based access control with five distinct roles, each with precisely defined permissions.
+SiteSync OS implements comprehensive role-based access control with five distinct roles, each with precisely defined permissions.
 
 ### Admin Role
 
@@ -958,7 +958,7 @@ Executives have read-only access to:
 
 ### Granular Permissions
 
-Beyond these predefined roles, BuildOS supports granular permissions that can be customized for specific organizational needs. Permissions can be granted or restricted at the feature level (e.g., can create RFIs but not approve them) or the data level (e.g., can only see projects in a specific region).
+Beyond these predefined roles, SiteSync OS supports granular permissions that can be customized for specific organizational needs. Permissions can be granted or restricted at the feature level (e.g., can create RFIs but not approve them) or the data level (e.g., can only see projects in a specific region).
 
 ## Secure Document Storage with AWS S3
 
@@ -991,7 +991,7 @@ All project documents, photos, and files are stored in Amazon S3 with multiple l
 
 ## Audit Trails and Activity Logging
 
-BuildOS maintains comprehensive audit trails that track all user actions and system events:
+SiteSync OS maintains comprehensive audit trails that track all user actions and system events:
 
 ### User Activity Logging
 
@@ -1026,7 +1026,7 @@ Audit logs are:
 
 ## HTTPS Encryption
 
-All communication between users and BuildOS is encrypted using HTTPS:
+All communication between users and SiteSync OS is encrypted using HTTPS:
 
 - TLS 1.3 provides the strongest available encryption
 - Strong cipher suites prevent cryptographic attacks
@@ -1035,11 +1035,11 @@ All communication between users and BuildOS is encrypted using HTTPS:
 
 ## Data Privacy and GDPR Compliance
 
-BuildOS is designed to support compliance with data privacy regulations including GDPR, CCPA, and industry-specific requirements:
+SiteSync OS is designed to support compliance with data privacy regulations including GDPR, CCPA, and industry-specific requirements:
 
 ### Data Minimization
 
-BuildOS collects only the data necessary for its functionality. Optional data fields allow organizations to limit data collection to their specific needs.
+SiteSync OS collects only the data necessary for its functionality. Optional data fields allow organizations to limit data collection to their specific needs.
 
 ### User Rights
 
@@ -1052,15 +1052,15 @@ The platform supports user rights required by privacy regulations:
 
 ### Data Processing Agreements
 
-BuildOS provides Data Processing Agreements (DPAs) that define how customer data is handled, stored, and protected, meeting requirements for GDPR and other regulations.
+SiteSync OS provides Data Processing Agreements (DPAs) that define how customer data is handled, stored, and protected, meeting requirements for GDPR and other regulations.
 
 ### Geographic Data Residency
 
-For organizations with data residency requirements, BuildOS can be deployed in specific geographic regions to ensure data remains within required jurisdictions.
+For organizations with data residency requirements, SiteSync OS can be deployed in specific geographic regions to ensure data remains within required jurisdictions.
 
 ## Security Monitoring and Incident Response
 
-BuildOS includes security monitoring capabilities that detect and respond to potential security incidents:
+SiteSync OS includes security monitoring capabilities that detect and respond to potential security incidents:
 
 - **Anomaly Detection**: Unusual access patterns or behavior trigger alerts
 - **Intrusion Detection**: Automated systems monitor for attack attempts
@@ -1071,28 +1071,28 @@ BuildOS includes security monitoring capabilities that detect and respond to pot
 
 ## Compliance Certifications
 
-BuildOS is designed to support common compliance requirements in the construction industry:
+SiteSync OS is designed to support common compliance requirements in the construction industry:
 
 - **SOC 2 Type II**: Controls for security, availability, and confidentiality
 - **ISO 27001**: Information security management system standards
 - **NIST Cybersecurity Framework**: Alignment with federal security standards
 - **Industry-Specific Requirements**: Support for requirements in government contracting, healthcare construction, and other regulated sectors
 
-By implementing enterprise-grade security throughout the platform, BuildOS enables construction firms to confidently manage their most sensitive project data while maintaining the accessibility and collaboration that modern construction requires.
+By implementing enterprise-grade security throughout the platform, SiteSync OS enables construction firms to confidently manage their most sensitive project data while maintaining the accessibility and collaboration that modern construction requires.
 
 \newpage
 
 # Customer Success & ROI {#customer-success}
 
-BuildOS delivers measurable value from day one, with customers typically seeing significant improvements in efficiency, cost savings, and project outcomes within the first few months of implementation. The platform's impact is not theoretical—it's quantifiable, trackable, and directly tied to bottom-line results.
+SiteSync OS delivers measurable value from day one, with customers typically seeing significant improvements in efficiency, cost savings, and project outcomes within the first few months of implementation. The platform's impact is not theoretical—it's quantifiable, trackable, and directly tied to bottom-line results.
 
 ## Average Customer Metrics
 
-Across our customer base, BuildOS consistently delivers impressive performance improvements:
+Across our customer base, SiteSync OS consistently delivers impressive performance improvements:
 
 ### 35% Faster Project Completion
 
-Projects managed in BuildOS complete an average of 35% faster than those managed with traditional tools. This acceleration comes from multiple factors:
+Projects managed in SiteSync OS complete an average of 35% faster than those managed with traditional tools. This acceleration comes from multiple factors:
 
 - **Reduced Delays**: Real-time collaboration and instant notifications eliminate delays caused by waiting for information or approvals
 - **Faster Decision-Making**: Dashboards and analytics provide the information needed to make decisions quickly and confidently
@@ -1152,7 +1152,7 @@ Faster change order processing accelerates project progress, improves cash flow,
 
 ## ROI Calculator Built Into Platform
 
-BuildOS includes a comprehensive ROI calculator that helps organizations quantify the value they're receiving from the platform. The calculator tracks:
+SiteSync OS includes a comprehensive ROI calculator that helps organizations quantify the value they're receiving from the platform. The calculator tracks:
 
 ### Time Savings
 
@@ -1184,7 +1184,7 @@ Time savings are converted to dollar values based on loaded labor rates, showing
 - Improved labor productivity
 - Better resource allocation
 
-The ROI calculator updates continuously as the organization uses BuildOS, providing real-time visibility into the value being delivered. Most organizations see positive ROI within 3-6 months, with returns accelerating as teams become more proficient with the platform.
+The ROI calculator updates continuously as the organization uses SiteSync OS, providing real-time visibility into the value being delivered. Most organizations see positive ROI within 3-6 months, with returns accelerating as teams become more proficient with the platform.
 
 ## Case Study Examples
 
@@ -1192,7 +1192,7 @@ While specific customer details are confidential, typical success stories includ
 
 ### Regional Commercial Contractor
 
-A 50-person commercial contractor managing 15-20 concurrent projects implemented BuildOS to replace a patchwork of spreadsheets, email, and legacy software.
+A 50-person commercial contractor managing 15-20 concurrent projects implemented SiteSync OS to replace a patchwork of spreadsheets, email, and legacy software.
 
 **Results after 6 months:**
 - Project completion time reduced from 14 months to 10 months average
@@ -1226,7 +1226,7 @@ A large infrastructure contractor needed to improve coordination across multiple
 
 ## Customer Support and Success
 
-BuildOS's impact is amplified by comprehensive customer support:
+SiteSync OS's impact is amplified by comprehensive customer support:
 
 - **Dedicated Success Manager**: Each customer has a dedicated success manager who ensures successful implementation and ongoing optimization
 - **Training Programs**: Comprehensive training for all user roles, with ongoing education as new features are released
@@ -1234,7 +1234,7 @@ BuildOS's impact is amplified by comprehensive customer support:
 - **User Community**: Access to user community for peer learning and best practice sharing
 - **Regular Business Reviews**: Quarterly reviews to assess ROI, identify optimization opportunities, and plan for future needs
 
-The combination of powerful technology and strong customer support ensures that BuildOS customers achieve maximum value from their investment.
+The combination of powerful technology and strong customer support ensures that SiteSync OS customers achieve maximum value from their investment.
 
 \newpage
 
@@ -1271,7 +1271,7 @@ Increasing regulatory requirements around safety, environmental impact, and proj
 
 ## Target Market Segments
 
-BuildOS addresses multiple segments within the construction industry, each with distinct needs and characteristics:
+SiteSync OS addresses multiple segments within the construction industry, each with distinct needs and characteristics:
 
 ### Commercial Construction (40% of Market)
 
@@ -1283,7 +1283,7 @@ Commercial construction firms building office buildings, retail centers, hotels,
 - Need sophisticated financial tracking and reporting
 - Value integration with accounting and ERP systems
 
-BuildOS's comprehensive feature set and financial analytics capabilities are particularly well-suited to commercial construction firms.
+SiteSync OS's comprehensive feature set and financial analytics capabilities are particularly well-suited to commercial construction firms.
 
 ### Residential Development (35% of Market)
 
@@ -1295,7 +1295,7 @@ Residential developers building single-family homes, townhomes, and multifamily 
 - Integration with sales and marketing systems
 - Cost control and budget management
 
-BuildOS's automation capabilities and real estate financial analysis tools address these needs effectively.
+SiteSync OS's automation capabilities and real estate financial analysis tools address these needs effectively.
 
 ### Infrastructure (15% of Market)
 
@@ -1307,7 +1307,7 @@ Infrastructure contractors working on roads, bridges, utilities, and public work
 - Integration with government systems
 - Long-term project tracking (multi-year projects)
 
-BuildOS's mobile-friendly field tools and comprehensive reporting capabilities serve infrastructure contractors well.
+SiteSync OS's mobile-friendly field tools and comprehensive reporting capabilities serve infrastructure contractors well.
 
 ### Specialty Contractors (10% of Market)
 
@@ -1319,7 +1319,7 @@ Specialty subcontractors (electrical, plumbing, HVAC, etc.) need:
 - Equipment and inventory management
 - Mobile-first tools for field workers
 
-BuildOS's modular architecture allows specialty contractors to use the features they need without paying for unnecessary functionality.
+SiteSync OS's modular architecture allows specialty contractors to use the features they need without paying for unnecessary functionality.
 
 ![Target Market Segments](chart_segments.png)
 
@@ -1327,9 +1327,9 @@ BuildOS's modular architecture allows specialty contractors to use the features 
 
 Within the United States alone, there are approximately:
 
-- **500,000+ construction firms** that could benefit from BuildOS
-- **5 million+ construction professionals** who could be BuildOS users
-- **$1.6 trillion in annual construction spending** that could be managed more efficiently with BuildOS
+- **500,000+ construction firms** that could benefit from SiteSync OS
+- **5 million+ construction professionals** who could be SiteSync OS users
+- **$1.6 trillion in annual construction spending** that could be managed more efficiently with SiteSync OS
 
 Even capturing a small percentage of this market represents significant revenue opportunity.
 
@@ -1346,7 +1346,7 @@ Large, expensive systems like Procore, Autodesk Construction Cloud, and Oracle A
 - **Slow to Innovate**: Legacy architectures make it difficult to add new features
 - **Over-Featured**: Include functionality most firms don't need
 
-BuildOS competes by offering comparable functionality at lower cost with better user experience and faster innovation.
+SiteSync OS competes by offering comparable functionality at lower cost with better user experience and faster innovation.
 
 ### Point Solutions
 
@@ -1356,7 +1356,7 @@ Many vendors offer specialized solutions for specific workflows (RFI management,
 - **Limited**: Don't provide comprehensive project visibility
 - **Integration Challenges**: Data doesn't flow smoothly between systems
 
-BuildOS's unified platform eliminates these issues by providing all functionality in one system.
+SiteSync OS's unified platform eliminates these issues by providing all functionality in one system.
 
 ### Spreadsheets and Email
 
@@ -1367,13 +1367,13 @@ Many smaller firms still rely on spreadsheets and email for project management. 
 - **Error-Prone**: Manual processes lead to mistakes
 - **No Automation**: Everything requires manual effort
 
-BuildOS provides a clear upgrade path for these firms with affordable pricing and easy adoption.
+SiteSync OS provides a clear upgrade path for these firms with affordable pricing and easy adoption.
 
 ## Project Intelligence Infrastructure Pricing
 
-BuildOS is not sold like commodity software. It is **mission-critical infrastructure** that protects execution and capital. Our pricing reflects the value we deliver: risk reduction, capital intelligence, and continuous project visibility.
+SiteSync OS is not sold like commodity software. It is **mission-critical infrastructure** that protects execution and capital. Our pricing reflects the value we deliver: risk reduction, capital intelligence, and continuous project visibility.
 
-### How Buyers Evaluate BuildOS
+### How Buyers Evaluate SiteSync OS
 
 **General Contractors Ask:**
 - "Does this reduce rework and protect us from claims?"
@@ -1385,7 +1385,7 @@ BuildOS is not sold like commodity software. It is **mission-critical infrastruc
 - "Does this de-risk our exit strategy?"
 - "Can this replace consultants and spreadsheet chaos?"
 
-**BuildOS Answer:**  
+**SiteSync OS Answer:**  
 *We are not a tool. We are risk reduction + capital intelligence.*
 
 ### Pricing Models
@@ -1445,9 +1445,9 @@ For real estate developers and owners managing multiple assets, portfolio licens
 | **Bluebeam** | $300-$400/user | Document markup | Zero financial intelligence, no AI, no project management |
 | **Procore** | $10k-$50k/year | Project management | Weak financial modeling, 8-12 week setup, fragmented UX |
 | **Consultants** | $50k-$250k/project | One-time analysis | Slow, static outputs, no continuous intelligence |
-| **BuildOS** | $2,400-$12,000/project | **Complete operating system** | **Nothing—it's unified infrastructure** |
+| **SiteSync OS** | $2,400-$12,000/project | **Complete operating system** | **Nothing—it's unified infrastructure** |
 
-### What BuildOS Delivers That Others Don't
+### What SiteSync OS Delivers That Others Don't
 
 - **Financial Intelligence:** IRR/NPV calculations, capital stack management, multi-year projections—built-in, not bolted on
 - **AI Integration:** Design services, predictive analytics, risk alerts—native to the platform
@@ -1456,7 +1456,7 @@ For real estate developers and owners managing multiple assets, portfolio licens
 
 ### Market Positioning
 
-**We Position BuildOS As:**
+**We Position SiteSync OS As:**
 
 - **Project Intelligence Platform** (not "software")
 - **Construction Operating System** (mission-critical)
@@ -1464,7 +1464,7 @@ For real estate developers and owners managing multiple assets, portfolio licens
 
 **Our Positioning Statement:**
 
-*"BuildOS replaces drawings, spreadsheets, and financial blind spots with one trusted system that protects both execution and capital."*
+*"SiteSync OS replaces drawings, spreadsheets, and financial blind spots with one trusted system that protects both execution and capital."*
 
 ### Launch & Scaling Strategy
 
@@ -1488,7 +1488,7 @@ For real estate developers and owners managing multiple assets, portfolio licens
 
 ## Revenue Projections
 
-With enterprise-grade pricing and conservative market penetration, BuildOS has significant revenue potential:
+With enterprise-grade pricing and conservative market penetration, SiteSync OS has significant revenue potential:
 
 **Scenario: Project-Based Revenue Model**
 
@@ -1511,17 +1511,17 @@ These projections are conservative and assume:
 - 15% annual customer churn (low for infrastructure software)
 - Average customer lifetime value (LTV) of 4-5 years
 
-The construction software market's size ($12B), growth rate (10% CAGR), and current fragmentation create an ideal environment for BuildOS to capture significant market share at premium pricing.
+The construction software market's size ($12B), growth rate (10% CAGR), and current fragmentation create an ideal environment for SiteSync OS to capture significant market share at premium pricing.
 
 \newpage
 
 # Roadmap & Vision {#roadmap-vision}
 
-BuildOS has achieved significant milestones with its current feature set, but the vision extends far beyond what exists today. The roadmap balances near-term enhancements that deliver immediate value with long-term innovations that will define the future of construction management.
+SiteSync OS has achieved significant milestones with its current feature set, but the vision extends far beyond what exists today. The roadmap balances near-term enhancements that deliver immediate value with long-term innovations that will define the future of construction management.
 
 ## Current Capabilities (Phase 1 & 2 Complete)
 
-BuildOS today represents the culmination of two major development phases:
+SiteSync OS today represents the culmination of two major development phases:
 
 **Phase 1** delivered core project management functionality:
 - Project creation and management
@@ -1542,7 +1542,7 @@ BuildOS today represents the culmination of two major development phases:
 - Advanced financial analytics with IRR/NPV calculations
 - Real-time notifications and activity tracking
 
-With 77 routes, 53 API endpoints, and comprehensive functionality across 11 modules, BuildOS is already a powerful, production-ready platform serving construction firms today.
+With 77 routes, 53 API endpoints, and comprehensive functionality across 11 modules, SiteSync OS is already a powerful, production-ready platform serving construction firms today.
 
 ## Phase 3: Mobile Native Apps (6-9 Months)
 
@@ -1550,7 +1550,7 @@ The next major development phase focuses on native mobile applications for iOS a
 
 ### Native Mobile Experience
 
-While BuildOS's responsive web interface works well on mobile browsers, native apps will provide:
+While SiteSync OS's responsive web interface works well on mobile browsers, native apps will provide:
 
 - **Offline Functionality**: Full offline capability for field workers without connectivity
 - **Push Notifications**: Native push notifications for instant alerts
@@ -1622,7 +1622,7 @@ Advanced forecasting models will predict:
 
 ## Phase 5: IoT Sensor Integration (18-24 Months)
 
-Integration with Internet of Things (IoT) sensors will bring real-time physical data into BuildOS:
+Integration with Internet of Things (IoT) sensors will bring real-time physical data into SiteSync OS:
 
 ### Equipment Sensors
 
@@ -1653,7 +1653,7 @@ Integration with Internet of Things (IoT) sensors will bring real-time physical 
 
 ## Phase 6: BIM Integration (24-30 Months)
 
-Building Information Modeling (BIM) integration will connect BuildOS with 3D design models:
+Building Information Modeling (BIM) integration will connect SiteSync OS with 3D design models:
 
 ### Model-Based Workflows
 
@@ -1671,7 +1671,7 @@ Building Information Modeling (BIM) integration will connect BuildOS with 3D des
 
 ## Phase 7: API Marketplace (30+ Months)
 
-An API marketplace will enable third-party developers to build on the BuildOS platform:
+An API marketplace will enable third-party developers to build on the SiteSync OS platform:
 
 ### Developer Platform
 
@@ -1692,25 +1692,25 @@ Enable integrations with:
 
 ## Long-Term Vision: Industry-Standard Platform
 
-The ultimate vision for BuildOS is to become the industry-standard platform for construction management—the system that construction professionals expect to use, that clients request, and that defines best practices for the industry.
+The ultimate vision for SiteSync OS is to become the industry-standard platform for construction management—the system that construction professionals expect to use, that clients request, and that defines best practices for the industry.
 
 This vision includes:
 
 ### Universal Adoption
 
-BuildOS becomes the common language of construction, enabling seamless collaboration between general contractors, subcontractors, architects, engineers, and owners—all working in the same platform.
+SiteSync OS becomes the common language of construction, enabling seamless collaboration between general contractors, subcontractors, architects, engineers, and owners—all working in the same platform.
 
 ### Data Network Effects
 
-As more projects are managed in BuildOS, the platform's AI becomes smarter, benchmarks become more accurate, and insights become more valuable. The data network effect creates a competitive moat that becomes stronger over time.
+As more projects are managed in SiteSync OS, the platform's AI becomes smarter, benchmarks become more accurate, and insights become more valuable. The data network effect creates a competitive moat that becomes stronger over time.
 
 ### Industry Transformation
 
-BuildOS doesn't just digitize existing processes—it enables entirely new ways of working that weren't possible before. Construction becomes more efficient, more predictable, and more profitable, raising standards across the industry.
+SiteSync OS doesn't just digitize existing processes—it enables entirely new ways of working that weren't possible before. Construction becomes more efficient, more predictable, and more profitable, raising standards across the industry.
 
 ### Global Expansion
 
-While initially focused on the US market, BuildOS will expand globally, adapting to local regulations, languages, and construction practices while maintaining a unified platform that enables international collaboration.
+While initially focused on the US market, SiteSync OS will expand globally, adapting to local regulations, languages, and construction practices while maintaining a unified platform that enables international collaboration.
 
 The roadmap is ambitious but achievable, building on the strong foundation that exists today. Each phase delivers tangible value while moving toward the long-term vision of transforming construction management through technology.
 
@@ -1718,17 +1718,17 @@ The roadmap is ambitious but achievable, building on the strong foundation that 
 
 # Get Started {#get-started}
 
-BuildOS is ready to transform your construction operations today. Whether you're a small contractor looking to move beyond spreadsheets or a large firm seeking to consolidate multiple systems, BuildOS offers flexible deployment options, transparent pricing, and comprehensive support to ensure your success.
+SiteSync OS is ready to transform your construction operations today. Whether you're a small contractor looking to move beyond spreadsheets or a large firm seeking to consolidate multiple systems, SiteSync OS offers flexible deployment options, transparent pricing, and comprehensive support to ensure your success.
 
 ## Deployment Options
 
-BuildOS can be deployed in the configuration that best meets your organization's needs:
+SiteSync OS can be deployed in the configuration that best meets your organization's needs:
 
 ### Cloud-Hosted SaaS (Recommended)
 
-The fastest path to value is BuildOS's fully managed cloud deployment:
+The fastest path to value is SiteSync OS's fully managed cloud deployment:
 
-- **Instant Access**: Start using BuildOS within hours of signing up
+- **Instant Access**: Start using SiteSync OS within hours of signing up
 - **Automatic Updates**: New features and security updates deployed automatically
 - **No IT Overhead**: No servers to manage, no software to install
 - **Automatic Scaling**: Performance scales automatically with your usage
@@ -1740,7 +1740,7 @@ Cloud-hosted deployment is ideal for most organizations, providing the best bala
 
 ### On-Premise Deployment
 
-For organizations with specific security, compliance, or data residency requirements, BuildOS can be deployed on your own infrastructure:
+For organizations with specific security, compliance, or data residency requirements, SiteSync OS can be deployed on your own infrastructure:
 
 - **Complete Control**: Full control over hardware, network, and security configuration
 - **Data Residency**: Keep data within specific geographic regions or facilities
@@ -1763,7 +1763,7 @@ Hybrid deployment provides flexibility to optimize for your specific requirement
 
 ## Pricing Tiers
 
-BuildOS offers three pricing tiers designed to meet the needs of organizations at different stages:
+SiteSync OS offers three pricing tiers designed to meet the needs of organizations at different stages:
 
 ### Starter Tier - $50/user/month
 
@@ -1820,7 +1820,7 @@ Save 15% with annual billing (vs. monthly billing).
 
 ## Implementation Timeline
 
-BuildOS is designed for rapid implementation with minimal disruption to ongoing operations:
+SiteSync OS is designed for rapid implementation with minimal disruption to ongoing operations:
 
 ### Week 1: Planning and Configuration
 
@@ -1851,11 +1851,11 @@ BuildOS is designed for rapid implementation with minimal disruption to ongoing 
 - Workflow optimization based on usage patterns
 - Expansion to additional use cases and integrations
 
-Most organizations are fully operational on BuildOS within 2-4 weeks, with some seeing value within the first few days.
+Most organizations are fully operational on SiteSync OS within 2-4 weeks, with some seeing value within the first few days.
 
 ## Training and Support Included
 
-Every BuildOS subscription includes comprehensive training and support:
+Every SiteSync OS subscription includes comprehensive training and support:
 
 ### Initial Training
 
@@ -1879,7 +1879,7 @@ Every BuildOS subscription includes comprehensive training and support:
 
 ## Free Trial Available
 
-Experience BuildOS risk-free with a 30-day free trial:
+Experience SiteSync OS risk-free with a 30-day free trial:
 
 - Full access to all features (Enterprise tier)
 - No credit card required to start
@@ -1887,15 +1887,15 @@ Experience BuildOS risk-free with a 30-day free trial:
 - Import your own project data to see real value
 - No obligation to continue after trial
 
-The trial period gives you time to thoroughly evaluate BuildOS, train your team, and see measurable results before making a commitment.
+The trial period gives you time to thoroughly evaluate SiteSync OS, train your team, and see measurable results before making a commitment.
 
 ## Contact Information and Demo Request
 
-Ready to transform your construction operations with BuildOS?
+Ready to transform your construction operations with SiteSync OS?
 
 ### Schedule a Demo
 
-See BuildOS in action with a personalized demo:
+See SiteSync OS in action with a personalized demo:
 
 - **Web**: www.buildos.com/demo
 - **Email**: sales@buildos.com
@@ -1910,7 +1910,7 @@ Begin your 30-day free trial immediately:
 - **Web**: www.buildos.com/trial
 - **Email**: trial@buildos.com
 
-You'll receive login credentials within minutes and can start exploring BuildOS right away.
+You'll receive login credentials within minutes and can start exploring SiteSync OS right away.
 
 ### Contact Sales
 
@@ -1920,7 +1920,7 @@ Have questions or need custom pricing?
 - **Phone**: 1-800-BUILD-OS (1-800-284-5367)
 - **Hours**: Monday-Friday, 8am-6pm EST
 
-Our sales team is ready to answer your questions, discuss your specific requirements, and help you determine the best BuildOS configuration for your organization.
+Our sales team is ready to answer your questions, discuss your specific requirements, and help you determine the best SiteSync OS configuration for your organization.
 
 ### Technical Support
 
@@ -1938,9 +1938,9 @@ Support is available during business hours with emergency support available 24/7
 
 The construction industry is changing rapidly. Firms that embrace digital transformation are winning more bids, delivering projects faster, and achieving higher profit margins. Those that continue with legacy systems and manual processes are falling behind.
 
-BuildOS provides everything you need to compete and win in today's construction market: comprehensive functionality, intelligent automation, real-time visibility, and measurable ROI. With flexible deployment options, transparent pricing, and comprehensive support, there's never been a better time to make the switch.
+SiteSync OS provides everything you need to compete and win in today's construction market: comprehensive functionality, intelligent automation, real-time visibility, and measurable ROI. With flexible deployment options, transparent pricing, and comprehensive support, there's never been a better time to make the switch.
 
-**Don't let outdated tools hold your organization back. Experience BuildOS today and discover what modern construction management can be.**
+**Don't let outdated tools hold your organization back. Experience SiteSync OS today and discover what modern construction management can be.**
 
 \vspace{1cm}
 
@@ -1949,7 +1949,7 @@ BuildOS provides everything you need to compete and win in today's construction 
 
 \vspace{0.5cm}
 
-{\Large \textcolor{buildosblue}{\textbf{BuildOS}}}
+{\Large \textcolor{buildosblue}{\textbf{SiteSync OS}}}
 
 {\normalsize Building the Future of Construction Management}
 

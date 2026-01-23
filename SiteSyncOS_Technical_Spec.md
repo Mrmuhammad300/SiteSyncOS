@@ -1,6 +1,6 @@
 ---
-title: "BuildOS - Application Technical Specification"
-author: "BuildOS Engineering Team"
+title: "SiteSync OS - Application Technical Specification"
+author: "SiteSync OS Engineering Team"
 date: "January 2026"
 geometry: margin=1in
 ---
@@ -9,7 +9,7 @@ geometry: margin=1in
 
 # Architecture Overview
 
-BuildOS is built on a modern, scalable technology stack designed for performance, maintainability, and developer productivity.
+SiteSync OS is built on a modern, scalable technology stack designed for performance, maintainability, and developer productivity.
 
 ## Technology Stack
 
@@ -1918,7 +1918,7 @@ enum MaterialStatus {
 
 ### JWT Strategy
 
-BuildOS uses JSON Web Tokens (JWT) for stateless authentication:
+SiteSync OS uses JSON Web Tokens (JWT) for stateless authentication:
 
 **Configuration:**
 ```typescript
@@ -2515,7 +2515,7 @@ buildos-documents/
 
 ## System Overview
 
-The BuildOS notification system provides real-time updates to users about important project events through multiple channels.
+The SiteSync OS notification system provides real-time updates to users about important project events through multiple channels.
 
 ### Notification Types
 
@@ -2818,7 +2818,7 @@ export function rfiResponseTemplate({
       <body>
         <div class="container">
           <div class="header">
-            <h1>BuildOS</h1>
+            <h1>SiteSync OS</h1>
           </div>
           <div class="content">
             <h2>RFI Response Received</h2>
@@ -2833,7 +2833,7 @@ export function rfiResponseTemplate({
             </p>
           </div>
           <div class="footer">
-            <p>© 2026 BuildOS. All rights reserved.</p>
+            <p>© 2026 SiteSync OS. All rights reserved.</p>
             <p>You're receiving this email because you have notifications enabled.</p>
           </div>
         </div>

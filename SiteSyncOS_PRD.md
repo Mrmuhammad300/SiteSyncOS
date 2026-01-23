@@ -1,6 +1,6 @@
 ---
-title: "BuildOS - Product Requirements Document"
-author: "BuildOS Platform Team"
+title: "SiteSync OS - Product Requirements Document"
+author: "SiteSync OS Platform Team"
 date: "January 2026"
 geometry: margin=1in
 ---
@@ -11,7 +11,7 @@ geometry: margin=1in
 
 ## Product Overview
 
-**BuildOS** is an AI-powered Construction Management Platform designed to streamline project workflows, enhance collaboration, and provide real-time insights for construction teams. Built on modern web technologies, BuildOS serves as a comprehensive solution for managing all aspects of construction projects from inception to completion.
+**SiteSync OS** is an AI-powered Construction Management Platform designed to streamline project workflows, enhance collaboration, and provide real-time insights for construction teams. Built on modern web technologies, SiteSync OS serves as a comprehensive solution for managing all aspects of construction projects from inception to completion.
 
 The platform integrates traditional construction management tools with cutting-edge AI capabilities, automation workflows, and advanced analytics to deliver unprecedented efficiency and visibility across all project stakeholders.
 
@@ -23,7 +23,7 @@ The platform integrates traditional construction management tools with cutting-e
 
 ## Target Users
 
-BuildOS is designed for the following user personas:
+SiteSync OS is designed for the following user personas:
 
 | User Role | Primary Responsibilities | Key Features Used |
 |-----------|-------------------------|-------------------|
@@ -547,12 +547,12 @@ Seamless integration with external AI rendering and design platforms for archite
 
 - **Webhook-Based Communication:** Asynchronous request/response pattern
 - **External Platform:** Supabase Edge Function endpoint
-- **Callback System:** Results posted back to BuildOS via callback endpoint
+- **Callback System:** Results posted back to SiteSync OS via callback endpoint
 
 **Workflow:**
 
 1. **Design Request Creation:**
-   - User creates a design request in BuildOS
+   - User creates a design request in SiteSync OS
    - Specify design type, requirements, and parameters
    - Attach reference images or drawings
    - Set priority and deadline
@@ -569,7 +569,7 @@ Seamless integration with external AI rendering and design platforms for archite
    - Applies AI-powered enhancements and optimizations
 
 4. **Callback & Results:**
-   - External platform posts results to BuildOS callback endpoint
+   - External platform posts results to SiteSync OS callback endpoint
    - Endpoint: `/api/webhooks/design-callback`
    - Results automatically attached to original design request
    - Notifications sent to requester and stakeholders
@@ -804,7 +804,7 @@ Monitor project progress through development lifecycle:
 
 # User Roles & Permissions
 
-BuildOS implements a comprehensive role-based access control (RBAC) system to ensure appropriate access levels for all users.
+SiteSync OS implements a comprehensive role-based access control (RBAC) system to ensure appropriate access levels for all users.
 
 ## Role Definitions
 
@@ -1279,7 +1279,7 @@ BuildOS implements a comprehensive role-based access control (RBAC) system to en
      - Renders final output
    - Processing time varies by complexity (minutes to hours)
 
-4. **Callback to BuildOS (External Platform)**
+4. **Callback to SiteSync OS (External Platform)**
    - Upon completion, external platform prepares callback
    - Callback payload includes:
      - Original task ID
@@ -1287,10 +1287,10 @@ BuildOS implements a comprehensive role-based access control (RBAC) system to en
      - Generated design file URLs
      - Metadata (resolution, format, processing time)
      - Any error messages if failed
-   - Posts to BuildOS callback endpoint: `/api/webhooks/design-callback`
+   - Posts to SiteSync OS callback endpoint: `/api/webhooks/design-callback`
    - Includes authentication signature
 
-5. **Result Processing (BuildOS System)**
+5. **Result Processing (SiteSync OS System)**
    - Callback endpoint receives results
    - Validates authentication signature
    - Matches task ID to original request
@@ -1336,7 +1336,7 @@ BuildOS implements a comprehensive role-based access control (RBAC) system to en
 
 # Success Metrics
 
-BuildOS has achieved significant milestones in development and deployment, demonstrating comprehensive functionality and robust architecture.
+SiteSync OS has achieved significant milestones in development and deployment, demonstrating comprehensive functionality and robust architecture.
 
 ## Platform Scale
 
