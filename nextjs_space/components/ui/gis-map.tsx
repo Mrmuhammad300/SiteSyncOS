@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import { useEffect, useRef, useState } from 'react';
+import { MapPin, AlertTriangle, Building2, HardHat, Globe } from 'lucide-react';
 
 export interface MapMarker {
   id: string;
@@ -47,6 +46,141 @@ const getMarkerIcon = (type: 'property' | 'project'): string => {
   return type === 'property' ? '🏢' : '🏗️';
 };
 
+// Check if WebGL is available
+function isWebGLAvailable(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    return gl !== null;
+  } catch {
+    return false;
+  }
+}
+
+// Fallback list view when map is unavailable
+function FallbackListView({
+  markers,
+  height,
+  onMarkerClick,
+  selectedMarkerId,
+  showRiskOverlay,
+}: {
+  markers: MapMarker[];
+  height: string;
+  onMarkerClick?: (marker: MapMarker) => void;
+  selectedMarkerId?: string | null;
+  showRiskOverlay?: boolean;
+}) {
+  return (
+    <div className="relative rounded-lg overflow-hidden border border-border bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800" style={{ height }}>
+      {/* Header */}
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-border p-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Globe className="h-5 w-5 text-primary" />
+          <span className="font-medium text-sm">GIS Location View</span>
+        </div>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <AlertTriangle className="h-3 w-3" />
+          Map unavailable - showing list view
+        </div>
+      </div>
+
+      {/* Scrollable list */}
+      <div className="overflow-y-auto p-4" style={{ height: `calc(${height} - 52px)` }}>
+        {markers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <MapPin className="h-12 w-12 mb-2 opacity-50" />
+            <p className="text-sm">No locations with coordinates</p>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {markers.map((marker) => (
+              <div
+                key={marker.id}
+                onClick={() => onMarkerClick?.(marker)}
+                className={`p-4 rounded-lg border bg-white dark:bg-slate-800 cursor-pointer transition-all hover:shadow-md ${
+                  selectedMarkerId === marker.id ? 'ring-2 ring-primary shadow-md' : ''
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-lg border-2 border-white shadow-md"
+                    style={{ backgroundColor: getRiskColor(marker.riskZone) }}
+                  >
+                    {marker.type === 'property' ? '🏢' : '🏗️'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">{marker.name}</div>
+                    <div className="text-xs text-muted-foreground truncate mt-0.5">
+                      {marker.address || 'No address'}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full font-medium"
+                        style={{
+                          backgroundColor: `${getRiskColor(marker.riskZone)}20`,
+                          color: getRiskColor(marker.riskZone),
+                        }}
+                      >
+                        {marker.riskZone || 'Not Assessed'}
+                      </span>
+                      {marker.riskScore !== null && marker.riskScore !== undefined && (
+                        <span className="text-xs text-muted-foreground">Score: {marker.riskScore}</span>
+                      )}
+                    </div>
+                    {marker.coordinates && (
+                      <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {marker.coordinates[1].toFixed(4)}, {marker.coordinates[0].toFixed(4)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Risk Legend */}
+      {showRiskOverlay && (
+        <div className="absolute bottom-4 left-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-border">
+          <div className="text-xs font-semibold mb-2">Risk Levels</div>
+          <div className="space-y-1.5">
+            {[
+              { zone: 'Low', color: '#22c55e' },
+              { zone: 'Moderate', color: '#eab308' },
+              { zone: 'High', color: '#f97316' },
+              { zone: 'Severe', color: '#dc2626' },
+            ].map(({ zone, color }) => (
+              <div key={zone} className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                <span className="text-xs">{zone}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Asset Type Legend */}
+      <div className="absolute bottom-4 right-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-border">
+        <div className="text-xs font-semibold mb-2">Asset Types</div>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span>🏢</span>
+            <span className="text-xs">Property</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span>🏗️</span>
+            <span className="text-xs">Project</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function GISMap({
   markers,
   center = [-98.5795, 39.8283], // Center of US
@@ -57,29 +191,59 @@ export function GISMap({
   selectedMarkerId,
 }: GISMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const map = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [webGLSupported, setWebGLSupported] = useState<boolean | null>(null);
+  const [mapboxgl, setMapboxgl] = useState<any>(null);
+
+  // Check WebGL support on mount
+  useEffect(() => {
+    const supported = isWebGLAvailable();
+    setWebGLSupported(supported);
+    
+    // If WebGL is supported, dynamically import mapbox-gl
+    if (supported) {
+      import('mapbox-gl').then((module) => {
+        setMapboxgl(module.default);
+      }).catch(() => {
+        setMapError('Failed to load map library');
+      });
+    }
+  }, []);
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current || map.current || !webGLSupported || !mapboxgl) return;
 
-    mapboxgl.accessToken = MAPBOX_TOKEN;
+    try {
+      mapboxgl.accessToken = MAPBOX_TOKEN;
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: center,
-      zoom: zoom,
-    });
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: center,
+        zoom: zoom,
+        failIfMajorPerformanceCaveat: false,
+      });
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
-    map.current.on('load', () => {
-      setMapLoaded(true);
-    });
+      map.current.on('load', () => {
+        setMapLoaded(true);
+      });
+
+      map.current.on('error', (e: any) => {
+        console.error('Map error:', e);
+        setMapError('Map failed to load');
+      });
+
+    } catch (error) {
+      console.error('Map initialization error:', error);
+      setMapError('Failed to initialize map');
+    }
 
     return () => {
       if (map.current) {
@@ -87,11 +251,11 @@ export function GISMap({
         map.current = null;
       }
     };
-  }, []);
+  }, [webGLSupported, mapboxgl, center, zoom]);
 
   // Update markers when data changes
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    if (!map.current || !mapLoaded || !mapboxgl) return;
 
     // Clear existing markers
     markersRef.current.forEach((marker) => marker.remove());
@@ -200,12 +364,39 @@ export function GISMap({
         });
       }
     }
-  }, [markers, mapLoaded, onMarkerClick, selectedMarkerId]);
+  }, [markers, mapLoaded, mapboxgl, onMarkerClick, selectedMarkerId]);
+
+  // Show fallback if WebGL not supported or there's an error
+  if (webGLSupported === false || mapError) {
+    return (
+      <FallbackListView
+        markers={markers}
+        height={height}
+        onMarkerClick={onMarkerClick}
+        selectedMarkerId={selectedMarkerId}
+        showRiskOverlay={showRiskOverlay}
+      />
+    );
+  }
+
+  // Loading state
+  if (webGLSupported === null || !mapboxgl) {
+    return (
+      <div className="relative rounded-lg overflow-hidden border border-border" style={{ height }}>
+        <div className="absolute inset-0 bg-muted flex items-center justify-center">
+          <div className="text-center">
+            <Globe className="h-12 w-12 mx-auto mb-2 text-muted-foreground animate-pulse" />
+            <p className="text-sm text-muted-foreground">Loading map...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative rounded-lg overflow-hidden border border-border">
       <div ref={mapContainer} style={{ height }} />
-      
+
       {/* Risk Legend */}
       {showRiskOverlay && (
         <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-border">
