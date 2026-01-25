@@ -73,6 +73,9 @@ model User {
   workOrdersAssigned      WorkOrder[]             @relation("WorkOrderAssignee")
   workOrdersCreated       WorkOrder[]             @relation("WorkOrderCreator")
   workOrdersVerified      WorkOrder[]             @relation("WorkOrderVerifier")
+  milestonesVerified      ProjectMilestone[]      @relation("MilestoneVerifier")
+  workflowsInitiated      DrawApprovalWorkflow[]  @relation("WorkflowInitiator")
+  workflowsDecided        DrawApprovalWorkflow[]  @relation("WorkflowDecider")
 }
 
 model Project {
@@ -130,6 +133,11 @@ model Project {
   submittals           Submittal[]
   timeEntries          TimeEntry[]
   workOrders           WorkOrder[]
+  events               ProjectEvent[]
+  milestones           ProjectMilestone[]
+  ledgerEntries        LedgerEntry[]
+  auditPacks           AuditPack[]
+  cashflowForecasts    CashflowForecast[]
 }
 
 model ProjectTeam {
@@ -1064,6 +1072,7 @@ model DrawRequest {
   submittedBy      User?                 @relation("DrawRequestSubmitter", fields: [submittedById], references: [id])
   documents        DrawRequestDocument[]
   items            DrawRequestItem[]
+  approvalWorkflow DrawApprovalWorkflow?
 
   @@unique([projectId, drawNumber])
   @@index([projectId])
@@ -1481,6 +1490,226 @@ enum RiskZone {
   Moderate
   High
   Severe
+}
+
+// ========================================
+// EVENT SPINE & QUANTUM LEDGER MODELS
+// ========================================
+
+enum EventType {
+  MilestoneCompleted
+  CapitalDrawRequested
+  DrawApproved
+  DrawDenied
+  DrawFunded
+  InspectionCompleted
+  BudgetThresholdAlert
+  RiskFlagged
+  ComplianceUpdated
+  JournalEntryCreated
+  PaymentProcessed
+  ContractSigned
+  ChangeOrderApproved
+}
+
+enum MilestoneType {
+  SitePrep
+  FoundationComplete
+  FramingComplete
+  RoofComplete
+  MEPRoughIn
+  InsulationComplete
+  DrywallComplete
+  FinishesComplete
+  FinalInspection
+  CertificateOfOccupancy
+  ProjectCloseout
+  Custom
+}
+
+enum LedgerEntryType {
+  Debit
+  Credit
+}
+
+enum ApprovalStatus {
+  Pending
+  AutoApproved
+  HITLRequired
+  CommitteeRequired
+  Approved
+  Denied
+  Escalated
+}
+
+model ProjectEvent {
+  id              String      @id @default(cuid())
+  eventType       EventType
+  eventVersion    String      @default("1.0.0")
+  occurredAt      DateTime    @default(now())
+  producer        String      @default("SiteSyncOS")
+  projectId       String
+  correlationId   String?
+  causationId     String?
+  confidence      Float?      @default(1.0)
+  data            Json
+  policyData      Json?
+  auditData       Json?
+  processed       Boolean     @default(false)
+  processedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  
+  project         Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ledgerEntries   LedgerEntry[]
+  auditPack       AuditPack?
+
+  @@index([projectId])
+  @@index([eventType])
+  @@index([occurredAt])
+  @@index([correlationId])
+}
+
+model ProjectMilestone {
+  id                String          @id @default(cuid())
+  projectId         String
+  milestoneType     MilestoneType
+  name              String
+  description       String?
+  scheduledDate     DateTime?
+  completedDate     DateTime?
+  verifiedDate      DateTime?
+  verifiedById      String?
+  verificationMethod String?
+  percentComplete   Float           @default(0)
+  evidenceLinks     String[]        @default([])
+  status            String          @default("Pending")
+  drawEligible      Boolean         @default(false)
+  budgetedCost      Float?
+  actualCost        Float?
+  sortOrder         Int             @default(0)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  verifiedBy        User?           @relation("MilestoneVerifier", fields: [verifiedById], references: [id])
+
+  @@index([projectId])
+  @@index([milestoneType])
+  @@index([status])
+}
+
+model LedgerEntry {
+  id                String          @id @default(cuid())
+  entryNumber       String          @unique
+  projectId         String
+  eventId           String?
+  entryType         LedgerEntryType
+  accountCode       String
+  accountName       String
+  description       String
+  amount            Float
+  currency          String          @default("USD")
+  balanceBefore     Float?
+  balanceAfter      Float?
+  lineageRef        String?
+  metadata          Json?
+  reconciled        Boolean         @default(false)
+  reconciledAt      DateTime?
+  reconciledById    String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  event             ProjectEvent?   @relation(fields: [eventId], references: [id])
+
+  @@index([projectId])
+  @@index([eventId])
+  @@index([accountCode])
+  @@index([createdAt])
+}
+
+model DrawApprovalWorkflow {
+  id                String          @id @default(cuid())
+  drawRequestId     String          @unique
+  requestedAmount   Float
+  approvalStatus    ApprovalStatus  @default(Pending)
+  autoApproveMax    Float           @default(25000)
+  hitlRequiredMin   Float           @default(25001)
+  committeeMin      Float           @default(250001)
+  evidenceComplete  Boolean         @default(false)
+  policyValidated   Boolean         @default(false)
+  riskScore         Float?
+  riskFlags         String[]        @default([])
+  conditions        String[]        @default([])
+  approvers         Json?
+  initiatedById     String
+  initiatedAt       DateTime        @default(now())
+  decidedAt         DateTime?
+  decidedById       String?
+  decisionNotes     String?
+  auditPackRef      String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  drawRequest       DrawRequest     @relation(fields: [drawRequestId], references: [id], onDelete: Cascade)
+  initiatedBy       User            @relation("WorkflowInitiator", fields: [initiatedById], references: [id])
+  decidedBy         User?           @relation("WorkflowDecider", fields: [decidedById], references: [id])
+
+  @@index([approvalStatus])
+  @@index([initiatedAt])
+}
+
+model AuditPack {
+  id                String          @id @default(cuid())
+  packNumber        String          @unique
+  projectId         String
+  eventId           String?         @unique
+  drawRequestId     String?
+  title             String
+  description       String?
+  evidenceLinks     String[]        @default([])
+  lineageRefs       String[]        @default([])
+  complianceStatus  String          @default("Pending")
+  retentionPeriod   Int             @default(7)
+  generatedAt       DateTime        @default(now())
+  generatedById     String?
+  cloudStoragePath  String?
+  isPublic          Boolean         @default(false)
+  metadata          Json?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  event             ProjectEvent?   @relation(fields: [eventId], references: [id])
+
+  @@index([projectId])
+  @@index([complianceStatus])
+  @@index([generatedAt])
+}
+
+model CashflowForecast {
+  id                String          @id @default(cuid())
+  projectId         String
+  forecastDate      DateTime
+  periodStart       DateTime
+  periodEnd         DateTime
+  projectedInflow   Float           @default(0)
+  projectedOutflow  Float           @default(0)
+  netCashflow       Float           @default(0)
+  cumulativeBalance Float           @default(0)
+  budgetVariance    Float           @default(0)
+  costToComplete    Float?
+  runwayMonths      Float?
+  riskFactors       Json?
+  assumptions       Json?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  project           Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([forecastDate])
+  @@index([periodStart])
 }
 
 enum HazardType {

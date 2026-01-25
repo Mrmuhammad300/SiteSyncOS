@@ -31,12 +31,22 @@ export async function GET(req: NextRequest) {
     const drawRequests = await prisma.drawRequest.findMany({
       where,
       include: {
-        project: { select: { id: true, name: true } },
-        submittedBy: { select: { id: true, name: true, email: true } },
+        project: { select: { id: true, name: true, projectNumber: true } },
+        submittedBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+        approvedBy: { select: { id: true, firstName: true, lastName: true } },
         items: true,
         documents: true,
         complianceChecks: true,
-        _count: { select: { items: true, documents: true } }
+        approvalWorkflow: {
+          select: {
+            approvalStatus: true,
+            evidenceComplete: true,
+            policyValidated: true,
+            riskScore: true,
+            conditions: true,
+          }
+        },
+        _count: { select: { items: true, documents: true, complianceChecks: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
