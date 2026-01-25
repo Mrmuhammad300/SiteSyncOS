@@ -51,6 +51,9 @@ import {
   FileCheck,
   Briefcase,
   Globe,
+  BookOpen,
+  Target,
+  Activity,
 } from 'lucide-react';
 import { isMasterAdmin, isManagement, isContractor, isLender, getRoleDisplayName, getRoleBadgeColor } from '@/lib/roles';
 
@@ -83,6 +86,12 @@ const opsNavigation = [
   { name: 'Documents', href: '/documents', icon: FileStack },
 ];
 
+// Quantum Ledger™ - Treasury & Financial Intelligence
+const treasuryNavigation = [
+  { name: 'Quantum Ledger', href: '/ledger', icon: BookOpen },
+  { name: 'Milestones', href: '/milestones', icon: Target },
+];
+
 // Portals
 const portalNavigation = [
   { name: 'Contractor Portal', href: '/contractor-portal', icon: HardHat },
@@ -101,6 +110,7 @@ const navigation = [
   ...vaultNavigation,
   ...buildNavigation,
   ...opsNavigation,
+  ...treasuryNavigation,
   ...intelligenceNavigation,
 ];
 
