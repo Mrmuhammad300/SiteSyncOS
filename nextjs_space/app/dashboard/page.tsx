@@ -277,7 +277,7 @@ export default function DashboardPage() {
                 </Badge>
               )}
             </div>
-            <p className="text-gray-600">Unified Construction Intelligence Platform</p>
+            <p className="text-gray-600">Asset Management Intelligence</p>
           </div>
           
           {/* Admin-only Quick Actions */}

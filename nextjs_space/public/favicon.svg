@@ -1,8 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-  <rect width="256" height="256" fill="#1a1a2e"/>
-  <path d="M128 60c-35 0-65 20-75 48h150c-10-28-40-48-75-48z" fill="#ff8c00"/>
-  <ellipse cx="128" cy="108" rx="75" ry="12" fill="#ff6600"/>
-  <rect x="40" y="160" width="176" height="24" rx="4" fill="#0066cc"/>
-  <rect x="48" y="184" width="160" height="12" rx="2" fill="#004999"/>
-  <path d="M128 60v48" stroke="#ff6600" stroke-width="8" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b"/>
+      <stop offset="100%" style="stop-color:#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="40" fill="url(#grad)"/>
+  <!-- Asset Management Boxes Icon -->
+  <!-- Top box -->
+  <rect x="88" y="48" width="80" height="56" rx="6" fill="none" stroke="#fff" stroke-width="8"/>
+  <line x1="128" y1="48" x2="128" y2="104" stroke="#fff" stroke-width="8"/>
+  <line x1="88" y1="76" x2="168" y2="76" stroke="#fff" stroke-width="8"/>
+  <!-- Bottom left box -->
+  <rect x="40" y="120" width="80" height="56" rx="6" fill="none" stroke="#fff" stroke-width="8"/>
+  <line x1="80" y1="120" x2="80" y2="176" stroke="#fff" stroke-width="8"/>
+  <line x1="40" y1="148" x2="120" y2="148" stroke="#fff" stroke-width="8"/>
+  <!-- Bottom right box -->
+  <rect x="136" y="120" width="80" height="56" rx="6" fill="none" stroke="#fff" stroke-width="8"/>
+  <line x1="176" y1="120" x2="176" y2="176" stroke="#fff" stroke-width="8"/>
+  <line x1="136" y1="148" x2="216" y2="148" stroke="#fff" stroke-width="8"/>
+  <!-- Intelligence indicator -->
+  <circle cx="128" cy="208" r="16" fill="#3b82f6"/>
+  <circle cx="88" cy="208" r="8" fill="#60a5fa"/>
+  <circle cx="168" cy="208" r="8" fill="#60a5fa"/>
 </svg>

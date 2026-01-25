@@ -43,7 +43,7 @@ import {
   Shield,
   Brain,
   Home,
-  Layers,
+  Boxes,
   Database,
   Lock,
   Zap,
@@ -170,12 +170,13 @@ export function DashboardNav() {
           {/* Logo and Brand */}
           <Link href="/dashboard" className="flex items-center space-x-3 group">
             <div className="w-10 h-10 bg-gradient-to-br from-slate-800 to-blue-600 rounded-lg flex items-center justify-center group-hover:shadow-lg transition-shadow">
-              <Layers className="w-6 h-6 text-white" />
+              <Boxes className="w-6 h-6 text-white" />
             </div>
             <div className="hidden sm:block">
               <span className="text-xl font-bold tracking-wider bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">
                 SiteSync OS
               </span>
+              <span className="hidden md:block text-xs text-muted-foreground -mt-1">Asset Management Intelligence</span>
             </div>
           </Link>
 

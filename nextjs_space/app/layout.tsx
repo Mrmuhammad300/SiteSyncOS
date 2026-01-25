@@ -9,8 +9,8 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
-  title: 'SiteSync OS - Unified Construction Intelligence Platform',
-  description: 'Enterprise construction management powered by Zenflow AI and Quantum Ledger. SiteSync Vault™ | SiteSync Build™ | SiteSync Ops™',
+  title: 'SiteSync OS - Asset Management Intelligence',
+  description: 'Enterprise asset management intelligence powered by Zenflow AI and Quantum Ledger. SiteSync Vault™ | SiteSync Build™ | SiteSync Ops™',
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',

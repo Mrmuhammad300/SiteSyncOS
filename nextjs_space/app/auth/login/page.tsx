@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Layers, Loader2, Chrome } from 'lucide-react';
+import { Boxes, Loader2, Chrome } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,10 +46,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-xl">
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-blue-600 rounded-xl flex items-center justify-center mb-4">
-            <Layers className="w-10 h-10 text-white" />
+            <Boxes className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-3xl font-bold tracking-wider text-gray-900">SiteSync OS</h1>
-          <p className="text-gray-600 mt-2 text-center">Unified Construction Intelligence Platform</p>
+          <p className="text-gray-600 mt-2 text-center">Asset Management Intelligence</p>
           <div className="flex gap-2 mt-3">
             <span className="text-xs px-2 py-1 bg-slate-100 rounded-full text-slate-600">Vault™</span>
             <span className="text-xs px-2 py-1 bg-blue-100 rounded-full text-blue-600">Build™</span>
