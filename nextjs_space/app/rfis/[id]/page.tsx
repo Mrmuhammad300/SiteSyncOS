@@ -9,7 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BackButton } from '@/components/ui/back-button';
-import { ArrowLeft, Calendar, User, AlertCircle, MessageSquare, Send } from 'lucide-react';
+import { DocumentUpload } from '@/components/ui/document-upload';
+import { ReportGenerator } from '@/components/ui/report-generator';
+import { ArrowLeft, Calendar, User, AlertCircle, MessageSquare, Send, Upload, FileText } from 'lucide-react';
 
 type RFI = {
   id: string;
@@ -78,6 +80,21 @@ export default function RFIDetailPage() {
             <Badge className={getStatusColor(rfi.status)}>{rfi.status === 'InReview' ? 'In Review' : rfi.status === 'DraftResponse' ? 'Draft Response' : rfi.status === 'OfficialResponse' ? 'Official Response' : rfi.status}</Badge>
           </div>
           <h2 className="text-xl text-gray-700">{rfi.subject}</h2>
+        </div>
+        <div className="flex gap-2">
+          <DocumentUpload 
+            entityType="rfi" 
+            entityId={rfi.id} 
+            buttonText="Attach Files"
+            buttonSize="sm"
+          />
+          <ReportGenerator 
+            entityType="rfi" 
+            entityId={rfi.id}
+            entityName={`RFI ${rfi.rfiNumber}`}
+            buttonText="Export"
+            buttonSize="sm"
+          />
         </div>
       </div>
 

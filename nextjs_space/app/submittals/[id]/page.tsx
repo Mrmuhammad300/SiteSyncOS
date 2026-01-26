@@ -13,7 +13,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Download, FileText, MessageSquare, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { DocumentUpload } from '@/components/ui/document-upload';
+import { ReportGenerator } from '@/components/ui/report-generator';
+import { ArrowLeft, Download, FileText, MessageSquare, CheckCircle2, Clock, AlertCircle, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -273,6 +275,21 @@ export default function SubmittalDetailPage() {
                     </Badge>
                   </div>
                   <h2 className="text-xl text-muted-foreground">{submittal.title}</h2>
+                </div>
+                <div className="flex gap-2">
+                  <DocumentUpload 
+                    entityType="submittal" 
+                    entityId={submittal.id} 
+                    buttonText="Upload"
+                    buttonSize="sm"
+                  />
+                  <ReportGenerator 
+                    entityType="submittal" 
+                    entityId={submittal.id}
+                    entityName={`Submittal ${submittal.submittalNumber}`}
+                    buttonText="Export"
+                    buttonSize="sm"
+                  />
                 </div>
               </div>
             </CardHeader>

@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BackButton } from '@/components/ui/back-button';
-import { ArrowLeft, Edit, DollarSign, Calendar, MapPin, Users, MessageSquare, FileText, FileStack } from 'lucide-react';
+import { DocumentUpload } from '@/components/ui/document-upload';
+import { ReportGenerator } from '@/components/ui/report-generator';
+import { ArrowLeft, Edit, DollarSign, Calendar, MapPin, Users, MessageSquare, FileText, FileStack, Upload } from 'lucide-react';
 
 type Project = {
   id: string;
@@ -81,9 +83,23 @@ export default function ProjectDetailPage() {
             <Badge className={getPhaseColor(project.phase)}>{project.phase}</Badge>
           </div>
         </div>
-        <Button onClick={() => router.push(`/projects/${project.id}/edit`)} className="bg-gradient-to-r from-blue-600 to-orange-500">
-          <Edit className="w-4 h-4 mr-2" />Edit
-        </Button>
+        <div className="flex gap-2">
+          <DocumentUpload 
+            entityType="project" 
+            entityId={project.id} 
+            buttonText="Upload Files"
+            onUploadComplete={() => router.refresh()}
+          />
+          <ReportGenerator 
+            entityType="project" 
+            entityId={project.id}
+            entityName={project.name}
+            buttonText="Generate Report"
+          />
+          <Button onClick={() => router.push(`/projects/${project.id}/edit`)} className="bg-gradient-to-r from-blue-600 to-orange-500">
+            <Edit className="w-4 h-4 mr-2" />Edit
+          </Button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6 mb-6">

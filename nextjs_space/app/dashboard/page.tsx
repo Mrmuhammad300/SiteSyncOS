@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { isMasterAdmin, isManagement, isContractor, isLender, getRoleDisplayName, getRoleBadgeColor } from '@/lib/roles';
+import { ReportGenerator } from '@/components/ui/report-generator';
 
 type Project = {
   id: string;
@@ -283,6 +284,12 @@ export default function DashboardPage() {
           {/* Admin-only Quick Actions */}
           {isAdmin && (
             <div className="flex items-center gap-2">
+              <ReportGenerator 
+                entityType="portfolio" 
+                entityName="Portfolio Overview"
+                buttonText="Portfolio Report"
+                buttonVariant="outline"
+              />
               <Dialog open={showSimulation} onOpenChange={setShowSimulation}>
                 <DialogTrigger asChild>
                   <Button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700">

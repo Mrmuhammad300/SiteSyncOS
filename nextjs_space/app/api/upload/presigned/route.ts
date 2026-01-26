@@ -1,26 +1,39 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { generatePresignedUploadUrl } from '@/lib/s3';
 
-export const dynamic = 'force-dynamic';
-
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const body = await request.json();
-    const { fileName, contentType, isPublic } = body;
-
-    if (!fileName || !contentType) {
-      return NextResponse.json({ error: 'Missing fileName or contentType' }, { status: 400 });
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await generatePresignedUploadUrl(fileName, contentType, isPublic || false);
-    return NextResponse.json(result);
+    const { fileName, contentType, isPublic } = await request.json();
+
+    if (!fileName || !contentType) {
+      return NextResponse.json(
+        { error: 'fileName and contentType are required' },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize filename
+    const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    
+    const { uploadUrl, cloud_storage_path } = await generatePresignedUploadUrl(
+      sanitizedFileName,
+      contentType,
+      isPublic || false
+    );
+
+    return NextResponse.json({ uploadUrl, cloud_storage_path });
   } catch (error) {
-    console.error('Error:', error);
-    return NextResponse.json({ error: 'Failed to generate upload URL' }, { status: 500 });
+    console.error('Error generating presigned URL:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate upload URL' },
+      { status: 500 }
+    );
   }
 }

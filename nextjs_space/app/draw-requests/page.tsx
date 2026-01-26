@@ -14,9 +14,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { BackButton } from '@/components/ui/back-button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DocumentUpload } from '@/components/ui/document-upload';
+import { ReportGenerator } from '@/components/ui/report-generator';
 import { 
   FileText, Plus, Send, CheckCircle, Clock, AlertCircle, DollarSign, Download, 
-  ShieldCheck, XCircle, Zap, Activity, Users, BookOpen, ArrowRight, RefreshCw
+  ShieldCheck, XCircle, Zap, Activity, Users, BookOpen, ArrowRight, RefreshCw, Upload
 } from 'lucide-react';
 
 interface DrawRequest {
