@@ -120,8 +120,8 @@ export async function executePipeline(context: PipelineContext): Promise<Pipelin
         status: output.status,
         autonomyLevel: autonomyLevel,
         confidenceScore: output.confidence,
-        inputData: currentContext,
-        outputData: output.output,
+        inputData: JSON.parse(JSON.stringify(currentContext)),
+        outputData: JSON.parse(JSON.stringify(output.output)),
         reasoning: output.reasoning,
         pipelinePosition: i,
         pipelineId,
@@ -699,23 +699,29 @@ async function executeCollectiveMemoryCurator(
   
   // Store this event in memory
   if (projectId) {
+    const memoryKey = `${pipelineContext.eventType}_${Date.now()}`;
+    const memoryValue = JSON.parse(JSON.stringify({ 
+      eventType: pipelineContext.eventType, 
+      timestamp: new Date().toISOString(), 
+      contextKeys: Object.keys(context) 
+    }));
     await prisma.agentMemory.upsert({
       where: {
         memoryType_projectId_key: {
           memoryType: 'event_history',
           projectId,
-          key: `${pipelineContext.eventType}_${Date.now()}`,
+          key: memoryKey,
         },
       },
       create: {
         memoryType: 'event_history',
         projectId,
-        key: `${pipelineContext.eventType}_${Date.now()}`,
-        value: { eventType: pipelineContext.eventType, timestamp: new Date(), context },
+        key: memoryKey,
+        value: memoryValue,
         importance: 0.7,
       },
       update: {
-        value: { eventType: pipelineContext.eventType, timestamp: new Date(), context },
+        value: memoryValue,
         accessCount: { increment: 1 },
         lastAccessed: new Date(),
       },
