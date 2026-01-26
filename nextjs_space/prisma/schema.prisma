@@ -76,6 +76,7 @@ model User {
   milestonesVerified      ProjectMilestone[]      @relation("MilestoneVerifier")
   workflowsInitiated      DrawApprovalWorkflow[]  @relation("WorkflowInitiator")
   workflowsDecided        DrawApprovalWorkflow[]  @relation("WorkflowDecider")
+  agentExecutionsApproved AgentExecution[]
 }
 
 model Project {
@@ -138,6 +139,8 @@ model Project {
   ledgerEntries        LedgerEntry[]
   auditPacks           AuditPack[]
   cashflowForecasts    CashflowForecast[]
+  agentExecutions      AgentExecution[]
+  agentMemories        AgentMemory[]
 }
 
 model ProjectTeam {
@@ -2102,4 +2105,262 @@ enum MaintenanceCategory {
   Landscaping
   Security
   Other
+}
+
+// ============================================
+// AGENT ORCHESTRATION SYSTEM
+// ============================================
+
+enum AgentType {
+  InterfaceAgent
+  ReasoningAgent
+  GovernanceAgent
+  PolicyAgent
+  RiskAgent
+  AuditAgent
+  CoordinationAgent
+  QualityControlAgent
+  SimulationAgent
+  ExecutionAgent
+  ConsensusAgent
+  KnowledgeAgent
+  LearningAgent
+  VerificationAgent
+  CreativeAgent
+  CommunicationAgent
+}
+
+enum AutonomyLevel {
+  AdvisoryOnly        // Level 0
+  DraftWithApproval   // Level 1
+  AutoExecuteThreshold // Level 2
+  ContinuousOptimization // Level 3
+}
+
+enum AgentExecutionStatus {
+  Pending
+  Running
+  AwaitingApproval
+  Approved
+  Rejected
+  Completed
+  Failed
+  Escalated
+}
+
+enum DomainEventType {
+  // Project Events
+  ProjectCreated
+  ProjectUpdated
+  ProjectArchived
+  // RFI Events
+  RfiCreated
+  RfiResponseReceived
+  RfiOverdue
+  RfiClosed
+  // Submittal Events
+  SubmittalCreated
+  SubmittalReviewed
+  SubmittalApproved
+  SubmittalRejected
+  // Change Order Events
+  ChangeOrderCreated
+  ChangeOrderApprovalRequested
+  ChangeOrderApproved
+  ChangeOrderRejected
+  // Punch List Events
+  PunchItemCreated
+  PunchItemAssigned
+  PunchItemCompleted
+  // Document Events
+  DocumentUploaded
+  DocumentUpdated
+  DocumentValidated
+  // Design Events
+  DesignTaskSent
+  DesignCallbackReceived
+  DesignRevisionRequested
+  // Workflow Events
+  WorkflowStarted
+  WorkflowStepCompleted
+  WorkflowFailed
+  // System Events
+  SystemAlert
+  SystemRiskFlag
+  SystemAutonomyChanged
+}
+
+model AIAgent {
+  id              String          @id @default(cuid())
+  agentId         String          @unique // e.g., "human_oversight_liaison"
+  name            String
+  type            AgentType
+  description     String          @db.Text
+  autonomyLevel   AutonomyLevel   @default(DraftWithApproval)
+  isActive        Boolean         @default(true)
+  configuration   Json?           // Agent-specific config (triggers, outputs, rules)
+  metrics         Json?           // Performance metrics
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  executions      AgentExecution[]
+  decisions       AgentDecision[]
+  
+  @@index([agentId])
+  @@index([type])
+}
+
+model AgentExecution {
+  id                String                @id @default(cuid())
+  executionId       String                @unique @default(cuid())
+  agentId           String
+  agent             AIAgent               @relation(fields: [agentId], references: [id])
+  eventType         DomainEventType
+  eventId           String?               // Reference to the triggering event
+  projectId         String?
+  project           Project?              @relation(fields: [projectId], references: [id])
+  
+  status            AgentExecutionStatus  @default(Pending)
+  autonomyLevel     AutonomyLevel
+  confidenceScore   Float?
+  
+  inputData         Json?                 // Input context for the agent
+  outputData        Json?                 // Agent's output/recommendation
+  reasoning         String?               @db.Text // Agent's reasoning chain
+  
+  pipelinePosition  Int                   @default(0) // Position in agent pipeline
+  pipelineId        String?               // Group executions in same pipeline
+  
+  requiresApproval  Boolean               @default(false)
+  approvedById      String?
+  approvedBy        User?                 @relation(fields: [approvedById], references: [id])
+  approvedAt        DateTime?
+  
+  escalatedTo       String?               // Agent ID if escalated
+  escalationReason  String?
+  
+  startedAt         DateTime              @default(now())
+  completedAt       DateTime?
+  errorMessage      String?
+  
+  decisions         AgentDecision[]
+  childExecutions   AgentExecution[]      @relation("ExecutionHierarchy")
+  parentExecution   AgentExecution?       @relation("ExecutionHierarchy", fields: [parentExecutionId], references: [id])
+  parentExecutionId String?
+  
+  @@index([agentId])
+  @@index([eventType])
+  @@index([projectId])
+  @@index([pipelineId])
+  @@index([status])
+}
+
+model AgentDecision {
+  id              String          @id @default(cuid())
+  executionId     String
+  execution       AgentExecution  @relation(fields: [executionId], references: [id])
+  agentId         String
+  agent           AIAgent         @relation(fields: [agentId], references: [id])
+  
+  decisionType    String          // e.g., "recommended_action", "risk_flag", "approval"
+  decision        String          @db.Text
+  alternatives    Json?           // Alternative options considered
+  confidence      Float
+  
+  riskFlags       Json?           // Any risk flags raised
+  policyViolations Json?          // Policy violations detected
+  
+  requiresHuman   Boolean         @default(false)
+  humanDecision   String?
+  humanDecidedBy  String?
+  humanDecidedAt  DateTime?
+  
+  metadata        Json?
+  createdAt       DateTime        @default(now())
+  
+  @@index([executionId])
+  @@index([agentId])
+}
+
+model EventAgentBinding {
+  id              String          @id @default(cuid())
+  eventType       DomainEventType
+  
+  pipelineAgents  Json            // Array of agent IDs in execution order
+  autonomyLevel   AutonomyLevel   @default(DraftWithApproval)
+  finalOutput     String          // Expected output type
+  
+  requiresAudit   Boolean         @default(true)
+  blockOnRiskFlag Boolean         @default(true)
+  minConfidence   Float           @default(0.7)
+  
+  isActive        Boolean         @default(true)
+  configuration   Json?           // Additional binding config
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@unique([eventType])
+  @@index([eventType])
+}
+
+model DomainStateMachine {
+  id              String          @id @default(cuid())
+  domain          String          @unique // e.g., "rfi", "change_order"
+  
+  states          Json            // Array of valid states
+  initialState    String
+  terminalStates  Json            // Array of terminal states
+  transitions     Json            // Transition rules
+  guards          Json?           // Guard conditions for transitions
+  
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([domain])
+}
+
+model AgentMemory {
+  id              String          @id @default(cuid())
+  memoryType      String          // "project_history", "decisions", "outcomes"
+  projectId       String?
+  project         Project?        @relation(fields: [projectId], references: [id])
+  
+  key             String
+  value           Json
+  embedding       String?         @db.Text // Vector embedding for retrieval
+  
+  importance      Float           @default(0.5)
+  accessCount     Int             @default(0)
+  lastAccessed    DateTime?
+  
+  expiresAt       DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@unique([memoryType, projectId, key])
+  @@index([memoryType])
+  @@index([projectId])
+}
+
+model AgentLearningSignal {
+  id              String          @id @default(cuid())
+  executionId     String
+  agentId         String
+  
+  signalType      String          // "human_correction", "outcome_success", "error"
+  originalOutput  Json?
+  correctedOutput Json?
+  feedback        String?         @db.Text
+  
+  outcomeMetrics  Json?           // Measured outcomes
+  isPositive      Boolean
+  weight          Float           @default(1.0)
+  
+  processedAt     DateTime?
+  createdAt       DateTime        @default(now())
+  
+  @@index([agentId])
+  @@index([signalType])
 }
