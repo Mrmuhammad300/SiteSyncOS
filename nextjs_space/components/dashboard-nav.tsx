@@ -100,6 +100,7 @@ const portalNavigation = [
 // Intelligence & Planning
 const intelligenceNavigation = [
   { name: 'AI Orchestrator', href: '/ai-assistant', icon: Brain },
+  { name: 'Spatial Workbench', href: '/spatial-workbench', icon: Boxes },
   { name: 'GIS Intelligence', href: '/gis', icon: Globe },
   { name: 'Scenarios', href: '/scenarios', icon: Target },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },

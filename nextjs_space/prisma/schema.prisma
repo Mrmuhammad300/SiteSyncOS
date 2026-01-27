@@ -77,6 +77,12 @@ model User {
   workflowsInitiated      DrawApprovalWorkflow[]  @relation("WorkflowInitiator")
   workflowsDecided        DrawApprovalWorkflow[]  @relation("WorkflowDecider")
   agentExecutionsApproved AgentExecution[]
+  
+  // Kimi Spatial Generation relations
+  spatialModelsCreated    SpatialModel[]      @relation("SpatialModelCreator")
+  spatialExportsRequested SpatialExport[]     @relation("SpatialExportRequester")
+  spatialAnnotationsCreated SpatialAnnotation[] @relation("SpatialAnnotationCreator")
+  spatialApprovalsReviewed SpatialApproval[]   @relation("SpatialApprovalReviewer")
 }
 
 model Project {
@@ -141,6 +147,7 @@ model Project {
   cashflowForecasts    CashflowForecast[]
   agentExecutions      AgentExecution[]
   agentMemories        AgentMemory[]
+  spatialModels        SpatialModel[]
 }
 
 model ProjectTeam {
@@ -463,6 +470,7 @@ model Property {
   project                 Project?               @relation(fields: [projectId], references: [id])
   tenants                 Tenant[]
   propertyUnits           Unit[]
+  spatialModels           SpatialModel[]
 
   @@index([assetType])
   @@index([developmentStage])
@@ -2363,4 +2371,249 @@ model AgentLearningSignal {
   
   @@index([agentId])
   @@index([signalType])
+}
+
+
+// ==========================================
+// KIMI K2.5 SPATIAL GENERATION SYSTEM
+// ==========================================
+
+enum SpatialModelStatus {
+  Generated
+  NeedsReview
+  Blocked
+  Approved
+  Exported
+}
+
+enum SpatialTargetEngine {
+  ThreeJS
+  BabylonJS
+  UnityCSharp
+}
+
+enum SpatialArtifactType {
+  SceneCode
+  RenderPreview
+  ExportScript
+  GlbAsset
+  ObjAsset
+  MetadataJson
+}
+
+enum SpatialLegalMode {
+  NonAuthoritativePreview
+  LicensedReviewRequired
+  ConstructionIssueBlocked
+}
+
+model SpatialModel {
+  id                String              @id @default(cuid())
+  spatialModelId    String              @unique @default(cuid()) // External-facing ID
+  projectId         String?
+  project           Project?            @relation(fields: [projectId], references: [id])
+  propertyId        String?
+  property          Property?           @relation(fields: [propertyId], references: [id])
+  
+  status            SpatialModelStatus  @default(Generated)
+  targetEngine      SpatialTargetEngine @default(ThreeJS)
+  units             String              @default("metric") // metric | imperial
+  
+  // Layout specification
+  layoutSpec        Json                // The LayoutSpec JSON
+  referenceImages   Json?               // Array of ReferenceImage objects
+  generationConstraints Json?           // GenerationConstraints
+  
+  // Legal and compliance
+  legalMode         SpatialLegalMode    @default(NonAuthoritativePreview)
+  disclaimerText    String              @default("AI-generated preview. Not a construction document. Human licensure review required for any regulated use.") @db.Text
+  nonAuthoritative  Boolean             @default(true)
+  
+  // AI generation metadata
+  promptContractId  String?             // e.g., "kimi_threejs_full_scene_v1"
+  warnings          Json?               // Array of warning strings
+  assumptions       Json?               // Array of assumption strings
+  
+  // Version tracking
+  version           Int                 @default(1)
+  parentModelId     String?
+  parentModel       SpatialModel?       @relation("SpatialModelIterations", fields: [parentModelId], references: [id])
+  iterations        SpatialModel[]      @relation("SpatialModelIterations")
+  iterationNotes    String?             @db.Text
+  
+  // Artifacts
+  artifacts         SpatialArtifact[]
+  exports           SpatialExport[]
+  annotations       SpatialAnnotation[]
+  audits            SpatialAudit[]
+  approvals         SpatialApproval[]
+  
+  createdById       String?
+  createdBy         User?               @relation("SpatialModelCreator", fields: [createdById], references: [id])
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  @@index([projectId])
+  @@index([propertyId])
+  @@index([status])
+  @@index([createdById])
+}
+
+model SpatialArtifact {
+  id                String              @id @default(cuid())
+  spatialModelId    String
+  spatialModel      SpatialModel        @relation(fields: [spatialModelId], references: [id], onDelete: Cascade)
+  
+  artifactType      SpatialArtifactType
+  uri               String              // S3 cloud_storage_path or URL
+  contentType       String              // MIME type
+  sha256            String?             // Content hash for integrity
+  
+  // Content storage
+  inlineContent     String?             @db.Text // For code artifacts stored inline
+  metadata          Json?
+  
+  // Labels for policy compliance
+  labels            Json                @default("[\"AI_GENERATED\", \"NON_AUTHORITATIVE\", \"NOT_FOR_CONSTRUCTION\"]")
+  
+  isPublic          Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  
+  @@index([spatialModelId])
+  @@index([artifactType])
+}
+
+model SpatialExport {
+  id                String              @id @default(cuid())
+  exportId          String              @unique @default(cuid())
+  spatialModelId    String
+  spatialModel      SpatialModel        @relation(fields: [spatialModelId], references: [id], onDelete: Cascade)
+  
+  format            String              // "glb" | "obj"
+  exportMode        String              @default("kimi_generated_script") // "kimi_generated_script" | "server_side_converter"
+  
+  // Result
+  artifactUri       String?             // S3 cloud_storage_path
+  artifactSha256    String?
+  status            String              @default("pending") // pending | processing | completed | failed
+  errorMessage      String?             @db.Text
+  
+  // Audit
+  auditTraceId      String?
+  
+  requestedById     String?
+  requestedBy       User?               @relation("SpatialExportRequester", fields: [requestedById], references: [id])
+  
+  createdAt         DateTime            @default(now())
+  completedAt       DateTime?
+  
+  @@index([spatialModelId])
+  @@index([status])
+}
+
+model SpatialAnnotation {
+  id                String              @id @default(cuid())
+  spatialModelId    String
+  spatialModel      SpatialModel        @relation(fields: [spatialModelId], references: [id], onDelete: Cascade)
+  
+  // Position in 3D space
+  positionX         Float
+  positionY         Float
+  positionZ         Float
+  
+  // Annotation content
+  title             String
+  description       String?             @db.Text
+  annotationType    String              @default("note") // note | rfi | submittal | change_order | issue
+  
+  // Links to other entities
+  linkedRfiId       String?
+  linkedSubmittalId String?
+  linkedChangeOrderId String?
+  
+  // Visual properties
+  color             String              @default("#FF6B6B")
+  icon              String              @default("pin")
+  
+  createdById       String?
+  createdBy         User?               @relation("SpatialAnnotationCreator", fields: [createdById], references: [id])
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  @@index([spatialModelId])
+  @@index([annotationType])
+}
+
+model SpatialAudit {
+  id                String              @id @default(cuid())
+  traceId           String              @unique @default(cuid())
+  spatialModelId    String?
+  spatialModel      SpatialModel?       @relation(fields: [spatialModelId], references: [id], onDelete: SetNull)
+  
+  // Actor information
+  actorType         String              // "user" | "agent" | "system"
+  actorId           String
+  actorDisplayName  String?
+  
+  // Action details
+  actionType        String              // "generate" | "iterate" | "export" | "approve" | "annotate"
+  actionDetails     Json?
+  
+  // Model info
+  modelProvider     String              @default("kimi")
+  modelVersion      String              @default("kimi-k2.5")
+  promptVersion     String?
+  
+  // Policy enforcement
+  nonAuthoritative  Boolean             @default(true)
+  humanInLoopEnforced Boolean           @default(true)
+  policyBlocksApplied Json?             // List of policies that blocked actions
+  
+  // Performance
+  latencyMs         Int?
+  tokenEstimate     Int?
+  
+  // Input/Output capture
+  requestData       Json?
+  responseData      Json?
+  
+  createdAt         DateTime            @default(now())
+  
+  @@index([spatialModelId])
+  @@index([actorId])
+  @@index([actionType])
+  @@index([createdAt])
+}
+
+model SpatialApproval {
+  id                String              @id @default(cuid())
+  spatialModelId    String
+  spatialModel      SpatialModel        @relation(fields: [spatialModelId], references: [id], onDelete: Cascade)
+  
+  // Approval type
+  approvalType      String              // "permit_submission" | "construction_document_issue" | "licensed_stamp"
+  
+  // Status
+  status            String              @default("pending") // pending | approved | rejected
+  
+  // Human reviewer
+  reviewerId        String?
+  reviewer          User?               @relation("SpatialApprovalReviewer", fields: [reviewerId], references: [id])
+  
+  // Attestation
+  attestationText   String?             @db.Text
+  licensedCredential String?            // License number, certification, etc.
+  stampedArtifactUri String?            // Uploaded stamped document
+  
+  // Rejection details
+  rejectionReason   String?             @db.Text
+  
+  requestedAt       DateTime            @default(now())
+  decidedAt         DateTime?
+  
+  @@index([spatialModelId])
+  @@index([status])
+  @@index([reviewerId])
 }
