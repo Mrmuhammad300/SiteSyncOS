@@ -526,9 +526,9 @@ async function callLLMAPI(request: LLMChatRequest): Promise<LLMChatResponse> {
     throw new Error('ABACUSAI_API_KEY environment variable not set');
   }
   
-  // Use claude-3-5-sonnet-v2 (valid model name for RouteLLM API)
-  // Alternative: omit model to use route-llm auto-routing
-  const modelName = request.model || 'claude-3-5-sonnet-v2';
+  // Omit model to use RouteLLM auto-routing (recommended)
+  // RouteLLM automatically selects the best model for the task
+  const { model: _unusedModel, ...requestWithoutModel } = request;
   
   const response = await fetch(`${LLM_API_BASE}/chat/completions`, {
     method: 'POST',
@@ -536,10 +536,7 @@ async function callLLMAPI(request: LLMChatRequest): Promise<LLMChatResponse> {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      ...request,
-      model: modelName,
-    }),
+    body: JSON.stringify(requestWithoutModel),
   });
   
   if (!response.ok) {
