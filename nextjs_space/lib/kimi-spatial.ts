@@ -379,24 +379,24 @@ function buildExportPrompt(sceneCode: string, format: 'glb' | 'obj', layoutSpec:
 }
 
 // ===========================================
-// KIMI API INTEGRATION
+// LLM API INTEGRATION (Abacus AI RouteLLM)
 // ===========================================
 
-const KIMI_API_BASE = 'https://api.moonshot.cn/v1';
+const LLM_API_BASE = 'https://routellm.abacus.ai/v1';
 
-interface KimiMessage {
+interface LLMMessage {
   role: 'system' | 'user' | 'assistant';
   content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
 }
 
-interface KimiChatRequest {
+interface LLMChatRequest {
   model: string;
-  messages: KimiMessage[];
+  messages: LLMMessage[];
   temperature?: number;
   max_tokens?: number;
 }
 
-interface KimiChatResponse {
+interface LLMChatResponse {
   id: string;
   choices: Array<{
     message: {
@@ -412,27 +412,35 @@ interface KimiChatResponse {
   };
 }
 
-async function callKimiAPI(request: KimiChatRequest): Promise<KimiChatResponse> {
-  const apiKey = process.env.KIMI_API_KEY;
+async function callLLMAPI(request: LLMChatRequest): Promise<LLMChatResponse> {
+  const apiKey = process.env.ABACUSAI_API_KEY;
   if (!apiKey) {
-    throw new Error('KIMI_API_KEY environment variable not set');
+    throw new Error('ABACUSAI_API_KEY environment variable not set');
   }
   
-  const response = await fetch(`${KIMI_API_BASE}/chat/completions`, {
+  const response = await fetch(`${LLM_API_BASE}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify({
+      ...request,
+      model: 'claude-3-5-sonnet', // Use Claude for better code generation
+    }),
   });
   
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Kimi API error: ${response.status} - ${error}`);
+    throw new Error(`LLM API error: ${response.status} - ${error}`);
   }
   
   return response.json();
+}
+
+// Alias for backward compatibility
+async function callKimiAPI(request: LLMChatRequest): Promise<LLMChatResponse> {
+  return callLLMAPI(request);
 }
 
 function extractCodeFromResponse(content: string): { code: string; metadata?: Record<string, unknown> } {
@@ -536,7 +544,7 @@ export async function generateScene(
   const userPrompt = formatLayoutSpecForPrompt(request.layoutSpec, request.units);
   
   // Build messages array
-  const messages: KimiMessage[] = [
+  const messages: LLMMessage[] = [
     { role: 'system', content: systemPrompt },
   ];
   
@@ -1013,4 +1021,315 @@ export async function getAuditTrail(spatialModelId: string) {
     where: { spatialModelId },
     orderBy: { createdAt: 'desc' },
   });
+}
+
+
+// ===========================================
+// NATURAL LANGUAGE TO LAYOUT CONVERSION
+// ===========================================
+
+const NL_TO_LAYOUT_SYSTEM_PROMPT = `You are an expert architectural layout designer. Convert natural language descriptions into structured JSON layout specifications.
+
+OUTPUT FORMAT: You must output ONLY a valid JSON object matching this schema:
+{
+  "levels": [
+    {
+      "name": "string (e.g., 'Ground Floor', 'First Floor')",
+      "elevation": number (in meters, 0 for ground floor),
+      "rooms": [
+        {
+          "name": "string (room name)",
+          "width": number (in meters),
+          "length": number (in meters),
+          "height": number (optional, ceiling height in meters)
+        }
+      ]
+    }
+  ],
+  "globalDefaults": {
+    "wallThickness": number (default 0.15 meters),
+    "ceilingHeight": number (default 2.7 meters)
+  }
+}
+
+RULES:
+1. Use realistic dimensions based on the description
+2. If dimensions aren't specified, use reasonable defaults (living room: 5x6m, bedroom: 4x4m, kitchen: 3x4m, bathroom: 2x3m)
+3. Convert imperial units to metric if needed (1 foot = 0.3048 meters)
+4. Output ONLY the JSON, no explanation or markdown code blocks
+5. Ensure all required fields are present`;
+
+export async function convertPromptToLayout(
+  prompt: string,
+  units: 'metric' | 'imperial' = 'metric'
+): Promise<{ layoutSpec: LayoutSpec; rawResponse: string }> {
+  const userPrompt = units === 'imperial' 
+    ? `${prompt}\n\nNote: The user is working in imperial units. Convert any feet/inches to meters in your output.`
+    : prompt;
+
+  const response = await callLLMAPI({
+    model: 'claude-3-5-sonnet',
+    messages: [
+      { role: 'system', content: NL_TO_LAYOUT_SYSTEM_PROMPT },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: 0.3,
+    max_tokens: 4000,
+  });
+
+  const rawResponse = response.choices[0]?.message?.content || '';
+  
+  // Try to extract JSON from the response
+  let jsonStr = rawResponse.trim();
+  
+  // Remove markdown code blocks if present
+  const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonMatch) {
+    jsonStr = jsonMatch[1].trim();
+  }
+  
+  // Try to find JSON object in the response
+  const jsonObjectMatch = jsonStr.match(/\{[\s\S]*\}/);
+  if (jsonObjectMatch) {
+    jsonStr = jsonObjectMatch[0];
+  }
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+    
+    // Validate and ensure structure
+    const layoutSpec: LayoutSpec = {
+      levels: parsed.levels || [{
+        name: 'Ground Floor',
+        elevation: 0,
+        rooms: [{ name: 'Main Room', width: 5, length: 6, height: 2.7 }],
+      }],
+      globalDefaults: {
+        wallThickness: parsed.globalDefaults?.wallThickness || 0.15,
+        ceilingHeight: parsed.globalDefaults?.ceilingHeight || 2.7,
+      },
+    };
+    
+    return { layoutSpec, rawResponse };
+  } catch (e) {
+    throw new Error(`Failed to parse layout from AI response: ${e instanceof Error ? e.message : 'Unknown error'}`);
+  }
+}
+
+// ===========================================
+// DIRECT THREE.JS SCENE GENERATION
+// ===========================================
+
+const THREEJS_GENERATION_PROMPT = `You are an expert Three.js developer. Generate complete, runnable Three.js code that creates a 3D architectural visualization.
+
+REQUIREMENTS:
+1. Output ONLY JavaScript code, no markdown or explanations
+2. Create a scene with:
+   - Scene, Camera, Renderer
+   - OrbitControls for interaction
+   - Ambient and directional lighting
+   - MeshStandardMaterial with colors for different elements
+3. Generate walls as BoxGeometry with appropriate dimensions
+4. Position rooms according to the layout (arrange them in a logical floor plan)
+5. Add floor and ceiling planes
+6. Use different colors: walls (#e0e0e0), floors (#8B4513), ceilings (#f5f5f5)
+7. Set up proper camera position to view the entire scene
+8. Include window resize handling
+9. Start the animation loop
+
+The code must be completely self-contained and runnable when injected into an HTML page that has Three.js and OrbitControls loaded.
+
+DO NOT include:
+- import statements
+- export statements  
+- HTML elements creation (assume canvas exists)
+- Comments about what the code does`;
+
+export async function generateThreeJSSceneDirectly(
+  layoutSpec: LayoutSpec,
+  units: 'metric' | 'imperial'
+): Promise<{ code: string; warnings: string[]; assumptions: string[] }> {
+  const unitLabel = units === 'metric' ? 'meters' : 'feet';
+  
+  const userPrompt = `Generate a Three.js scene for this building layout (dimensions in ${unitLabel}):
+
+${JSON.stringify(layoutSpec, null, 2)}
+
+Create walls, floors, and ceilings for each room. Position rooms in a logical floor plan layout.`;
+
+  const response = await callLLMAPI({
+    model: 'claude-3-5-sonnet',
+    messages: [
+      { role: 'system', content: THREEJS_GENERATION_PROMPT },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: 0.2,
+    max_tokens: 8000,
+  });
+
+  let code = response.choices[0]?.message?.content || '';
+  
+  // Clean up code - remove markdown if present
+  const codeMatch = code.match(/```(?:javascript|js)?\s*([\s\S]*?)```/);
+  if (codeMatch) {
+    code = codeMatch[1].trim();
+  }
+  
+  // If still no valid code, provide fallback
+  if (!code || code.length < 100) {
+    code = generateFallbackThreeJSCode(layoutSpec);
+  }
+  
+  return {
+    code,
+    warnings: [],
+    assumptions: ['Room positions calculated automatically', 'Standard materials applied'],
+  };
+}
+
+function generateFallbackThreeJSCode(layoutSpec: LayoutSpec): string {
+  const rooms = layoutSpec.levels[0]?.rooms || [];
+  const wallHeight = layoutSpec.globalDefaults?.ceilingHeight || 2.7;
+  const wallThickness = layoutSpec.globalDefaults?.wallThickness || 0.15;
+  
+  // Calculate positions for rooms
+  let currentX = 0;
+  const roomPositions = rooms.map((room, i) => {
+    const pos = { x: currentX, z: 0 };
+    currentX += room.width + 1; // 1m gap between rooms
+    return pos;
+  });
+  
+  return `
+// Scene setup
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a2e);
+
+// Camera
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(${currentX / 2}, 15, 20);
+camera.lookAt(${currentX / 2}, 0, 0);
+
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+// Controls
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(${currentX / 2}, ${wallHeight / 2}, 0);
+controls.update();
+
+// Lighting
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(10, 20, 10);
+directionalLight.castShadow = true;
+scene.add(directionalLight);
+
+// Materials
+const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, side: THREE.DoubleSide });
+const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xf5f5f5 });
+
+// Helper function to create a room
+function createRoom(name, width, length, height, posX, posZ) {
+  const group = new THREE.Group();
+  group.name = name;
+  
+  // Floor
+  const floorGeometry = new THREE.PlaneGeometry(width, length);
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(posX + width/2, 0, posZ + length/2);
+  floor.receiveShadow = true;
+  group.add(floor);
+  
+  // Ceiling
+  const ceiling = new THREE.Mesh(floorGeometry, ceilingMaterial);
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.set(posX + width/2, height, posZ + length/2);
+  group.add(ceiling);
+  
+  // Walls
+  const wallThickness = ${wallThickness};
+  
+  // North wall
+  const northWall = new THREE.Mesh(
+    new THREE.BoxGeometry(width, height, wallThickness),
+    wallMaterial
+  );
+  northWall.position.set(posX + width/2, height/2, posZ);
+  northWall.castShadow = true;
+  group.add(northWall);
+  
+  // South wall
+  const southWall = new THREE.Mesh(
+    new THREE.BoxGeometry(width, height, wallThickness),
+    wallMaterial
+  );
+  southWall.position.set(posX + width/2, height/2, posZ + length);
+  southWall.castShadow = true;
+  group.add(southWall);
+  
+  // East wall
+  const eastWall = new THREE.Mesh(
+    new THREE.BoxGeometry(wallThickness, height, length),
+    wallMaterial
+  );
+  eastWall.position.set(posX + width, height/2, posZ + length/2);
+  eastWall.castShadow = true;
+  group.add(eastWall);
+  
+  // West wall
+  const westWall = new THREE.Mesh(
+    new THREE.BoxGeometry(wallThickness, height, length),
+    wallMaterial
+  );
+  westWall.position.set(posX, height/2, posZ + length/2);
+  westWall.castShadow = true;
+  group.add(westWall);
+  
+  return group;
+}
+
+// Create rooms
+${rooms.map((room, i) => {
+  const pos = roomPositions[i];
+  const height = room.height || wallHeight;
+  return `scene.add(createRoom("${room.name}", ${room.width}, ${room.length}, ${height}, ${pos.x}, ${pos.z}));`;
+}).join('\n')}
+
+// Ground plane
+const groundGeometry = new THREE.PlaneGeometry(${currentX + 10}, 30);
+const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x3a3a5c });
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.rotation.x = -Math.PI / 2;
+ground.position.set(${currentX / 2}, -0.01, 5);
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Grid helper
+const gridHelper = new THREE.GridHelper(50, 50, 0x444444, 0x222222);
+gridHelper.position.y = -0.005;
+scene.add(gridHelper);
+
+// Resize handler
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Animation loop
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+`;
 }

@@ -12,16 +12,16 @@ import {
   AlertTriangle,
   CheckCircle2,
   Code,
-  FileJson,
+  MessageSquare,
   Sparkles,
-  ChevronDown,
-  ChevronUp,
   Eye,
   Copy,
   Info,
   History,
   Plus,
   Trash2,
+  Wand2,
+  Send,
 } from 'lucide-react';
 import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 
 interface RoomSpec {
@@ -101,6 +100,13 @@ const DEFAULT_LAYOUT: LayoutSpec = {
   },
 };
 
+const EXAMPLE_PROMPTS = [
+  'A modern 2-bedroom apartment with an open-plan living room and kitchen, a master bedroom with ensuite bathroom, and a second smaller bedroom',
+  'Small office space with a reception area, 2 private offices, a conference room, and a break room',
+  'Three-story townhouse with living areas on ground floor, bedrooms on second floor, and home office on third floor',
+  'Restaurant layout with main dining area, kitchen, storage room, and two restrooms',
+];
+
 export default function SpatialWorkbenchPage() {
   const { data: session, status } = useSession() || {};
   const router = useRouter();
@@ -111,10 +117,11 @@ export default function SpatialWorkbenchPage() {
   const [units, setUnits] = useState<'metric' | 'imperial'>('metric');
   const [targetEngine, setTargetEngine] = useState<'threejs' | 'babylonjs' | 'unity_csharp'>('threejs');
   const [layoutSpec, setLayoutSpec] = useState<LayoutSpec>(DEFAULT_LAYOUT);
-  const [layoutJson, setLayoutJson] = useState<string>(JSON.stringify(DEFAULT_LAYOUT, null, 2));
+  const [nlPrompt, setNlPrompt] = useState<string>('');
   const [iterationInstructions, setIterationInstructions] = useState<string>('');
   
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const [isIterating, setIsIterating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   
@@ -122,6 +129,7 @@ export default function SpatialWorkbenchPage() {
   const [sceneCode, setSceneCode] = useState<string>('');
   const [showCode, setShowCode] = useState(false);
   const [modelHistory, setModelHistory] = useState<Array<{ id: string; version: number; createdAt: string }>>([]);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   
   const viewerRef = useRef<HTMLIFrameElement>(null);
   
@@ -138,17 +146,6 @@ export default function SpatialWorkbenchPage() {
         .catch(err => console.error('Failed to fetch projects:', err));
     }
   }, [status]);
-  
-  // Parse JSON when textarea changes
-  const handleLayoutJsonChange = (value: string) => {
-    setLayoutJson(value);
-    try {
-      const parsed = JSON.parse(value);
-      setLayoutSpec(parsed);
-    } catch {
-      // Invalid JSON, don't update layoutSpec
-    }
-  };
   
   // Generate scene HTML for iframe
   const generateViewerHtml = useCallback((code: string) => {
@@ -183,9 +180,21 @@ export default function SpatialWorkbenchPage() {
       border-radius: 4px;
       text-align: center;
     }
+    #error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff6b6b;
+      font-family: system-ui, sans-serif;
+      padding: 20px;
+      background: rgba(0,0,0,0.8);
+      border-radius: 8px;
+      max-width: 80%;
+    }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>
 </head>
 <body>
   <div id="info">Orbit: drag | Pan: right-click drag | Zoom: scroll</div>
@@ -195,9 +204,9 @@ export default function SpatialWorkbenchPage() {
       ${code}
     } catch (e) {
       console.error('Scene error:', e);
-      document.body.innerHTML = '<div style="color:#fff;padding:20px;font-family:system-ui;"><h3>Error rendering scene</h3><pre>' + e.message + '</pre></div>';
+      document.body.innerHTML = '<div id="error"><h3>Error rendering scene</h3><pre style="white-space:pre-wrap;">' + e.message + '</pre></div>';
     }
-  </script>
+  <\/script>
 </body>
 </html>
 `;
@@ -211,15 +220,53 @@ export default function SpatialWorkbenchPage() {
     }
   }, [generateViewerHtml]);
   
+  // Convert NL prompt to layout
+  const handleConvertPrompt = async () => {
+    if (!nlPrompt.trim()) {
+      toast.error('Please enter a description');
+      return;
+    }
+    
+    setIsConverting(true);
+    try {
+      const response = await fetch('/api/integrations/kimi/v1/prompt-to-layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: nlPrompt,
+          units,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Conversion failed');
+      }
+      
+      setLayoutSpec(data.layout_spec);
+      toast.success('Layout generated from description!', {
+        description: `Created ${data.layout_spec.levels[0]?.rooms?.length || 0} rooms`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error('Conversion failed', { description: message });
+    } finally {
+      setIsConverting(false);
+    }
+  };
+  
   // Generate scene
   const handleGenerate = async () => {
     setIsGenerating(true);
+    setGenerationError(null);
+    
     try {
       const response = await fetch('/api/integrations/kimi/v1/scene/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          project_id: selectedProjectId || undefined,
+          project_id: selectedProjectId && selectedProjectId !== 'none' ? selectedProjectId : undefined,
           units,
           target_engine: targetEngine,
           layout_spec: layoutSpec,
@@ -246,11 +293,12 @@ export default function SpatialWorkbenchPage() {
         updateViewer(codeArtifact.inline_content);
       }
       
-      toast.success('Scene generated successfully!', {
-        description: `Model ID: ${data.spatial_model_id}`,
+      toast.success('3D Scene generated successfully!', {
+        description: `Model ID: ${data.spatial_model_id?.slice(0, 8)}...`,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
+      setGenerationError(message);
       toast.error('Generation failed', { description: message });
     } finally {
       setIsGenerating(false);
@@ -270,7 +318,7 @@ export default function SpatialWorkbenchPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          project_id: selectedProjectId || undefined,
+          project_id: selectedProjectId && selectedProjectId !== 'none' ? selectedProjectId : undefined,
           spatial_model_id: currentModel.spatial_model_id,
           iteration_instructions: iterationInstructions,
           target_engine: targetEngine,
@@ -300,7 +348,7 @@ export default function SpatialWorkbenchPage() {
       }
       
       toast.success('Scene updated successfully!', {
-        description: `New version created`,
+        description: 'New version created',
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -323,7 +371,7 @@ export default function SpatialWorkbenchPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          project_id: selectedProjectId || undefined,
+          project_id: selectedProjectId && selectedProjectId !== 'none' ? selectedProjectId : undefined,
           spatial_model_id: currentModel.spatial_model_id,
           format,
         }),
@@ -347,7 +395,7 @@ export default function SpatialWorkbenchPage() {
         URL.revokeObjectURL(url);
         
         toast.success('Export script downloaded!', {
-          description: `Run with: blender --background --python script.py`,
+          description: 'Run with: blender --background --python script.py',
         });
       }
     } catch (error) {
@@ -374,7 +422,6 @@ export default function SpatialWorkbenchPage() {
       height: newLayout.globalDefaults.ceilingHeight,
     });
     setLayoutSpec(newLayout);
-    setLayoutJson(JSON.stringify(newLayout, null, 2));
   };
   
   // Remove room
@@ -382,7 +429,6 @@ export default function SpatialWorkbenchPage() {
     const newLayout = { ...layoutSpec };
     newLayout.levels[levelIndex].rooms.splice(roomIndex, 1);
     setLayoutSpec(newLayout);
-    setLayoutJson(JSON.stringify(newLayout, null, 2));
   };
   
   // Update room
@@ -399,7 +445,11 @@ export default function SpatialWorkbenchPage() {
       room.height = Number(value);
     }
     setLayoutSpec(newLayout);
-    setLayoutJson(JSON.stringify(newLayout, null, 2));
+  };
+  
+  // Use example prompt
+  const useExamplePrompt = (prompt: string) => {
+    setNlPrompt(prompt);
   };
   
   if (status === 'loading') {
@@ -428,7 +478,7 @@ export default function SpatialWorkbenchPage() {
                 Spatial Workbench
               </h1>
               <p className="text-muted-foreground">
-                Generate 3D scenes from layout specifications using Kimi K2.5 AI
+                Generate 3D scenes from natural language or visual editor
               </p>
             </div>
           </div>
@@ -452,18 +502,142 @@ export default function SpatialWorkbenchPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Panel - Configuration */}
           <div className="space-y-6">
-            <Tabs defaultValue="visual" className="w-full">
+            <Tabs defaultValue="prompt" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="prompt">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  AI Prompt
+                </TabsTrigger>
                 <TabsTrigger value="visual">
                   <Layers className="h-4 w-4 mr-2" />
                   Visual Editor
                 </TabsTrigger>
-                <TabsTrigger value="json">
-                  <FileJson className="h-4 w-4 mr-2" />
-                  JSON Editor
-                </TabsTrigger>
               </TabsList>
               
+              {/* AI Prompt Tab */}
+              <TabsContent value="prompt" className="space-y-4 mt-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Wand2 className="h-5 w-5" />
+                      Describe Your Space
+                    </CardTitle>
+                    <CardDescription>
+                      Describe the building or space you want to visualize in natural language
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Textarea
+                      value={nlPrompt}
+                      onChange={(e) => setNlPrompt(e.target.value)}
+                      placeholder="e.g., A modern 3-bedroom house with an open-plan living area, kitchen with island, master bedroom with ensuite, two smaller bedrooms, and a shared bathroom..."
+                      className="h-[150px] resize-none"
+                    />
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleConvertPrompt}
+                        disabled={isConverting || !nlPrompt.trim()}
+                        className="flex-1"
+                      >
+                        {isConverting ? (
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4 mr-2" />
+                        )}
+                        {isConverting ? 'Converting...' : 'Generate Layout'}
+                      </Button>
+                    </div>
+                    
+                    <div className="pt-2">
+                      <Label className="text-xs text-muted-foreground mb-2 block">Example prompts:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {EXAMPLE_PROMPTS.map((prompt, i) => (
+                          <Button
+                            key={i}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-auto py-1 px-2"
+                            onClick={() => useExamplePrompt(prompt)}
+                          >
+                            {prompt.slice(0, 40)}...
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Settings Card */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Generation Settings</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Project (Optional)</Label>
+                        <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select project" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No Project</SelectItem>
+                            {projects.map(p => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.projectNumber} - {p.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Units</Label>
+                        <Select value={units} onValueChange={(v) => setUnits(v as 'metric' | 'imperial')}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="metric">Metric (meters)</SelectItem>
+                            <SelectItem value="imperial">Imperial (feet)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Current Layout Preview */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Current Layout</CardTitle>
+                    <CardDescription>
+                      {layoutSpec.levels[0]?.rooms.length || 0} rooms defined
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[150px]">
+                      <div className="space-y-1">
+                        {layoutSpec.levels.map((level, levelIndex) => (
+                          <div key={levelIndex}>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">{level.name}</p>
+                            {level.rooms.map((room, roomIndex) => (
+                              <div key={roomIndex} className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded text-sm">
+                                <span>{room.name}</span>
+                                <span className="text-muted-foreground">
+                                  {room.width} × {room.length}m
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              {/* Visual Editor Tab */}
               <TabsContent value="visual" className="space-y-4 mt-4">
                 {/* Settings */}
                 <Card>
@@ -500,19 +674,6 @@ export default function SpatialWorkbenchPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Target Engine</Label>
-                      <Select value={targetEngine} onValueChange={(v) => setTargetEngine(v as typeof targetEngine)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="threejs">Three.js (Web)</SelectItem>
-                          <SelectItem value="babylonjs">Babylon.js (Web)</SelectItem>
-                          <SelectItem value="unity_csharp">Unity C# (Game Engine)</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                   </CardContent>
                 </Card>
@@ -580,25 +741,6 @@ export default function SpatialWorkbenchPage() {
                   </CardContent>
                 </Card>
               </TabsContent>
-              
-              <TabsContent value="json" className="mt-4">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Layout JSON</CardTitle>
-                    <CardDescription>
-                      Edit the full layout specification in JSON format
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Textarea
-                      value={layoutJson}
-                      onChange={(e) => handleLayoutJsonChange(e.target.value)}
-                      className="font-mono text-sm h-[400px]"
-                      placeholder="Enter layout JSON..."
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
             </Tabs>
             
             {/* Generate Button */}
@@ -613,8 +755,17 @@ export default function SpatialWorkbenchPage() {
               ) : (
                 <Sparkles className="h-5 w-5 mr-2" />
               )}
-              {isGenerating ? 'Generating Scene...' : 'Generate 3D Scene'}
+              {isGenerating ? 'Generating 3D Scene...' : 'Generate 3D Scene'}
             </Button>
+            
+            {/* Generation Error */}
+            {generationError && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Generation Error</AlertTitle>
+                <AlertDescription>{generationError}</AlertDescription>
+              </Alert>
+            )}
             
             {/* Iteration Panel */}
             {currentModel && (
@@ -632,7 +783,7 @@ export default function SpatialWorkbenchPage() {
                   <Textarea
                     value={iterationInstructions}
                     onChange={(e) => setIterationInstructions(e.target.value)}
-                    placeholder="e.g., 'Increase wall thickness to 0.2m' or 'Move the kitchen 2m to the east'"
+                    placeholder="e.g., 'Add windows to all rooms' or 'Make the living room larger'"
                     className="h-[100px]"
                   />
                   <Button
@@ -693,7 +844,7 @@ export default function SpatialWorkbenchPage() {
                     <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
                       <div className="text-center">
                         <Box className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                        <p>Configure layout and click Generate</p>
+                        <p>Describe your space and click Generate</p>
                       </div>
                     </div>
                   ) : (
@@ -722,7 +873,7 @@ export default function SpatialWorkbenchPage() {
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[300px]">
-                    <pre className="text-xs font-mono bg-muted p-4 rounded overflow-x-auto">
+                    <pre className="text-xs font-mono bg-muted p-4 rounded overflow-x-auto whitespace-pre-wrap">
                       {sceneCode}
                     </pre>
                   </ScrollArea>
