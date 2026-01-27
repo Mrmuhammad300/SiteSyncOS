@@ -301,16 +301,120 @@ export function checkPolicyGate(
 }
 
 // ===========================================
+// INPUT VALIDATION & SANITIZATION
+// ===========================================
+
+const MAX_ROOMS_PER_LEVEL = 50;
+const MAX_LEVELS = 10;
+const MAX_DIMENSION = 1000; // meters
+const MIN_DIMENSION = 0.1; // meters
+const MAX_STRING_LENGTH = 200;
+
+function sanitizeString(input: string, maxLength: number = MAX_STRING_LENGTH): string {
+  // Remove potential prompt injection patterns
+  return String(input)
+    .slice(0, maxLength)
+    .replace(/\bignore\s+(all\s+)?(previous|above|prior)\s+instructions?\b/gi, '[REMOVED]')
+    .replace(/\bforget\s+(all\s+)?(previous|above|prior)\b/gi, '[REMOVED]')
+    .replace(/\bsystem\s*:\s*/gi, '[REMOVED]')
+    .replace(/\buser\s*:\s*/gi, '[REMOVED]')
+    .replace(/\bassistant\s*:\s*/gi, '[REMOVED]')
+    .replace(/```/g, '---')  // Prevent code block injection
+    .replace(/[<>]/g, '');   // Remove HTML-like chars
+}
+
+function validateRoomSpec(room: RoomSpec): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  if (!room.name || typeof room.name !== 'string') {
+    errors.push('Room name is required');
+  }
+  
+  if (typeof room.width !== 'number' || room.width < MIN_DIMENSION || room.width > MAX_DIMENSION) {
+    errors.push(`Room width must be between ${MIN_DIMENSION} and ${MAX_DIMENSION}`);
+  }
+  
+  if (typeof room.length !== 'number' || room.length < MIN_DIMENSION || room.length > MAX_DIMENSION) {
+    errors.push(`Room length must be between ${MIN_DIMENSION} and ${MAX_DIMENSION}`);
+  }
+  
+  if (room.height !== undefined && (typeof room.height !== 'number' || room.height < MIN_DIMENSION || room.height > MAX_DIMENSION)) {
+    errors.push(`Room height must be between ${MIN_DIMENSION} and ${MAX_DIMENSION}`);
+  }
+  
+  return { valid: errors.length === 0, errors };
+}
+
+function validateLayoutSpec(layoutSpec: LayoutSpec): { valid: boolean; errors: string[]; sanitized: LayoutSpec } {
+  const errors: string[] = [];
+  
+  if (!layoutSpec || !Array.isArray(layoutSpec.levels)) {
+    return { valid: false, errors: ['Layout must have levels array'], sanitized: layoutSpec };
+  }
+  
+  if (layoutSpec.levels.length > MAX_LEVELS) {
+    errors.push(`Maximum ${MAX_LEVELS} levels allowed`);
+  }
+  
+  const sanitized: LayoutSpec = {
+    levels: [],
+    globalDefaults: {
+      wallThickness: Math.min(Math.max(layoutSpec.globalDefaults?.wallThickness || 0.15, 0.05), 1),
+      ceilingHeight: Math.min(Math.max(layoutSpec.globalDefaults?.ceilingHeight || 2.7, 2), 10),
+    },
+  };
+  
+  for (const level of layoutSpec.levels.slice(0, MAX_LEVELS)) {
+    const sanitizedLevel: LevelSpec = {
+      name: sanitizeString(level.name || 'Floor', 50),
+      elevation: typeof level.elevation === 'number' ? Math.max(-100, Math.min(level.elevation, 500)) : 0,
+      rooms: [],
+    };
+    
+    if (!Array.isArray(level.rooms)) {
+      errors.push(`Level "${sanitizedLevel.name}" must have rooms array`);
+      continue;
+    }
+    
+    if (level.rooms.length > MAX_ROOMS_PER_LEVEL) {
+      errors.push(`Maximum ${MAX_ROOMS_PER_LEVEL} rooms per level allowed`);
+    }
+    
+    for (const room of level.rooms.slice(0, MAX_ROOMS_PER_LEVEL)) {
+      const validation = validateRoomSpec(room);
+      if (!validation.valid) {
+        errors.push(...validation.errors.map(e => `Room "${room.name}": ${e}`));
+      }
+      
+      sanitizedLevel.rooms.push({
+        name: sanitizeString(room.name || 'Room', 100),
+        width: Math.min(Math.max(Number(room.width) || 4, MIN_DIMENSION), MAX_DIMENSION),
+        length: Math.min(Math.max(Number(room.length) || 4, MIN_DIMENSION), MAX_DIMENSION),
+        height: room.height ? Math.min(Math.max(Number(room.height), MIN_DIMENSION), MAX_DIMENSION) : undefined,
+        position: room.position,
+      });
+    }
+    
+    sanitized.levels.push(sanitizedLevel);
+  }
+  
+  return { valid: errors.length === 0, errors, sanitized };
+}
+
+// ===========================================
 // PROMPT BUILDING
 // ===========================================
 
 function formatLayoutSpecForPrompt(layoutSpec: LayoutSpec, units: 'metric' | 'imperial'): string {
   const unitLabel = units === 'metric' ? 'meters' : 'feet';
   
+  // Validate and sanitize the layout spec before use in prompt
+  const { sanitized } = validateLayoutSpec(layoutSpec);
+  
   let prompt = `Here is a JSON layout specification describing a building. All dimensions are in ${unitLabel}.\n\n`;
-  prompt += '```json\n';
-  prompt += JSON.stringify(layoutSpec, null, 2);
-  prompt += '\n```\n\n';
+  prompt += '---json\n';  // Use --- instead of ``` to prevent injection
+  prompt += JSON.stringify(sanitized, null, 2);
+  prompt += '\n---\n\n';
   prompt += 'Please generate complete, runnable 3D scene code based on this specification.\n';
   prompt += 'Ensure all rooms, walls, doors, windows, and furniture are positioned correctly.\n';
   prompt += 'Include proper materials and lighting for visualization.\n';
@@ -347,14 +451,18 @@ function buildSystemPrompt(contract: PromptContract, constraints?: GenerationCon
 }
 
 function buildIterationPrompt(originalCode: string, instructions: string): string {
+  // Sanitize iteration instructions to prevent prompt injection
+  const sanitizedInstructions = sanitizeString(instructions, 2000);
+  
   let prompt = 'Here is the current 3D scene code:\n\n';
-  prompt += '```javascript\n';
+  prompt += '---javascript\n';  // Use --- to prevent injection
   prompt += originalCode;
-  prompt += '\n```\n\n';
-  prompt += 'User requested changes:\n';
-  prompt += instructions + '\n\n';
+  prompt += '\n---\n\n';
+  prompt += 'User requested changes (for 3D visualization only):\n';
+  prompt += sanitizedInstructions + '\n\n';
   prompt += 'Please generate the updated complete scene code with the requested changes.\n';
   prompt += 'Maintain all existing functionality and safety labels.\n';
+  prompt += 'IMPORTANT: Only modify 3D rendering code. Do not add network calls, data access, or browser APIs.\n';
   
   return prompt;
 }

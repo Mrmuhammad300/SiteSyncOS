@@ -147,12 +147,56 @@ export default function SpatialWorkbenchPage() {
     }
   }, [status]);
   
-  // Generate scene HTML for iframe
+  // Sanitize code to prevent obvious injection attempts
+  const sanitizeGeneratedCode = useCallback((code: string): string => {
+    // Remove potentially dangerous patterns from AI-generated code
+    const dangerousPatterns = [
+      /eval\s*\(/gi,
+      /Function\s*\(/gi,
+      /new\s+Function\s*\(/gi,
+      /document\.cookie/gi,
+      /localStorage\./gi,
+      /sessionStorage\./gi,
+      /window\.opener/gi,
+      /window\.parent/gi,
+      /window\.top/gi,
+      /parent\./gi,
+      /top\./gi,
+      /fetch\s*\(\s*['"`][^'"`]*(?:http|\/\/)/gi,  // External fetch calls
+      /XMLHttpRequest/gi,
+      /\.innerHTML\s*=/gi,
+      /\.outerHTML\s*=/gi,
+      /document\.write/gi,
+      /document\.writeln/gi,
+      /importScripts/gi,
+      /\.src\s*=\s*['"`][^'"`]*(?:http|data:|javascript:)/gi,
+    ];
+    
+    let sanitized = code;
+    for (const pattern of dangerousPatterns) {
+      sanitized = sanitized.replace(pattern, '/* BLOCKED */');
+    }
+    
+    // Limit code size to prevent DoS
+    const MAX_CODE_SIZE = 500000; // 500KB
+    if (sanitized.length > MAX_CODE_SIZE) {
+      console.warn('Generated code exceeds size limit, truncating');
+      sanitized = sanitized.slice(0, MAX_CODE_SIZE);
+    }
+    
+    return sanitized;
+  }, []);
+  
+  // Generate scene HTML for iframe - SANDBOXED
   const generateViewerHtml = useCallback((code: string) => {
+    // Sanitize the code before injection
+    const safeCode = sanitizeGeneratedCode(code);
+    
     return `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'none';">
   <style>
     body { margin: 0; overflow: hidden; background: #1a1a2e; }
     canvas { display: block; }
@@ -200,17 +244,24 @@ export default function SpatialWorkbenchPage() {
   <div id="info">Orbit: drag | Pan: right-click drag | Zoom: scroll</div>
   <div id="disclaimer">⚠️ AI-GENERATED PREVIEW | NOT FOR CONSTRUCTION | NON-AUTHORITATIVE</div>
   <script>
+    // Disable dangerous APIs inside sandbox
+    window.fetch = function() { throw new Error('Network access disabled in preview'); };
+    window.XMLHttpRequest = function() { throw new Error('Network access disabled in preview'); };
+    
     try {
-      ${code}
+      ${safeCode}
     } catch (e) {
       console.error('Scene error:', e);
-      document.body.innerHTML = '<div id="error"><h3>Error rendering scene</h3><pre style="white-space:pre-wrap;">' + e.message + '</pre></div>';
+      const errorDiv = document.createElement('div');
+      errorDiv.id = 'error';
+      errorDiv.innerHTML = '<h3>Error rendering scene</h3><pre style="white-space:pre-wrap;">' + String(e.message).slice(0, 500) + '</pre>';
+      document.body.appendChild(errorDiv);
     }
   <\/script>
 </body>
 </html>
 `;
-  }, []);
+  }, [sanitizeGeneratedCode]);
   
   // Update viewer
   const updateViewer = useCallback((code: string) => {
@@ -412,40 +463,59 @@ export default function SpatialWorkbenchPage() {
     toast.success('Code copied to clipboard');
   };
   
-  // Add room
-  const addRoom = (levelIndex: number) => {
-    const newLayout = { ...layoutSpec };
-    newLayout.levels[levelIndex].rooms.push({
-      name: `Room ${newLayout.levels[levelIndex].rooms.length + 1}`,
-      width: 4,
-      length: 4,
-      height: newLayout.globalDefaults.ceilingHeight,
+  // Deep clone helper to ensure immutable state updates
+  const deepCloneLayout = useCallback((layout: LayoutSpec): LayoutSpec => {
+    return JSON.parse(JSON.stringify(layout));
+  }, []);
+  
+  // Add room (with proper immutable update)
+  const addRoom = useCallback((levelIndex: number) => {
+    setLayoutSpec(prevLayout => {
+      const newLayout = deepCloneLayout(prevLayout);
+      if (newLayout.levels[levelIndex]) {
+        newLayout.levels[levelIndex].rooms.push({
+          name: `Room ${newLayout.levels[levelIndex].rooms.length + 1}`,
+          width: 4,
+          length: 4,
+          height: newLayout.globalDefaults.ceilingHeight,
+        });
+      }
+      return newLayout;
     });
-    setLayoutSpec(newLayout);
-  };
+  }, [deepCloneLayout]);
   
-  // Remove room
-  const removeRoom = (levelIndex: number, roomIndex: number) => {
-    const newLayout = { ...layoutSpec };
-    newLayout.levels[levelIndex].rooms.splice(roomIndex, 1);
-    setLayoutSpec(newLayout);
-  };
+  // Remove room (with proper immutable update)
+  const removeRoom = useCallback((levelIndex: number, roomIndex: number) => {
+    setLayoutSpec(prevLayout => {
+      const newLayout = deepCloneLayout(prevLayout);
+      if (newLayout.levels[levelIndex]?.rooms[roomIndex]) {
+        newLayout.levels[levelIndex].rooms.splice(roomIndex, 1);
+      }
+      return newLayout;
+    });
+  }, [deepCloneLayout]);
   
-  // Update room
-  const updateRoom = (levelIndex: number, roomIndex: number, field: 'name' | 'width' | 'length' | 'height', value: string | number) => {
-    const newLayout = { ...layoutSpec };
-    const room = newLayout.levels[levelIndex].rooms[roomIndex];
-    if (field === 'name') {
-      room.name = value as string;
-    } else if (field === 'width') {
-      room.width = Number(value);
-    } else if (field === 'length') {
-      room.length = Number(value);
-    } else if (field === 'height') {
-      room.height = Number(value);
-    }
-    setLayoutSpec(newLayout);
-  };
+  // Update room (with proper immutable update and validation)
+  const updateRoom = useCallback((levelIndex: number, roomIndex: number, field: 'name' | 'width' | 'length' | 'height', value: string | number) => {
+    setLayoutSpec(prevLayout => {
+      const newLayout = deepCloneLayout(prevLayout);
+      const room = newLayout.levels[levelIndex]?.rooms[roomIndex];
+      if (!room) return prevLayout;
+      
+      if (field === 'name') {
+        // Sanitize name to prevent injection (max 100 chars, alphanumeric + spaces)
+        const sanitizedName = String(value).slice(0, 100).replace(/[<>'"]/g, '');
+        room.name = sanitizedName;
+      } else if (field === 'width' || field === 'length' || field === 'height') {
+        const numValue = Number(value);
+        // Validate numeric bounds (0.1m to 1000m)
+        if (!isNaN(numValue) && numValue > 0 && numValue <= 1000) {
+          room[field] = numValue;
+        }
+      }
+      return newLayout;
+    });
+  }, [deepCloneLayout]);
   
   // Use example prompt
   const useExamplePrompt = (prompt: string) => {
@@ -851,7 +921,7 @@ export default function SpatialWorkbenchPage() {
                     <iframe
                       ref={viewerRef}
                       className="w-full h-full border-0"
-                      sandbox="allow-scripts allow-same-origin"
+                      sandbox="allow-scripts"
                       title="3D Scene Viewer"
                     />
                   )}

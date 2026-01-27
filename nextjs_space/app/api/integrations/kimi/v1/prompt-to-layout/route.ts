@@ -10,6 +10,16 @@ import { convertPromptToLayout } from '@/lib/kimi-spatial';
 
 export const maxDuration = 60;
 
+// Input sanitization for prompt
+function sanitizePrompt(prompt: string): string {
+  // Limit length and remove potential injection patterns
+  return prompt
+    .slice(0, 5000)
+    .replace(/\bignore\s+(all\s+)?(previous|above|prior)\s+instructions?\b/gi, '')
+    .replace(/\bsystem\s*:\s*/gi, '')
+    .replace(/```/g, '');
+}
+
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,14 +36,24 @@ export async function POST(request: Request) {
       );
     }
 
-    const units = body.units || 'metric';
+    // Sanitize the user prompt
+    const sanitizedPrompt = sanitizePrompt(body.prompt);
     
-    const result = await convertPromptToLayout(body.prompt, units);
+    if (sanitizedPrompt.length < 10) {
+      return NextResponse.json(
+        { error: 'Prompt too short. Please provide a more detailed description.' },
+        { status: 400 }
+      );
+    }
+
+    const units = body.units === 'imperial' ? 'imperial' : 'metric';  // Strict validation
+    
+    const result = await convertPromptToLayout(sanitizedPrompt, units);
 
     return NextResponse.json({
       success: true,
       layout_spec: result.layoutSpec,
-      raw_response: result.rawResponse,
+      // NOTE: raw_response removed to prevent information disclosure
     });
   } catch (error) {
     console.error('Prompt to layout conversion error:', error);
@@ -42,13 +62,14 @@ export async function POST(request: Request) {
     
     if (message.includes('ABACUSAI_API_KEY')) {
       return NextResponse.json(
-        { error: 'LLM API not configured. Please check server configuration.' },
+        { error: 'Service temporarily unavailable. Please try again.' },
         { status: 503 }
       );
     }
     
+    // Return generic error to prevent information disclosure
     return NextResponse.json(
-      { error: message },
+      { error: 'Failed to generate layout. Please try a different description.' },
       { status: 500 }
     );
   }
