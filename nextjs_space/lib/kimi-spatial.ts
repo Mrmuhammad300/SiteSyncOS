@@ -526,6 +526,10 @@ async function callLLMAPI(request: LLMChatRequest): Promise<LLMChatResponse> {
     throw new Error('ABACUSAI_API_KEY environment variable not set');
   }
   
+  // Use claude-3-5-sonnet-v2 (valid model name for RouteLLM API)
+  // Alternative: omit model to use route-llm auto-routing
+  const modelName = request.model || 'claude-3-5-sonnet-v2';
+  
   const response = await fetch(`${LLM_API_BASE}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -534,7 +538,7 @@ async function callLLMAPI(request: LLMChatRequest): Promise<LLMChatResponse> {
     },
     body: JSON.stringify({
       ...request,
-      model: 'claude-3-5-sonnet', // Use Claude for better code generation
+      model: modelName,
     }),
   });
   
@@ -677,9 +681,9 @@ export async function generateScene(
     messages.push({ role: 'user', content: userPrompt });
   }
   
-  // Call Kimi API
+  // Call LLM API (using Abacus RouteLLM)
   const kimiResponse = await callKimiAPI({
-    model: 'moonshot-v1-128k',
+    model: 'claude-3-5-sonnet-v2',
     messages,
     temperature: 0.3,
     max_tokens: 16000,
@@ -832,9 +836,9 @@ export async function iterateScene(
   const systemPrompt = buildSystemPrompt(contract);
   const userPrompt = buildIterationPrompt(originalCode, request.iterationInstructions);
   
-  // Call Kimi API
+  // Call LLM API (using Abacus RouteLLM)
   const kimiResponse = await callKimiAPI({
-    model: 'moonshot-v1-128k',
+    model: 'claude-3-5-sonnet-v2',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -976,9 +980,9 @@ export async function exportScene(
   const systemPrompt = buildSystemPrompt(contract);
   const userPrompt = buildExportPrompt(sceneCode, request.format, existingModel.layoutSpec as unknown as LayoutSpec);
   
-  // Call Kimi API
+  // Call LLM API (using Abacus RouteLLM)
   const kimiResponse = await callKimiAPI({
-    model: 'moonshot-v1-128k',
+    model: 'claude-3-5-sonnet-v2',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -1176,7 +1180,7 @@ export async function convertPromptToLayout(
     : prompt;
 
   const response = await callLLMAPI({
-    model: 'claude-3-5-sonnet',
+    model: 'claude-3-5-sonnet-v2',
     messages: [
       { role: 'system', content: NL_TO_LAYOUT_SYSTEM_PROMPT },
       { role: 'user', content: userPrompt },
@@ -1266,7 +1270,7 @@ ${JSON.stringify(layoutSpec, null, 2)}
 Create walls, floors, and ceilings for each room. Position rooms in a logical floor plan layout.`;
 
   const response = await callLLMAPI({
-    model: 'claude-3-5-sonnet',
+    model: 'claude-3-5-sonnet-v2',
     messages: [
       { role: 'system', content: THREEJS_GENERATION_PROMPT },
       { role: 'user', content: userPrompt },
