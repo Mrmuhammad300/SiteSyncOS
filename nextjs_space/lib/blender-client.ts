@@ -3,8 +3,6 @@
  * Enables AI-powered 3D modeling for construction visualization
  */
 
-import { prisma } from './db';
-
 // Blender MCP Configuration
 const BLENDER_HOST = process.env.BLENDER_HOST || 'localhost';
 const BLENDER_PORT = parseInt(process.env.BLENDER_PORT || '9876');
@@ -393,27 +391,36 @@ export async function createSiteVisualization(
     includeEquipment?: boolean;
     style?: 'realistic' | 'schematic' | 'wireframe';
   } = {}
-): Promise<{ success: boolean; sceneId?: string; previewUrl?: string }> {
-  const client = getBlenderClient();
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-  });
+): Promise<{ success: boolean; sceneId?: string; previewUrl?: string; error?: string }> {
+  try {
+    const { prisma } = await import('./db');
+    const client = getBlenderClient();
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+    });
 
-  if (!project) {
-    return { success: false };
+    if (!project) {
+      return { success: false, error: 'Project not found' };
+    }
+
+    // Build the scene based on project data
+    await client.getSceneInfo();
+
+    // Log the operation
+    console.log(`[BlenderMCP] Creating site visualization for project: ${project.name}`);
+
+    return {
+      success: true,
+      sceneId: `scene_${projectId}_${Date.now()}`,
+      previewUrl: '/api/blender/preview/' + projectId,
+    };
+  } catch (error) {
+    console.error('[BlenderMCP] createSiteVisualization error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create site visualization',
+    };
   }
-
-  // Build the scene based on project data
-  await client.getSceneInfo();
-  
-  // Log the operation
-  console.log(`[BlenderMCP] Creating site visualization for project: ${project.name}`);
-
-  return {
-    success: true,
-    sceneId: `scene_${projectId}_${Date.now()}`,
-    previewUrl: '/api/blender/preview/' + projectId,
-  };
 }
 
 /**
@@ -450,25 +457,34 @@ export async function generateBuildingModel(
 export async function renderPropertyVisualization(
   propertyId: string,
   viewType: 'aerial' | 'street' | 'interior' | 'isometric' = 'aerial'
-): Promise<{ success: boolean; imageUrl?: string }> {
-  const client = getBlenderClient();
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
-  });
+): Promise<{ success: boolean; imageUrl?: string; error?: string }> {
+  try {
+    const { prisma } = await import('./db');
+    const client = getBlenderClient();
+    const property = await prisma.property.findUnique({
+      where: { id: propertyId },
+    });
 
-  if (!property) {
-    return { success: false };
+    if (!property) {
+      return { success: false, error: 'Property not found' };
+    }
+
+    console.log(`[BlenderMCP] Rendering ${viewType} view for property: ${property.name}`);
+
+    // Get screenshot from Blender
+    const screenshot = await client.getViewportScreenshot();
+
+    return {
+      success: true,
+      imageUrl: `data:image/png;base64,${screenshot}`,
+    };
+  } catch (error) {
+    console.error('[BlenderMCP] renderPropertyVisualization error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to render property visualization',
+    };
   }
-
-  console.log(`[BlenderMCP] Rendering ${viewType} view for property: ${property.name}`);
-
-  // Get screenshot from Blender
-  const screenshot = await client.getViewportScreenshot();
-
-  return {
-    success: true,
-    imageUrl: `data:image/png;base64,${screenshot}`,
-  };
 }
 
 // ============================================
