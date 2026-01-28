@@ -325,22 +325,22 @@ export default function AIAssistantPage() {
 
         {/* Main Content */}
         <Tabs defaultValue="agents" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:w-[600px]">
             <TabsTrigger value="agents" className="flex items-center gap-2">
-              <Bot className="w-4 h-4" />
+              <Bot className="w-4 h-4 hidden sm:inline" />
               Agents
             </TabsTrigger>
             <TabsTrigger value="executions" className="flex items-center gap-2">
-              <Activity className="w-4 h-4" />
+              <Activity className="w-4 h-4 hidden sm:inline" />
               Executions
             </TabsTrigger>
             <TabsTrigger value="approvals" className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+              <Clock className="w-4 h-4 hidden sm:inline" />
               Approvals
             </TabsTrigger>
             <TabsTrigger value="graph" className="flex items-center gap-2">
-              <GitBranch className="w-4 h-4" />
-              Dependency Graph
+              <GitBranch className="w-4 h-4 hidden sm:inline" />
+              Graph
             </TabsTrigger>
           </TabsList>
 
@@ -420,31 +420,31 @@ export default function AIAssistantPage() {
                     {executions.map(exec => (
                       <div
                         key={exec.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer gap-3"
                         onClick={() => setSelectedExecution(exec)}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="p-2 bg-blue-100 rounded-lg">
+                          <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                             <Bot className="w-5 h-5 text-blue-600" />
                           </div>
-                          <div>
-                            <p className="font-medium">{exec.agent.name}</p>
-                            <p className="text-sm text-muted-foreground">
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{exec.agent.name}</p>
+                            <p className="text-sm text-muted-foreground truncate">
                               {exec.eventType.replace(/([A-Z])/g, ' $1').trim()}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 sm:gap-4 flex-wrap sm:flex-nowrap pl-12 sm:pl-0">
                           {exec.project && (
-                            <Badge variant="outline">{exec.project.name}</Badge>
+                            <Badge variant="outline" className="truncate max-w-[120px]">{exec.project.name}</Badge>
                           )}
                           {exec.confidenceScore && (
-                            <span className="text-sm text-muted-foreground">
-                              {(exec.confidenceScore * 100).toFixed(0)}% conf.
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">
+                              {(exec.confidenceScore * 100).toFixed(0)}%
                             </span>
                           )}
                           {getStatusBadge(exec.status)}
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                          <ChevronRight className="w-5 h-5 text-gray-400 hidden sm:block" />
                         </div>
                       </div>
                     ))}
@@ -587,42 +587,42 @@ export default function AIAssistantPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-medium mb-2">Decision Flow</h4>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Badge variant="outline">Orchestrator</Badge>
-                        <ChevronRight className="w-4 h-4" />
-                        <Badge variant="outline">Decision Advisor</Badge>
-                        <ChevronRight className="w-4 h-4" />
-                        <Badge variant="outline">Risk Sentinel</Badge>
+                      <div className="flex items-center gap-1 sm:gap-2 text-sm flex-wrap">
+                        <Badge variant="outline" className="text-xs">Orchestrator</Badge>
+                        <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                        <Badge variant="outline" className="text-xs">Decision Advisor</Badge>
+                        <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                        <Badge variant="outline" className="text-xs">Risk Sentinel</Badge>
                       </div>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-medium mb-2">Escalation Path</h4>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Badge variant="outline">Risk Sentinel</Badge>
-                        <ChevronRight className="w-4 h-4" />
-                        <Badge variant="outline">Ethics Council</Badge>
-                        <ChevronRight className="w-4 h-4" />
-                        <Badge variant="outline">Human Liaison</Badge>
+                      <div className="flex items-center gap-1 sm:gap-2 text-sm flex-wrap">
+                        <Badge variant="outline" className="text-xs">Risk Sentinel</Badge>
+                        <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                        <Badge variant="outline" className="text-xs">Ethics Council</Badge>
+                        <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                        <Badge variant="outline" className="text-xs">Human Liaison</Badge>
                       </div>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-medium mb-2">Quality Control</h4>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Badge variant="outline">Meta Reasoning</Badge>
-                        <ChevronRight className="w-4 h-4" />
-                        <Badge variant="outline">Truth Validator</Badge>
-                        <ChevronRight className="w-4 h-4" />
-                        <Badge variant="outline">Memory Curator</Badge>
+                      <div className="flex items-center gap-1 sm:gap-2 text-sm flex-wrap">
+                        <Badge variant="outline" className="text-xs">Meta Reasoning</Badge>
+                        <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                        <Badge variant="outline" className="text-xs">Truth Validator</Badge>
+                        <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                        <Badge variant="outline" className="text-xs">Memory Curator</Badge>
                       </div>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <h4 className="font-medium mb-2">Execution Path</h4>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Badge variant="outline">Workflow Engine</Badge>
-                        <ChevronRight className="w-4 h-4" />
-                        <Badge variant="outline">AI Overseer</Badge>
-                        <ChevronRight className="w-4 h-4" />
-                        <Badge variant="outline">Transparency</Badge>
+                      <div className="flex items-center gap-1 sm:gap-2 text-sm flex-wrap">
+                        <Badge variant="outline" className="text-xs">Workflow Engine</Badge>
+                        <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                        <Badge variant="outline" className="text-xs">AI Overseer</Badge>
+                        <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                        <Badge variant="outline" className="text-xs">Transparency</Badge>
                       </div>
                     </div>
                   </div>

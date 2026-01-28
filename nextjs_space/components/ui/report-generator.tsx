@@ -282,7 +282,7 @@ export function ReportGenerator({
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
               <TabsTrigger value="type">Report Type</TabsTrigger>
               <TabsTrigger value="style">Style</TabsTrigger>
               <TabsTrigger value="sections">Sections</TabsTrigger>
@@ -291,7 +291,7 @@ export function ReportGenerator({
 
             {/* Report Type Tab */}
             <TabsContent value="type" className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {REPORT_TYPES.map(type => {
                   const Icon = type.icon;
                   return (
@@ -348,7 +348,7 @@ export function ReportGenerator({
 
               <div className="pt-4">
                 <Label className="text-sm font-medium">Output Format</Label>
-                <div className="grid grid-cols-4 gap-2 mt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
                   {REPORT_FORMATS.map(format => {
                     const Icon = format.icon;
                     return (
@@ -369,7 +369,7 @@ export function ReportGenerator({
 
             {/* Sections Tab */}
             <TabsContent value="sections" className="space-y-4">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {sectionOptions.map(section => (
                   <div
                     key={section.id}
