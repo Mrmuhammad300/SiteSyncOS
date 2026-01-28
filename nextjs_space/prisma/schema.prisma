@@ -77,6 +77,10 @@ model User {
   workflowsInitiated      DrawApprovalWorkflow[]  @relation("WorkflowInitiator")
   workflowsDecided        DrawApprovalWorkflow[]  @relation("WorkflowDecider")
   agentExecutionsApproved AgentExecution[]
+  materialCreations       Material[]              @relation("MaterialCreator")
+  projectMaterialCreations ProjectMaterial[]      @relation("ProjectMaterialCreator")
+  specCreations           MaterialSpecification[] @relation("MaterialSpecCreator")
+  templateCreations       MaterialTemplate[]      @relation("MaterialTemplateCreator")
 }
 
 model Project {
@@ -141,6 +145,9 @@ model Project {
   cashflowForecasts    CashflowForecast[]
   agentExecutions      AgentExecution[]
   agentMemories        AgentMemory[]
+  projectMaterials      ProjectMaterial[]
+  materialSpecifications MaterialSpecification[]
+  materialSubstitutions MaterialSubstitution[]
 }
 
 model ProjectTeam {
@@ -2348,19 +2355,379 @@ model AgentLearningSignal {
   id              String          @id @default(cuid())
   executionId     String
   agentId         String
-  
+
   signalType      String          // "human_correction", "outcome_success", "error"
   originalOutput  Json?
   correctedOutput Json?
   feedback        String?         @db.Text
-  
+
   outcomeMetrics  Json?           // Measured outcomes
   isPositive      Boolean
   weight          Float           @default(1.0)
-  
+
   processedAt     DateTime?
   createdAt       DateTime        @default(now())
-  
+
   @@index([agentId])
   @@index([signalType])
+}
+
+// ============================================
+// MATERIAL LIBRARY MODELS
+// ============================================
+
+model MaterialCategory {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  description     String?
+  parentId        String?
+  csiDivision     String?
+  csiSection      String?
+  displayOrder    Int       @default(0)
+  iconName        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  parent          MaterialCategory?  @relation("MatCategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children        MaterialCategory[] @relation("MatCategoryHierarchy")
+  materials       Material[]
+
+  @@index([parentId])
+  @@index([csiDivision, csiSection])
+}
+
+model Material {
+  id                    String    @id @default(cuid())
+
+  // Basic Information
+  name                  String
+  description           String?   @db.Text
+  manufacturer          String?
+  productLine           String?
+  modelNumber           String?
+  sku                   String?
+
+  // Categorization
+  categoryId            String
+  csiDivision           String?
+  csiSection            String?
+
+  // Pricing
+  unitCost              Decimal?  @db.Decimal(12, 4)
+  unitOfMeasure         String
+  currency              String    @default("USD")
+  priceDate             DateTime?
+  priceSource           String?
+
+  // Availability
+  leadTimeDays          Int?
+  availabilityStatus    MaterialAvailability @default(AVAILABLE)
+  minimumOrderQuantity  Decimal?  @db.Decimal(10, 2)
+
+  // Performance Attributes (JSON for flexibility)
+  structuralProperties  Json?
+  thermalProperties     Json?
+  acousticProperties    Json?
+  fireRatings           Json?
+  sustainabilityMetrics Json?
+
+  // Compliance
+  buildingCodeCompliant Boolean   @default(false)
+  certifications        String[]
+  approvalRegions       String[]
+
+  // Documentation
+  dataSheetUrl          String?
+  installationGuideUrl  String?
+  warrantyInfo          String?   @db.Text
+  expectedLifespan      Int?
+  maintenanceNotes      String?   @db.Text
+
+  // Vendor Information
+  primaryVendorId       String?
+  alternativeVendorIds  String[]
+
+  // Metadata
+  isActive              Boolean   @default(true)
+  isFavorite            Boolean   @default(false)
+  tags                  String[]
+  imageUrl              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  createdById           String?
+
+  // Relationships
+  category              MaterialCategory @relation(fields: [categoryId], references: [id])
+  primaryVendor         Vendor?         @relation("PrimaryVendor", fields: [primaryVendorId], references: [id])
+  createdBy             User?           @relation("MaterialCreator", fields: [createdById], references: [id])
+  priceHistory          MaterialPriceHistory[]
+  projectMaterials      ProjectMaterial[]
+  specifications        MaterialSpecification[]
+  substitutionsFrom     MaterialSubstitution[] @relation("OriginalMaterial")
+  substitutionsTo       MaterialSubstitution[] @relation("SubstituteMaterial")
+  templateMaterials     MaterialTemplateMaterial[]
+
+  @@index([categoryId])
+  @@index([manufacturer])
+  @@index([csiDivision, csiSection])
+  @@index([availabilityStatus])
+  @@index([isActive])
+  @@index([createdById])
+}
+
+enum MaterialAvailability {
+  AVAILABLE
+  LIMITED_STOCK
+  SPECIAL_ORDER
+  DISCONTINUED
+  OBSOLETE
+}
+
+model MaterialPriceHistory {
+  id              String    @id @default(cuid())
+  materialId      String
+  unitCost        Decimal   @db.Decimal(12, 4)
+  effectiveDate   DateTime
+  source          String?
+  vendorId        String?
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now())
+
+  material        Material  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  vendor          Vendor?   @relation(fields: [vendorId], references: [id])
+
+  @@index([materialId, effectiveDate])
+  @@index([vendorId])
+}
+
+model Vendor {
+  id              String    @id @default(cuid())
+  name            String
+  companyName     String?
+  contactName     String?
+  email           String?
+  phone           String?
+  address         String?
+  city            String?
+  state           String?
+  zipCode         String?
+  country         String    @default("USA")
+  website         String?
+
+  // Business Details
+  vendorType      VendorType
+  specialties     String[]
+  serviceRegions  String[]
+  paymentTerms    String?
+  shippingPolicy  String?   @db.Text
+  returnPolicy    String?   @db.Text
+
+  // Performance Metrics
+  reliabilityScore Decimal? @db.Decimal(3, 2)
+  averageLeadTime  Int?
+  onTimeDeliveryRate Decimal? @db.Decimal(5, 2)
+
+  // Status
+  isActive        Boolean   @default(true)
+  isPreferred     Boolean   @default(false)
+
+  // Metadata
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  materials       Material[]         @relation("PrimaryVendor")
+  priceHistory    MaterialPriceHistory[]
+
+  @@index([vendorType])
+  @@index([isActive, isPreferred])
+}
+
+enum VendorType {
+  MANUFACTURER
+  DISTRIBUTOR
+  SUPPLIER
+  FABRICATOR
+  SPECIALTY
+}
+
+model ProjectMaterial {
+  id              String    @id @default(cuid())
+  projectId       String
+  materialId      String
+
+  // Quantity & Location
+  quantity        Decimal   @db.Decimal(10, 2)
+  location        String?
+  specSection     String?
+
+  // Status
+  status          ProjectMaterialStatus @default(SPECIFIED)
+  approvalStatus  MaterialApprovalStatus @default(PENDING)
+  approvedBy      String?
+  approvedDate    DateTime?
+
+  // Cost Tracking
+  budgetedCost    Decimal?  @db.Decimal(12, 2)
+  actualCost      Decimal?  @db.Decimal(12, 2)
+
+  // Installation
+  installDate     DateTime?
+  installedBy     String?
+
+  // Substitution
+  isSubstitution  Boolean   @default(false)
+  originalMaterialId String?
+  substitutionReason String? @db.Text
+
+  // Metadata
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdById     String
+
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  material        Material  @relation(fields: [materialId], references: [id])
+  createdBy       User      @relation("ProjectMaterialCreator", fields: [createdById], references: [id])
+
+  @@unique([projectId, materialId, location])
+  @@index([projectId])
+  @@index([materialId])
+  @@index([status])
+  @@index([approvalStatus])
+  @@index([createdById])
+}
+
+enum ProjectMaterialStatus {
+  SPECIFIED
+  APPROVED
+  ORDERED
+  IN_TRANSIT
+  DELIVERED
+  INSTALLED
+  REJECTED
+}
+
+enum MaterialApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REQUIRES_REVIEW
+}
+
+model MaterialSpecification {
+  id              String    @id @default(cuid())
+  materialId      String
+  projectId       String?
+
+  // Specification Details
+  specSection     String
+  specTitle       String
+  requirements    String    @db.Text
+  performanceCriteria String? @db.Text
+
+  // Testing & Quality Control
+  testingRequired Boolean   @default(false)
+  testingStandards String[]
+  qualityControlNotes String? @db.Text
+
+  // Submittals
+  submittalRequired Boolean  @default(true)
+  sampleRequired   Boolean   @default(false)
+  mockupRequired   Boolean   @default(false)
+
+  // Installation
+  installationMethod String?  @db.Text
+  specialInstructions String? @db.Text
+
+  // Warranty
+  warrantyPeriod   Int?
+  warrantyType     String?
+
+  // Metadata
+  version          String    @default("1.0")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  createdById      String
+
+  material         Material  @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  project          Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy        User      @relation("MaterialSpecCreator", fields: [createdById], references: [id])
+
+  @@index([materialId])
+  @@index([projectId])
+  @@index([specSection])
+  @@index([createdById])
+}
+
+model MaterialSubstitution {
+  id              String    @id @default(cuid())
+  projectId       String
+  originalMaterialId String
+  substituteMaterialId String
+
+  // Substitution Details
+  reason          String    @db.Text
+  requestedBy     String
+  requestDate     DateTime  @default(now())
+
+  // Approval Workflow
+  status          MaterialApprovalStatus @default(PENDING)
+  reviewedBy      String?
+  reviewDate      DateTime?
+  reviewNotes     String?   @db.Text
+
+  // Cost Impact
+  costDifference  Decimal?  @db.Decimal(12, 2)
+  impactsSchedule Boolean   @default(false)
+  scheduleDays    Int?
+
+  // Metadata
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  originalMaterial Material @relation("OriginalMaterial", fields: [originalMaterialId], references: [id])
+  substituteMaterial Material @relation("SubstituteMaterial", fields: [substituteMaterialId], references: [id])
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model MaterialTemplate {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?   @db.Text
+  projectType     String?
+  buildingType    String?
+
+  // Metadata
+  isPublic        Boolean   @default(false)
+  useCount        Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdById     String
+
+  createdBy       User      @relation("MaterialTemplateCreator", fields: [createdById], references: [id])
+  materials       MaterialTemplateMaterial[]
+
+  @@index([projectType])
+  @@index([createdById])
+  @@index([isPublic])
+}
+
+model MaterialTemplateMaterial {
+  id              String    @id @default(cuid())
+  templateId      String
+  materialId      String
+  quantity        Decimal?  @db.Decimal(10, 2)
+  location        String?
+  notes           String?   @db.Text
+  displayOrder    Int       @default(0)
+
+  template        MaterialTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  material        Material  @relation(fields: [materialId], references: [id])
+
+  @@index([templateId])
+  @@index([materialId])
 }
