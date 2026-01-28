@@ -3793,6 +3793,143 @@ export function ProjectImage({ src, alt }: { src: string; alt: string }) {
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** January 2026  
+## 3D Visualization Architecture
+
+### Spatial Workbench
+
+The Spatial Workbench provides interactive 3D visualization for construction sites using Three.js and React Three Fiber.
+
+**Technology Stack:**
+
+| Component | Technology | Version |
+|-----------|------------|---------|
+| 3D Rendering | Three.js | 0.182.0 |
+| React Renderer | @react-three/fiber | 8.15.19 |
+| Helper Components | @react-three/drei | 9.96.5 |
+| 3D Backend | Blender MCP | 1.5.5 |
+
+**Component Architecture:**
+
+```
+┌─────────────────────────────────────┐
+│      SceneViewer3D Component        │
+├─────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  │
+│  │   Canvas    │  │  Controls   │  │
+│  │  (WebGL)    │  │  (Orbit)    │  │
+│  └─────────────┘  └─────────────┘  │
+│  ┌─────────────────────────────┐   │
+│  │      Scene Objects          │   │
+│  │  Building | Equipment |     │   │
+│  │  Vehicle | Vegetation       │   │
+│  └─────────────────────────────┘   │
+│  ┌─────────────────────────────┐   │
+│  │      Environment            │   │
+│  │  Lights | Grid | Axes       │   │
+│  └─────────────────────────────┘   │
+└─────────────────────────────────────┘
+```
+
+**Scene Object Interface:**
+
+```typescript
+interface SceneObject {
+  id: string;
+  name: string;
+  type: 'building' | 'ground' | 'equipment' | 'vegetation' | 'vehicle' | 'custom';
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: [number, number, number];
+  color?: string;
+  dimensions?: {
+    width?: number;
+    height?: number;
+    depth?: number;
+  };
+  metadata?: Record<string, unknown>;
+}
+```
+
+### Blender MCP Integration
+
+The Blender MCP (Model Context Protocol) enables AI-powered 3D model generation.
+
+**Connection Modes:**
+
+1. **Mock Mode** - Development without Blender
+2. **HTTP Mode** - Production web deployment
+3. **Socket Mode** - Local development with Blender
+
+**Client Architecture:**
+
+```typescript
+class BlenderMCPClient {
+  // Connection methods
+  async checkConnection(): Promise<boolean>
+
+  // Scene operations
+  async getSceneInfo(): Promise<SceneInfo>
+  async createObject(type, name, options): Promise<ObjectInfo>
+  async modifyObject(name, options): Promise<ObjectInfo>
+  async deleteObject(name): Promise<boolean>
+
+  // Rendering
+  async getViewportScreenshot(): Promise<string>
+  async renderScene(options): Promise<RenderResult>
+
+  // AI Generation
+  async generateModel(prompt, options): Promise<GeneratedModel>
+  async generateScene(description, options): Promise<GeneratedScene>
+
+  // Construction-specific
+  async createSiteVisualization(projectId, options): Promise<SiteVisualization>
+  async generateBuildingModel(designRequestId, specs): Promise<BuildingModel>
+  async renderPropertyVisualization(propertyId, viewType): Promise<PropertyRender>
+}
+```
+
+**API Endpoints:**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/blender?action=status` | GET | Check connection status |
+| `/api/blender?action=scene` | GET | Get scene information |
+| `/api/blender?action=screenshot` | GET | Capture viewport |
+| `/api/blender` | POST | Execute Blender commands |
+
+### GIS Integration
+
+The GIS module provides geospatial visualization using MapBox GL.
+
+**Features:**
+- Property and project mapping
+- Risk zone overlays (flood, earthquake, wildfire, hurricane, tornado)
+- Geocoding and coordinate management
+- Risk assessment API integration
+
+**Risk Assessment Response:**
+
+```typescript
+interface RiskAssessment {
+  latitude: number;
+  longitude: number;
+  riskScore: number;        // 0-100
+  riskZone: 'Low' | 'Moderate' | 'High' | 'Severe';
+  floodZone: string;
+  hazardTypes: string[];
+  riskFactors: {
+    floodRisk: number;
+    earthquakeRisk: number;
+    wildfireRisk: number;
+    hurricaneRisk: number;
+    tornadoRisk: number;
+  };
+  recommendations: string[];
+}
+```
+
+---
+
+**Document Version:** 1.1
+**Last Updated:** January 2026
 **Status:** Production Release

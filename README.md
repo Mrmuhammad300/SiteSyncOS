@@ -14,6 +14,8 @@ SiteSync OS is an advanced construction management platform powered by AI, built
 - **Punch Items** - Deficiency tracking and completion management
 - **Documents** - File management with AWS S3 cloud storage integration
 - **Design Services** - AI-powered architectural rendering via external platform integration
+- **Spatial Workbench** - Interactive 3D site visualization with Three.js
+- **GIS Intelligence** - Geospatial mapping with risk assessment and property visualization
 
 ### Advanced Features
 - ✅ **Webhook Integrations** - n8n automation for change orders and design services
@@ -22,6 +24,9 @@ SiteSync OS is an advanced construction management platform powered by AI, built
 - ✅ **Cloud Storage** - AWS S3 integration for document management
 - ✅ **Real-time Updates** - Status tracking across all modules
 - ✅ **Responsive Design** - Modern UI with Tailwind CSS and Radix UI components
+- ✅ **3D Visualization** - Interactive Three.js-powered construction site visualization
+- ✅ **Blender MCP Integration** - AI-powered 3D model generation via Blender
+- ✅ **GIS Mapping** - MapBox integration with risk zone overlays and geocoding
 
 ## 🛠️ Tech Stack
 
@@ -32,6 +37,9 @@ SiteSync OS is an advanced construction management platform powered by AI, built
 - **UI:** Tailwind CSS + Radix UI
 - **Forms:** React Hook Form + Zod validation
 - **State Management:** React Query (TanStack Query)
+- **3D Graphics:** Three.js + React Three Fiber + Drei
+- **GIS/Mapping:** MapBox GL
+- **3D Integration:** Blender MCP (Model Context Protocol)
 
 ## 📋 Prerequisites
 
@@ -76,6 +84,15 @@ DESIGN_WEBHOOK_SECRET="your-design-webhook-secret"
 
 # External AI Design Platform
 DESIGN_WEBHOOK_URL="https://your-design-platform.com/webhook"
+
+# Blender MCP (Optional - for 3D visualization)
+BLENDER_HOST="localhost"
+BLENDER_PORT="9876"
+BLENDER_HTTP_PORT="8765"
+BLENDER_USE_MOCK="true"  # Set to "false" when Blender is running
+
+# MapBox (for GIS features)
+NEXT_PUBLIC_MAPBOX_TOKEN="your-mapbox-token"
 ```
 
 4. **Initialize the database:**
@@ -105,6 +122,7 @@ construction_crm_platform/
 ├── nextjs_space/
 │   ├── app/
 │   │   ├── api/              # API routes
+│   │   │   └── blender/      # Blender MCP API endpoints
 │   │   ├── auth/             # Authentication pages
 │   │   ├── dashboard/        # Dashboard
 │   │   ├── projects/         # Project management
@@ -115,21 +133,28 @@ construction_crm_platform/
 │   │   ├── change-orders/    # Change order management
 │   │   ├── punch-items/      # Punch list
 │   │   ├── documents/        # Document management
-│   │   └── design-services/  # AI design integration
+│   │   ├── design-services/  # AI design integration
+│   │   ├── spatial-workbench/# 3D site visualization
+│   │   └── gis/              # GIS mapping and risk assessment
 │   ├── components/
-│   │   └── ui/               # Reusable UI components
+│   │   └── ui/
+│   │       ├── scene-viewer-3d.tsx  # Three.js 3D viewer component
+│   │       └── gis-map.tsx          # MapBox GIS component
 │   ├── lib/
 │   │   ├── auth-options.ts   # NextAuth configuration
 │   │   ├── db.ts             # Prisma client
 │   │   ├── s3.ts             # AWS S3 utilities
-│   │   └── design-webhook.ts # Design platform integration
+│   │   ├── design-webhook.ts # Design platform integration
+│   │   ├── blender-client.ts # Blender MCP client
+│   │   └── blender-mcp/      # Blender MCP Python server
 │   ├── prisma/
 │   │   └── schema.prisma     # Database schema
 │   └── scripts/
 │       └── seed.ts           # Database seeding
-├── WEBHOOK_GUIDE.md          # Webhook integration guide
-├── DESIGN_SERVICES_GUIDE.md  # AI design platform guide
-└── README.md                 # This file
+├── WEBHOOK_GUIDE.md              # Webhook integration guide
+├── DESIGN_SERVICES_GUIDE.md      # AI design platform guide
+├── SPATIAL_WORKBENCH_GUIDE.md    # 3D visualization guide
+└── README.md                     # This file
 ```
 
 ## 🔗 API Endpoints
@@ -161,10 +186,22 @@ construction_crm_platform/
 - `POST /api/webhooks/change-orders` - n8n change order automation
 - `POST /api/webhooks/design-callback` - Design platform status updates
 
+### Blender MCP (3D Visualization)
+- `GET /api/blender?action=status` - Check Blender connection status
+- `GET /api/blender?action=scene` - Get current scene information
+- `GET /api/blender?action=screenshot` - Get viewport screenshot
+- `POST /api/blender` - Execute Blender commands (create_object, modify_object, render, etc.)
+
+### GIS
+- `GET /api/gis` - Get all mapped locations
+- `POST /api/gis` - Update location coordinates
+- `POST /api/gis/risk-assessment` - Run risk assessment for a location
+
 ## 📚 Documentation
 
 - **[Webhook Integration Guide](./WEBHOOK_GUIDE.md)** - Complete guide for setting up n8n webhooks
 - **[Design Services Guide](./DESIGN_SERVICES_GUIDE.md)** - AI design platform integration instructions
+- **[Spatial Workbench Guide](./SPATIAL_WORKBENCH_GUIDE.md)** - 3D visualization and Blender MCP integration
 
 ## 🔐 Security
 
