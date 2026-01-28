@@ -20,7 +20,17 @@ interface SessionUser {
 // GET: Check connection status or get scene info
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    let session;
+    try {
+      session = await getServerSession(authOptions);
+    } catch (authError) {
+      console.error('[BlenderAPI] Authentication service unavailable:', authError);
+      return NextResponse.json(
+        { error: 'Authentication service unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -76,9 +86,11 @@ export async function GET(request: Request) {
     }
   } catch (error) {
     console.error('[BlenderAPI] Error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to communicate with Blender';
+    const isConnectionError = message.includes('connect') || message.includes('ECONNREFUSED') || message.includes('ETIMEDOUT');
     return NextResponse.json(
-      { error: 'Failed to communicate with Blender' },
-      { status: 500 }
+      { error: isConnectionError ? 'Blender service is unreachable. Ensure the Blender MCP addon is running.' : message },
+      { status: isConnectionError ? 503 : 500 }
     );
   }
 }
@@ -86,7 +98,17 @@ export async function GET(request: Request) {
 // POST: Execute Blender commands
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    let session;
+    try {
+      session = await getServerSession(authOptions);
+    } catch (authError) {
+      console.error('[BlenderAPI] Authentication service unavailable:', authError);
+      return NextResponse.json(
+        { error: 'Authentication service unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -212,9 +234,11 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error('[BlenderAPI] Error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to execute Blender command';
+    const isConnectionError = message.includes('connect') || message.includes('ECONNREFUSED') || message.includes('ETIMEDOUT');
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to execute Blender command' },
-      { status: 500 }
+      { error: isConnectionError ? 'Blender service is unreachable. Ensure the Blender MCP addon is running.' : message },
+      { status: isConnectionError ? 503 : 500 }
     );
   }
 }

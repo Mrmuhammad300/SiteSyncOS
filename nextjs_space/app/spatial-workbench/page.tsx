@@ -93,6 +93,7 @@ const LOD_INFO: Record<number, { label: string; description: string }> = {
 export default function SpatialWorkbenchPage() {
   const [activeTab, setActiveTab] = useState('parametric');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [generatedModel, setGeneratedModel] = useState<GeneratedModel | null>(null);
   const [blenderScript, setBlenderScript] = useState<string | null>(null);
   const [visualizationPrompt, setVisualizationPrompt] = useState<string | null>(null);
@@ -122,24 +123,59 @@ export default function SpatialWorkbenchPage() {
     targetLOD: 300 as LODLevel,
   });
 
+  const updatePipelineStage = (index: number, status: PipelineStage['status']) => {
+    setPipelineStages((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], status };
+      return updated;
+    });
+  };
+
+  const resetPipeline = () => {
+    setPipelineStages((prev) => prev.map((s) => ({ ...s, status: 'pending' as const })));
+  };
+
+  const fetchWithRetry = async (
+    url: string,
+    options: RequestInit,
+    retries: number = 2,
+    baseDelay: number = 1000,
+  ): Promise<Response> => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+        return res;
+      } catch (err: any) {
+        if (attempt === retries) throw err;
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.warn(`[SpatialWorkbench] Retry ${attempt + 1}/${retries} after ${delay}ms`, err?.message);
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+    throw new Error('All retry attempts exhausted');
+  };
+
   const handleGenerate = async () => {
     setLoading(true);
+    setError(null);
     setGeneratedModel(null);
     setBlenderScript(null);
     setVisualizationPrompt(null);
+    resetPipeline();
 
-    // Animate pipeline stages
-    const stagesCopy = [...pipelineStages];
-    for (let i = 0; i < stagesCopy.length; i++) {
-      stagesCopy[i] = { ...stagesCopy[i], status: 'in_progress' };
-      setPipelineStages([...stagesCopy]);
-      await new Promise((r) => setTimeout(r, 400));
-      stagesCopy[i] = { ...stagesCopy[i], status: 'completed' };
-      setPipelineStages([...stagesCopy]);
-    }
+    // Stage 0: Massing
+    updatePipelineStage(0, 'in_progress');
+    await new Promise((r) => setTimeout(r, 300));
+    updatePipelineStage(0, 'completed');
+
+    // Stage 1: Parametric Engine (actual API call)
+    updatePipelineStage(1, 'in_progress');
 
     try {
-      const res = await fetch('/api/parametric', {
+      const res = await fetchWithRetry('/api/parametric', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -171,26 +207,76 @@ export default function SpatialWorkbenchPage() {
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setGeneratedModel({
-          id: data.model.id,
-          name: data.model.name,
-          lodLevel: data.model.lodLevel,
-          totalArea: data.model.totalArea,
-          envelopeArea: data.model.envelopeArea,
-          glazingArea: data.model.glazingArea,
-          solarArea: data.model.solarArea,
-          estimatedEnergyProduction: data.model.estimatedEnergyProduction,
-          elementCount: data.model.elements?.length || 0,
-          floorPlanCount: data.model.floorPlans?.length || 0,
-          floorPlans: data.model.floorPlans || [],
-        });
-        setBlenderScript(data.blenderScript);
-        setVisualizationPrompt(data.visualizationPrompt);
+      if (!res.ok) {
+        let errorMessage = `Server error (${res.status})`;
+        try {
+          const errData = await res.json();
+          errorMessage = errData.error || errorMessage;
+        } catch {
+          // response wasn't JSON
+        }
+        throw new Error(errorMessage);
       }
-    } catch (error) {
-      console.error('Generation error:', error);
+
+      const data = await res.json();
+
+      if (!data.success || !data.model) {
+        throw new Error(data.error || 'Invalid response from parametric engine');
+      }
+
+      updatePipelineStage(1, 'completed');
+
+      // Stage 2: Design Services
+      updatePipelineStage(2, 'in_progress');
+      await new Promise((r) => setTimeout(r, 300));
+      updatePipelineStage(2, 'completed');
+
+      // Stage 3: Spatial Workbench (floor plan processing)
+      updatePipelineStage(3, 'in_progress');
+      await new Promise((r) => setTimeout(r, 300));
+
+      setGeneratedModel({
+        id: data.model.id,
+        name: data.model.name,
+        lodLevel: data.model.lodLevel,
+        totalArea: data.model.totalArea,
+        envelopeArea: data.model.envelopeArea,
+        glazingArea: data.model.glazingArea,
+        solarArea: data.model.solarArea,
+        estimatedEnergyProduction: data.model.estimatedEnergyProduction,
+        elementCount: data.model.elements?.length || 0,
+        floorPlanCount: data.model.floorPlans?.length || 0,
+        floorPlans: data.model.floorPlans || [],
+      });
+      setBlenderScript(data.blenderScript);
+      setVisualizationPrompt(data.visualizationPrompt);
+      updatePipelineStage(3, 'completed');
+
+      // Stage 4: Export ready
+      updatePipelineStage(4, 'in_progress');
+      await new Promise((r) => setTimeout(r, 200));
+      updatePipelineStage(4, 'completed');
+    } catch (err: any) {
+      console.error('Generation error:', err);
+
+      // Mark current in_progress stage as error, and remaining as pending
+      setPipelineStages((prev) =>
+        prev.map((s) =>
+          s.status === 'in_progress'
+            ? { ...s, status: 'error' as const }
+            : s.status === 'pending'
+            ? s
+            : s
+        )
+      );
+
+      const message = err?.name === 'AbortError'
+        ? 'Request timed out. The server may be starting up — please try again.'
+        : err?.message?.includes('Failed to fetch') || err?.message?.includes('NetworkError')
+        ? 'Connection refused. The API server is unreachable — check that the application is running and try again.'
+        : err?.message || 'An unexpected error occurred during model generation.';
+
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -286,6 +372,8 @@ export default function SpatialWorkbenchPage() {
                       ? 'bg-green-50 border-green-300 text-green-800'
                       : stage.status === 'in_progress'
                       ? 'bg-indigo-50 border-indigo-300 text-indigo-800 animate-pulse'
+                      : stage.status === 'error'
+                      ? 'bg-red-50 border-red-300 text-red-800'
                       : 'bg-white border-gray-200 text-gray-600'
                   }`}
                 >
@@ -293,6 +381,8 @@ export default function SpatialWorkbenchPage() {
                     <CheckCircle2 className="w-4 h-4 text-green-600" />
                   ) : stage.status === 'in_progress' ? (
                     <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  ) : stage.status === 'error' ? (
+                    <AlertCircle className="w-4 h-4 text-red-600" />
                   ) : (
                     <Box className="w-4 h-4" />
                   )}
@@ -315,6 +405,30 @@ export default function SpatialWorkbenchPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Error Banner */}
+      {error && (
+        <Card className="mb-6 border-red-300 bg-red-50">
+          <CardContent className="flex items-start gap-3 py-4">
+            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-800">Generation Failed</p>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0"
+              onClick={() => {
+                setError(null);
+                handleGenerate();
+              }}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
