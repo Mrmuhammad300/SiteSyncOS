@@ -7,6 +7,8 @@ import {
   createSiteVisualization,
   generateBuildingModel,
   renderPropertyVisualization,
+  applyParametricDetail,
+  importAndEnhanceMassing,
 } from '@/lib/blender-client';
 
 interface SessionUser {
@@ -171,6 +173,24 @@ export async function POST(request: Request) {
       case 'render_property': {
         const { propertyId, viewType } = params;
         const result = await renderPropertyVisualization(propertyId, viewType);
+        return NextResponse.json(result);
+      }
+
+      // Parametric Detail Operations
+      case 'apply_parametric_detail': {
+        const { designRequestId, blenderScript, exportFormat, renderPreview, resolution } = params;
+        const result = await applyParametricDetail(designRequestId, {
+          blenderScript,
+          exportFormat,
+          renderPreview,
+          resolution,
+        });
+        return NextResponse.json(result);
+      }
+
+      case 'import_enhance_massing': {
+        const { glbFilePath, materialAssignments } = params;
+        const result = await importAndEnhanceMassing(glbFilePath, materialAssignments);
         return NextResponse.json(result);
       }
 

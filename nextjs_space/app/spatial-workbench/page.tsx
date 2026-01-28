@@ -1,1065 +1,858 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import {
-  Box,
-  Layers,
-  Play,
-  RefreshCw,
-  Download,
-  AlertTriangle,
-  CheckCircle2,
-  Code,
-  MessageSquare,
-  Sparkles,
-  Eye,
-  Copy,
-  Info,
-  History,
-  Plus,
-  Trash2,
-  Wand2,
-  Send,
-} from 'lucide-react';
-import { BackButton } from '@/components/ui/back-button';
+import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { BackButton } from '@/components/ui/back-button';
+import {
+  Layers,
+  Box,
+  Grid3X3,
+  Sun,
+  Download,
+  ArrowRight,
+  Settings,
+  Eye,
+  FileText,
+  Zap,
+  Building2,
+  LayoutGrid,
+  Ruler,
+  Palette,
+  SunMedium,
+  Home,
+  CheckCircle2,
+  AlertCircle,
+  ChevronRight,
+} from 'lucide-react';
 
-interface RoomSpec {
-  name: string;
-  width: number;
-  length: number;
-  height?: number;
-  position?: { x: number; y: number; z: number };
+type LODLevel = 100 | 200 | 300 | 350 | 400;
+
+interface PipelineStage {
+  stage: string;
+  label: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'error';
+  input: string;
+  output: string;
 }
 
-interface LevelSpec {
-  name: string;
-  elevation: number;
-  rooms: RoomSpec[];
-}
-
-interface LayoutSpec {
-  levels: LevelSpec[];
-  globalDefaults: {
-    wallThickness: number;
-    ceilingHeight: number;
-  };
-}
-
-interface SpatialModel {
-  spatial_model_id: string;
-  status: string;
-  engine: string;
-  warnings: string[];
-  assumptions: string[];
-  artifacts: Array<{
-    artifact_type: string;
-    uri: string;
-    content_type: string;
-    inline_content?: string;
-  }>;
-  audit: {
-    trace_id: string;
-    created_at: string;
-  };
-}
-
-interface Project {
+interface GeneratedModel {
   id: string;
   name: string;
-  projectNumber: string;
+  lodLevel: LODLevel;
+  totalArea: number;
+  envelopeArea: number;
+  glazingArea: number;
+  solarArea: number;
+  estimatedEnergyProduction: number;
+  elementCount: number;
+  floorPlanCount: number;
 }
 
-const DEFAULT_LAYOUT: LayoutSpec = {
-  levels: [
-    {
-      name: 'Ground Floor',
-      elevation: 0,
-      rooms: [
-        { name: 'Living Room', width: 6, length: 8, height: 3 },
-        { name: 'Kitchen', width: 4, length: 5, height: 3 },
-        { name: 'Bedroom 1', width: 4, length: 5, height: 3 },
-      ],
-    },
-  ],
-  globalDefaults: {
-    wallThickness: 0.15,
-    ceilingHeight: 2.7,
-  },
+const LOD_INFO: Record<number, { label: string; description: string }> = {
+  100: { label: 'Conceptual', description: 'Gross area, height, volume, location' },
+  200: { label: 'Schematic Design', description: 'Approximate geometry with generic materials' },
+  300: { label: 'Design Development', description: 'Specific assemblies, materials, window types' },
+  350: { label: 'Construction Docs', description: 'Coordination-level detail between disciplines' },
+  400: { label: 'Fabrication', description: 'Shop drawing geometry and cut lists' },
 };
 
-const EXAMPLE_PROMPTS = [
-  'A modern 2-bedroom apartment with an open-plan living room and kitchen, a master bedroom with ensuite bathroom, and a second smaller bedroom',
-  'Small office space with a reception area, 2 private offices, a conference room, and a break room',
-  'Three-story townhouse with living areas on ground floor, bedrooms on second floor, and home office on third floor',
-  'Restaurant layout with main dining area, kitchen, storage room, and two restrooms',
-];
-
 export default function SpatialWorkbenchPage() {
-  const { data: session, status } = useSession() || {};
-  const router = useRouter();
-  
-  // State
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
-  const [units, setUnits] = useState<'metric' | 'imperial'>('metric');
-  const [targetEngine, setTargetEngine] = useState<'threejs' | 'babylonjs' | 'unity_csharp'>('threejs');
-  const [layoutSpec, setLayoutSpec] = useState<LayoutSpec>(DEFAULT_LAYOUT);
-  const [nlPrompt, setNlPrompt] = useState<string>('');
-  const [iterationInstructions, setIterationInstructions] = useState<string>('');
-  
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
-  const [isIterating, setIsIterating] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  
-  const [currentModel, setCurrentModel] = useState<SpatialModel | null>(null);
-  const [sceneCode, setSceneCode] = useState<string>('');
-  const [showCode, setShowCode] = useState(false);
-  const [modelHistory, setModelHistory] = useState<Array<{ id: string; version: number; createdAt: string }>>([]);
-  const [generationError, setGenerationError] = useState<string | null>(null);
-  
-  const viewerRef = useRef<HTMLIFrameElement>(null);
-  
-  // Fetch projects
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetch('/api/projects')
-        .then(res => res.json())
-        .then(data => {
-          if (data.projects) {
-            setProjects(data.projects);
-          }
-        })
-        .catch(err => console.error('Failed to fetch projects:', err));
-    }
-  }, [status]);
-  
-  // Sanitize code to prevent obvious injection attempts
-  const sanitizeGeneratedCode = useCallback((code: string): string => {
-    // Remove potentially dangerous patterns from AI-generated code
-    const dangerousPatterns = [
-      /eval\s*\(/gi,
-      /Function\s*\(/gi,
-      /new\s+Function\s*\(/gi,
-      /document\.cookie/gi,
-      /localStorage\./gi,
-      /sessionStorage\./gi,
-      /window\.opener/gi,
-      /window\.parent/gi,
-      /window\.top/gi,
-      /parent\./gi,
-      /top\./gi,
-      /fetch\s*\(\s*['"`][^'"`]*(?:http|\/\/)/gi,  // External fetch calls
-      /XMLHttpRequest/gi,
-      /\.innerHTML\s*=/gi,
-      /\.outerHTML\s*=/gi,
-      /document\.write/gi,
-      /document\.writeln/gi,
-      /importScripts/gi,
-      /\.src\s*=\s*['"`][^'"`]*(?:http|data:|javascript:)/gi,
-    ];
-    
-    let sanitized = code;
-    for (const pattern of dangerousPatterns) {
-      sanitized = sanitized.replace(pattern, '/* BLOCKED */');
-    }
-    
-    // Limit code size to prevent DoS
-    const MAX_CODE_SIZE = 500000; // 500KB
-    if (sanitized.length > MAX_CODE_SIZE) {
-      console.warn('Generated code exceeds size limit, truncating');
-      sanitized = sanitized.slice(0, MAX_CODE_SIZE);
-    }
-    
-    return sanitized;
-  }, []);
-  
-  // Generate scene HTML for iframe - SANDBOXED
-  const generateViewerHtml = useCallback((code: string) => {
-    // Sanitize the code before injection
-    const safeCode = sanitizeGeneratedCode(code);
-    
-    return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'none';">
-  <style>
-    body { margin: 0; overflow: hidden; background: #1a1a2e; }
-    canvas { display: block; }
-    #info {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: #fff;
-      font-family: system-ui, sans-serif;
-      font-size: 12px;
-      background: rgba(0,0,0,0.5);
-      padding: 8px 12px;
-      border-radius: 4px;
-    }
-    #disclaimer {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      right: 10px;
-      color: #ff6b6b;
-      font-family: system-ui, sans-serif;
-      font-size: 10px;
-      background: rgba(0,0,0,0.7);
-      padding: 6px 10px;
-      border-radius: 4px;
-      text-align: center;
-    }
-    #error, #webgl-warning {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #ff6b6b;
-      font-family: system-ui, sans-serif;
-      padding: 20px;
-      background: rgba(0,0,0,0.8);
-      border-radius: 8px;
-      max-width: 80%;
-      text-align: center;
-    }
-    #webgl-warning a { color: #4fc3f7; }
-  </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>
-</head>
-<body>
-  <div id="info">Orbit: drag | Pan: right-click drag | Zoom: scroll</div>
-  <div id="disclaimer">⚠️ AI-GENERATED PREVIEW | NOT FOR CONSTRUCTION | NON-AUTHORITATIVE</div>
-  <script>
-    // Disable dangerous APIs inside sandbox
-    window.fetch = function() { throw new Error('Network access disabled in preview'); };
-    window.XMLHttpRequest = function() { throw new Error('Network access disabled in preview'); };
-    
-    // Check WebGL support
-    function checkWebGL() {
-      try {
-        const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        return !!gl;
-      } catch (e) {
-        return false;
-      }
-    }
-    
-    if (!checkWebGL()) {
-      document.body.innerHTML = '<div id="webgl-warning"><h3>WebGL Not Available</h3><p>Your browser or environment does not support WebGL, which is required to render 3D scenes.</p><p>The 3D code was generated successfully. Click "Show Code" to view and copy the generated Three.js code.</p><p>To view the 3D preview, please open this page in a browser with WebGL support (Chrome, Firefox, Safari).</p></div>';
-    } else {
-      try {
-        ${safeCode}
-      } catch (e) {
-        console.error('Scene error:', e);
-        const errorDiv = document.createElement('div');
-        errorDiv.id = 'error';
-        errorDiv.innerHTML = '<h3>Error rendering scene</h3><pre style="white-space:pre-wrap;">' + String(e.message).slice(0, 500) + '</pre>';
-        document.body.appendChild(errorDiv);
-      }
-    }
-  <\/script>
-</body>
-</html>
-`;
-  }, [sanitizeGeneratedCode]);
-  
-  // Update viewer
-  const updateViewer = useCallback((code: string) => {
-    if (viewerRef.current) {
-      const html = generateViewerHtml(code);
-      viewerRef.current.srcdoc = html;
-    }
-  }, [generateViewerHtml]);
-  
-  // Auto-update viewer when sceneCode changes (handles async state updates)
-  useEffect(() => {
-    if (sceneCode && currentModel && viewerRef.current) {
-      console.log('[Spatial Workbench] Auto-updating viewer, code length:', sceneCode.length);
-      const html = generateViewerHtml(sceneCode);
-      viewerRef.current.srcdoc = html;
-    }
-  }, [sceneCode, currentModel, generateViewerHtml]);
-  
-  // Convert NL prompt to layout
-  const handleConvertPrompt = async () => {
-    if (!nlPrompt.trim()) {
-      toast.error('Please enter a description');
-      return;
-    }
-    
-    setIsConverting(true);
-    try {
-      const response = await fetch('/api/integrations/kimi/v1/prompt-to-layout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: nlPrompt,
-          units,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Conversion failed');
-      }
-      
-      setLayoutSpec(data.layout_spec);
-      toast.success('Layout generated from description!', {
-        description: `Created ${data.layout_spec.levels[0]?.rooms?.length || 0} rooms`,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      toast.error('Conversion failed', { description: message });
-    } finally {
-      setIsConverting(false);
-    }
-  };
-  
-  // Generate scene
+  const [activeTab, setActiveTab] = useState('parametric');
+  const [loading, setLoading] = useState(false);
+  const [generatedModel, setGeneratedModel] = useState<GeneratedModel | null>(null);
+  const [blenderScript, setBlenderScript] = useState<string | null>(null);
+  const [visualizationPrompt, setVisualizationPrompt] = useState<string | null>(null);
+  const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([
+    { stage: 'massing', label: 'Massing Tool', status: 'pending', input: 'Zoning / Area data', output: '3D GLB Blocks' },
+    { stage: 'parametric', label: 'Parametric Engine', status: 'pending', input: 'GLB + Constraints', output: 'LOD 200-300 Model' },
+    { stage: 'design-services', label: 'Design Services', status: 'pending', input: 'GLB + Aesthetic Prompts', output: 'Photorealistic Renderings' },
+    { stage: 'spatial-workbench', label: 'Spatial Workbench', status: 'pending', input: 'Refined 3D Model', output: '2D Blueprints & Floor Plans' },
+    { stage: 'sitesync-export', label: 'SiteSync OS Export', status: 'pending', input: 'All of the above', output: 'Construction-Ready Docs' },
+  ]);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '',
+    projectType: 'mixed-use' as string,
+    totalFloors: 5,
+    floorToFloorHeight: 3.5,
+    footprintWidth: 30,
+    footprintDepth: 20,
+    windowToWallRatio: 0.35,
+    solarCoverage: 0.3,
+    facadeMaterial: 'concrete-precast',
+    glazingMaterial: 'glass-curtainwall',
+    roofMaterial: 'roof-tpo',
+    structureMaterial: 'concrete-structural',
+    sustainabilityTarget: 'LEED-Silver',
+    targetLOD: 300 as LODLevel,
+  });
+
   const handleGenerate = async () => {
-    setIsGenerating(true);
-    setGenerationError(null);
-    
+    setLoading(true);
+    setGeneratedModel(null);
+    setBlenderScript(null);
+    setVisualizationPrompt(null);
+
+    // Animate pipeline stages
+    const stagesCopy = [...pipelineStages];
+    for (let i = 0; i < stagesCopy.length; i++) {
+      stagesCopy[i] = { ...stagesCopy[i], status: 'in_progress' };
+      setPipelineStages([...stagesCopy]);
+      await new Promise((r) => setTimeout(r, 400));
+      stagesCopy[i] = { ...stagesCopy[i], status: 'completed' };
+      setPipelineStages([...stagesCopy]);
+    }
+
     try {
-      const response = await fetch('/api/integrations/kimi/v1/scene/generate', {
+      const res = await fetch('/api/parametric', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          project_id: selectedProjectId && selectedProjectId !== 'none' ? selectedProjectId : undefined,
-          units,
-          target_engine: targetEngine,
-          layout_spec: layoutSpec,
-          generation_constraints: {
-            maxPolygonsHint: 200000,
-            materialsSimple: true,
-            requireCompleteRunnableCode: true,
+          action: 'generate',
+          name: formData.name || `${formData.projectType} Building`,
+          constraints: {
+            projectType: formData.projectType,
+            totalFloors: formData.totalFloors,
+            floorToFloorHeight: formData.floorToFloorHeight,
+            footprintWidth: formData.footprintWidth,
+            footprintDepth: formData.footprintDepth,
+            windowToWallRatio: formData.windowToWallRatio,
+            solarCoverage: formData.solarCoverage,
+            materials: {
+              facade: formData.facadeMaterial,
+              glazing: formData.glazingMaterial,
+              roof: formData.roofMaterial,
+              structure: formData.structureMaterial,
+            },
+            sustainabilityTarget: formData.sustainabilityTarget,
+            accessibilityRequired: true,
+            unitMix: formData.projectType !== 'commercial' ? [
+              { type: 'Studio', count: 8, minArea: 400, maxArea: 500, adaAccessible: true },
+              { type: '1BR', count: 12, minArea: 550, maxArea: 700 },
+              { type: '2BR', count: 6, minArea: 800, maxArea: 1000 },
+            ] : undefined,
           },
+          targetLOD: formData.targetLOD,
         }),
       });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Generation failed');
-      }
-      
-      console.log('[handleGenerate] API response:', { 
-        spatial_model_id: data.spatial_model_id,
-        status: data.status,
-        artifacts_count: data.artifacts?.length 
-      });
-      
-      setCurrentModel(data);
-      
-      // Extract scene code
-      const codeArtifact = data.artifacts?.find((a: { artifact_type: string }) => a.artifact_type === 'scene_code');
-      console.log('[handleGenerate] Code artifact found:', !!codeArtifact, 'content length:', codeArtifact?.inline_content?.length || 0);
-      
-      if (codeArtifact?.inline_content) {
-        setSceneCode(codeArtifact.inline_content);
-        // Note: updateViewer may not work immediately due to async state, useEffect handles this
-      } else {
-        console.error('[handleGenerate] No scene code in response');
-        toast.error('Scene generated but no code returned');
-      }
-      
-      toast.success('3D Scene generated successfully!', {
-        description: `Model ID: ${data.spatial_model_id?.slice(0, 8)}...`,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      setGenerationError(message);
-      toast.error('Generation failed', { description: message });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-  
-  // Iterate scene
-  const handleIterate = async () => {
-    if (!currentModel || !iterationInstructions.trim()) {
-      toast.error('Please enter iteration instructions');
-      return;
-    }
-    
-    setIsIterating(true);
-    try {
-      const response = await fetch('/api/integrations/kimi/v1/scene/iterate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          project_id: selectedProjectId && selectedProjectId !== 'none' ? selectedProjectId : undefined,
-          spatial_model_id: currentModel.spatial_model_id,
-          iteration_instructions: iterationInstructions,
-          target_engine: targetEngine,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Iteration failed');
-      }
-      
-      // Save previous model to history
-      setModelHistory(prev => [
-        { id: currentModel.spatial_model_id, version: prev.length + 1, createdAt: currentModel.audit.created_at },
-        ...prev,
-      ]);
-      
-      setCurrentModel(data);
-      setIterationInstructions('');
-      
-      // Extract scene code
-      const codeArtifact = data.artifacts?.find((a: { artifact_type: string }) => a.artifact_type === 'scene_code');
-      if (codeArtifact?.inline_content) {
-        setSceneCode(codeArtifact.inline_content);
-        updateViewer(codeArtifact.inline_content);
-      }
-      
-      toast.success('Scene updated successfully!', {
-        description: 'New version created',
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      toast.error('Iteration failed', { description: message });
-    } finally {
-      setIsIterating(false);
-    }
-  };
-  
-  // Export scene
-  const handleExport = async (format: 'glb' | 'obj') => {
-    if (!currentModel) {
-      toast.error('No model to export');
-      return;
-    }
-    
-    setIsExporting(true);
-    try {
-      const response = await fetch('/api/integrations/kimi/v1/scene/export', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          project_id: selectedProjectId && selectedProjectId !== 'none' ? selectedProjectId : undefined,
-          spatial_model_id: currentModel.spatial_model_id,
-          format,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Export failed');
-      }
-      
-      // Download the export script
-      const script = data.artifact?.inline_content;
-      if (script) {
-        const blob = new Blob([script], { type: 'text/x-python' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `export_${format}_${currentModel.spatial_model_id}.py`;
-        a.click();
-        URL.revokeObjectURL(url);
-        
-        toast.success('Export script downloaded!', {
-          description: 'Run with: blender --background --python script.py',
+
+      if (res.ok) {
+        const data = await res.json();
+        setGeneratedModel({
+          id: data.model.id,
+          name: data.model.name,
+          lodLevel: data.model.lodLevel,
+          totalArea: data.model.totalArea,
+          envelopeArea: data.model.envelopeArea,
+          glazingArea: data.model.glazingArea,
+          solarArea: data.model.solarArea,
+          estimatedEnergyProduction: data.model.estimatedEnergyProduction,
+          elementCount: data.model.elements?.length || 0,
+          floorPlanCount: data.model.floorPlans?.length || 0,
         });
+        setBlenderScript(data.blenderScript);
+        setVisualizationPrompt(data.visualizationPrompt);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      toast.error('Export failed', { description: message });
+      console.error('Generation error:', error);
     } finally {
-      setIsExporting(false);
+      setLoading(false);
     }
   };
-  
-  // Copy code to clipboard
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(sceneCode);
-    toast.success('Code copied to clipboard');
+
+  const handleApplyPreset = (preset: string) => {
+    const presets: Record<string, Partial<typeof formData>> = {
+      'senior-living': {
+        projectType: 'senior-living',
+        floorToFloorHeight: 3.2,
+        windowToWallRatio: 0.15,
+        solarCoverage: 0.4,
+        facadeMaterial: 'brick-red',
+        glazingMaterial: 'glass-residential',
+        sustainabilityTarget: 'LEED-Gold',
+      },
+      'veteran-housing': {
+        projectType: 'veteran-housing',
+        floorToFloorHeight: 3.0,
+        windowToWallRatio: 0.2,
+        solarCoverage: 0.35,
+        facadeMaterial: 'cladding-fiber-cement',
+        glazingMaterial: 'glass-residential',
+        sustainabilityTarget: 'LEED-Silver',
+      },
+      'mixed-use': {
+        projectType: 'mixed-use',
+        floorToFloorHeight: 3.5,
+        windowToWallRatio: 0.4,
+        solarCoverage: 0.25,
+        facadeMaterial: 'concrete-precast',
+        glazingMaterial: 'glass-curtainwall',
+        sustainabilityTarget: 'LEED-Silver',
+      },
+      commercial: {
+        projectType: 'commercial',
+        floorToFloorHeight: 4.0,
+        windowToWallRatio: 0.55,
+        solarCoverage: 0.2,
+        facadeMaterial: 'metal-steel-dark',
+        glazingMaterial: 'glass-curtainwall',
+        sustainabilityTarget: 'LEED-Silver',
+      },
+    };
+    if (presets[preset]) {
+      setFormData((prev) => ({ ...prev, ...presets[preset] }));
+    }
   };
-  
-  // Deep clone helper to ensure immutable state updates
-  const deepCloneLayout = useCallback((layout: LayoutSpec): LayoutSpec => {
-    return JSON.parse(JSON.stringify(layout));
-  }, []);
-  
-  // Add room (with proper immutable update)
-  const addRoom = useCallback((levelIndex: number) => {
-    setLayoutSpec(prevLayout => {
-      const newLayout = deepCloneLayout(prevLayout);
-      if (newLayout.levels[levelIndex]) {
-        newLayout.levels[levelIndex].rooms.push({
-          name: `Room ${newLayout.levels[levelIndex].rooms.length + 1}`,
-          width: 4,
-          length: 4,
-          height: newLayout.globalDefaults.ceilingHeight,
-        });
-      }
-      return newLayout;
-    });
-  }, [deepCloneLayout]);
-  
-  // Remove room (with proper immutable update)
-  const removeRoom = useCallback((levelIndex: number, roomIndex: number) => {
-    setLayoutSpec(prevLayout => {
-      const newLayout = deepCloneLayout(prevLayout);
-      if (newLayout.levels[levelIndex]?.rooms[roomIndex]) {
-        newLayout.levels[levelIndex].rooms.splice(roomIndex, 1);
-      }
-      return newLayout;
-    });
-  }, [deepCloneLayout]);
-  
-  // Update room (with proper immutable update and validation)
-  const updateRoom = useCallback((levelIndex: number, roomIndex: number, field: 'name' | 'width' | 'length' | 'height', value: string | number) => {
-    setLayoutSpec(prevLayout => {
-      const newLayout = deepCloneLayout(prevLayout);
-      const room = newLayout.levels[levelIndex]?.rooms[roomIndex];
-      if (!room) return prevLayout;
-      
-      if (field === 'name') {
-        // Sanitize name to prevent injection (max 100 chars, alphanumeric + spaces)
-        const sanitizedName = String(value).slice(0, 100).replace(/[<>'"]/g, '');
-        room.name = sanitizedName;
-      } else if (field === 'width' || field === 'length' || field === 'height') {
-        const numValue = Number(value);
-        // Validate numeric bounds (0.1m to 1000m)
-        if (!isNaN(numValue) && numValue > 0 && numValue <= 1000) {
-          room[field] = numValue;
-        }
-      }
-      return newLayout;
-    });
-  }, [deepCloneLayout]);
-  
-  // Use example prompt
-  const useExamplePrompt = (prompt: string) => {
-    setNlPrompt(prompt);
-  };
-  
-  if (status === 'loading') {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-  
-  if (status === 'unauthenticated') {
-    router.push('/auth/login');
-    return null;
-  }
-  
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <BackButton fallbackUrl="/dashboard" />
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <Box className="h-8 w-8 text-primary" />
-                Spatial Workbench
-              </h1>
-              <p className="text-muted-foreground">
-                Generate 3D scenes from natural language or visual editor
-              </p>
-            </div>
-          </div>
-          {currentModel && (
-            <Badge variant="outline" className="text-sm">
-              Model: {currentModel.spatial_model_id.slice(0, 8)}...
-            </Badge>
-          )}
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <BackButton fallbackUrl="/dashboard" />
+      </div>
+
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Layers className="w-8 h-8 text-indigo-600" />
+            Spatial Workbench
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Parametric building generation, 2D floor plans, and 3D deliverables
+          </p>
         </div>
-        
-        {/* Disclaimer Banner */}
-        <Alert variant="destructive" className="bg-amber-500/10 border-amber-500/50">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <AlertTitle className="text-amber-600">Non-Authoritative Preview</AlertTitle>
-          <AlertDescription className="text-amber-600/80">
-            AI-generated visualizations are for preview purposes only. Not valid for construction documents,
-            permit submissions, or engineering signoff. Human licensure review required for any regulated use.
-          </AlertDescription>
-        </Alert>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Panel - Configuration */}
-          <div className="space-y-6">
-            <Tabs defaultValue="prompt" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="prompt">
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  AI Prompt
-                </TabsTrigger>
-                <TabsTrigger value="visual">
-                  <Layers className="h-4 w-4 mr-2" />
-                  Visual Editor
-                </TabsTrigger>
-              </TabsList>
-              
-              {/* AI Prompt Tab */}
-              <TabsContent value="prompt" className="space-y-4 mt-4">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Wand2 className="h-5 w-5" />
-                      Describe Your Space
-                    </CardTitle>
-                    <CardDescription>
-                      Describe the building or space you want to visualize in natural language
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Textarea
-                      value={nlPrompt}
-                      onChange={(e) => setNlPrompt(e.target.value)}
-                      placeholder="e.g., A modern 3-bedroom house with an open-plan living area, kitchen with island, master bedroom with ensuite, two smaller bedrooms, and a shared bathroom..."
-                      className="h-[150px] resize-none"
-                    />
-                    
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleConvertPrompt}
-                        disabled={isConverting || !nlPrompt.trim()}
-                        className="flex-1"
-                      >
-                        {isConverting ? (
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4 mr-2" />
-                        )}
-                        {isConverting ? 'Converting...' : 'Generate Layout'}
-                      </Button>
-                    </div>
-                    
-                    <div className="pt-2">
-                      <Label className="text-xs text-muted-foreground mb-2 block">Example prompts:</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {EXAMPLE_PROMPTS.map((prompt, i) => (
-                          <Button
-                            key={i}
-                            variant="outline"
-                            size="sm"
-                            className="text-xs h-auto py-1 px-2"
-                            onClick={() => useExamplePrompt(prompt)}
-                          >
-                            {prompt.slice(0, 40)}...
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Settings Card */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Generation Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Project (Optional)</Label>
-                        <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select project" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No Project</SelectItem>
-                            {projects.map(p => (
-                              <SelectItem key={p.id} value={p.id}>
-                                {p.projectNumber} - {p.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Units</Label>
-                        <Select value={units} onValueChange={(v) => setUnits(v as 'metric' | 'imperial')}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="metric">Metric (meters)</SelectItem>
-                            <SelectItem value="imperial">Imperial (feet)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Current Layout Preview */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Current Layout</CardTitle>
-                    <CardDescription>
-                      {layoutSpec.levels[0]?.rooms.length || 0} rooms defined
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[150px]">
-                      <div className="space-y-1">
-                        {layoutSpec.levels.map((level, levelIndex) => (
-                          <div key={levelIndex}>
-                            <p className="text-sm font-medium text-muted-foreground mb-1">{level.name}</p>
-                            {level.rooms.map((room, roomIndex) => (
-                              <div key={roomIndex} className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded text-sm">
-                                <span>{room.name}</span>
-                                <span className="text-muted-foreground">
-                                  {room.width} × {room.length}m
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              {/* Visual Editor Tab */}
-              <TabsContent value="visual" className="space-y-4 mt-4">
-                {/* Settings */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Generation Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Project (Optional)</Label>
-                        <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select project" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No Project</SelectItem>
-                            {projects.map(p => (
-                              <SelectItem key={p.id} value={p.id}>
-                                {p.projectNumber} - {p.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Units</Label>
-                        <Select value={units} onValueChange={(v) => setUnits(v as 'metric' | 'imperial')}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="metric">Metric (meters)</SelectItem>
-                            <SelectItem value="imperial">Imperial (feet)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Room Editor */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Layout Specification</CardTitle>
-                    <CardDescription>
-                      Define rooms with dimensions in {units === 'metric' ? 'meters' : 'feet'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[300px] pr-4">
-                      {layoutSpec.levels.map((level, levelIndex) => (
-                        <div key={levelIndex} className="mb-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium">{level.name}</h4>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => addRoom(levelIndex)}
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Add Room
-                            </Button>
-                          </div>
-                          <div className="space-y-2">
-                            {level.rooms.map((room, roomIndex) => (
-                              <div key={roomIndex} className="grid grid-cols-5 gap-2 items-center p-2 bg-muted/50 rounded">
-                                <Input
-                                  value={room.name}
-                                  onChange={(e) => updateRoom(levelIndex, roomIndex, 'name', e.target.value)}
-                                  placeholder="Room name"
-                                  className="col-span-2"
-                                />
-                                <Input
-                                  type="number"
-                                  value={room.width}
-                                  onChange={(e) => updateRoom(levelIndex, roomIndex, 'width', e.target.value)}
-                                  placeholder="W"
-                                  className="text-center"
-                                />
-                                <Input
-                                  type="number"
-                                  value={room.length}
-                                  onChange={(e) => updateRoom(levelIndex, roomIndex, 'length', e.target.value)}
-                                  placeholder="L"
-                                  className="text-center"
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeRoom(levelIndex, roomIndex)}
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-            
-            {/* Generate Button */}
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="w-full"
-              size="lg"
-            >
-              {isGenerating ? (
-                <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-              ) : (
-                <Sparkles className="h-5 w-5 mr-2" />
-              )}
-              {isGenerating ? 'Generating 3D Scene...' : 'Generate 3D Scene'}
+        <div className="flex gap-2 flex-wrap">
+          <Link href="/design-services">
+            <Button variant="outline" size="sm">
+              <Palette className="w-4 h-4 mr-2" />
+              Design Services
             </Button>
-            
-            {/* Generation Error */}
-            {generationError && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Generation Error</AlertTitle>
-                <AlertDescription>{generationError}</AlertDescription>
-              </Alert>
-            )}
-            
-            {/* Iteration Panel */}
-            {currentModel && (
+          </Link>
+          <Button variant="outline" size="sm" disabled>
+            <Download className="w-4 h-4 mr-2" />
+            Export GLB
+          </Button>
+        </div>
+      </div>
+
+      {/* Ecosystem Pipeline */}
+      <Card className="mb-6 border-indigo-200 bg-gradient-to-r from-indigo-50/50 to-purple-50/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Ecosystem Pipeline</CardTitle>
+          <CardDescription>Massing to Construction-Ready Documentation</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-center gap-2">
+            {pipelineStages.map((stage, idx) => (
+              <div key={stage.stage} className="flex items-center gap-2">
+                <div
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${
+                    stage.status === 'completed'
+                      ? 'bg-green-50 border-green-300 text-green-800'
+                      : stage.status === 'in_progress'
+                      ? 'bg-indigo-50 border-indigo-300 text-indigo-800 animate-pulse'
+                      : 'bg-white border-gray-200 text-gray-600'
+                  }`}
+                >
+                  {stage.status === 'completed' ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  ) : stage.status === 'in_progress' ? (
+                    <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Box className="w-4 h-4" />
+                  )}
+                  <span className="font-medium">{stage.label}</span>
+                </div>
+                {idx < pipelineStages.length - 1 && (
+                  <ChevronRight className="w-4 h-4 text-gray-400 hidden sm:block" />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 grid grid-cols-5 gap-2 text-xs text-muted-foreground hidden lg:grid">
+            {pipelineStages.map((stage) => (
+              <div key={stage.stage}>
+                <span className="font-medium">In:</span> {stage.input}
+                <br />
+                <span className="font-medium">Out:</span> {stage.output}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="parametric">
+            <Settings className="w-4 h-4 mr-2" />
+            Parametric Generator
+          </TabsTrigger>
+          <TabsTrigger value="floorplans">
+            <LayoutGrid className="w-4 h-4 mr-2" />
+            Floor Plans
+          </TabsTrigger>
+          <TabsTrigger value="deliverables">
+            <FileText className="w-4 h-4 mr-2" />
+            Deliverables
+          </TabsTrigger>
+        </TabsList>
+
+        {/* PARAMETRIC GENERATOR TAB */}
+        <TabsContent value="parametric">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Configuration Panel */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Presets */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <RefreshCw className="h-5 w-5" />
-                    Iterate on Scene
+                  <CardTitle className="text-base">Project Type Presets</CardTitle>
+                  <CardDescription>Apply pre-configured parametric constraints</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { key: 'senior-living', label: 'Senior Living', icon: Home },
+                      { key: 'veteran-housing', label: 'Veteran Housing', icon: Building2 },
+                      { key: 'mixed-use', label: 'Mixed-Use', icon: Layers },
+                      { key: 'commercial', label: 'Commercial', icon: Building2 },
+                    ].map((preset) => {
+                      const Icon = preset.icon;
+                      return (
+                        <button
+                          key={preset.key}
+                          onClick={() => handleApplyPreset(preset.key)}
+                          className={`p-3 rounded-lg border text-left hover:shadow-md transition-shadow ${
+                            formData.projectType === preset.key
+                              ? 'border-indigo-400 bg-indigo-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <Icon className="w-5 h-5 mb-1 text-indigo-600" />
+                          <div className="text-sm font-medium">{preset.label}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Building Dimensions */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Ruler className="w-4 h-4" />
+                    Building Dimensions
                   </CardTitle>
-                  <CardDescription>
-                    Describe changes you want to make to the current scene
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Textarea
-                    value={iterationInstructions}
-                    onChange={(e) => setIterationInstructions(e.target.value)}
-                    placeholder="e.g., 'Add windows to all rooms' or 'Make the living room larger'"
-                    className="h-[100px]"
-                  />
-                  <Button
-                    onClick={handleIterate}
-                    disabled={isIterating || !iterationInstructions.trim()}
-                    className="w-full"
-                  >
-                    {isIterating ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Play className="h-4 w-4 mr-2" />
-                    )}
-                    {isIterating ? 'Applying Changes...' : 'Apply Changes'}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Building Name</Label>
+                      <Input
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="e.g., Columbus Housing Project"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Target LOD</Label>
+                      <Select
+                        value={String(formData.targetLOD)}
+                        onValueChange={(v) => setFormData({ ...formData, targetLOD: parseInt(v) as LODLevel })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(LOD_INFO).map(([level, info]) => (
+                            <SelectItem key={level} value={level}>
+                              LOD {level} - {info.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>Floors</Label>
+                      <Input
+                        type="number"
+                        value={formData.totalFloors}
+                        onChange={(e) => setFormData({ ...formData, totalFloors: parseInt(e.target.value) || 1 })}
+                        min={1}
+                        max={80}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Floor Height (m)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={formData.floorToFloorHeight}
+                        onChange={(e) => setFormData({ ...formData, floorToFloorHeight: parseFloat(e.target.value) || 3 })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Width (m)</Label>
+                      <Input
+                        type="number"
+                        value={formData.footprintWidth}
+                        onChange={(e) => setFormData({ ...formData, footprintWidth: parseInt(e.target.value) || 10 })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Depth (m)</Label>
+                      <Input
+                        type="number"
+                        value={formData.footprintDepth}
+                        onChange={(e) => setFormData({ ...formData, footprintDepth: parseInt(e.target.value) || 10 })}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Envelope & Sustainability */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <SunMedium className="w-4 h-4" />
+                    Envelope & Sustainability
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center justify-between">
+                      <span>Window-to-Wall Ratio</span>
+                      <span className="font-mono text-sm text-muted-foreground">
+                        {Math.round(formData.windowToWallRatio * 100)}%
+                      </span>
+                    </Label>
+                    <Slider
+                      value={[formData.windowToWallRatio * 100]}
+                      onValueChange={([v]) => setFormData({ ...formData, windowToWallRatio: v / 100 })}
+                      min={5}
+                      max={80}
+                      step={1}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Senior living typically 15%; Commercial up to 60%
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center justify-between">
+                      <span>Solar Panel Roof Coverage</span>
+                      <span className="font-mono text-sm text-muted-foreground">
+                        {Math.round(formData.solarCoverage * 100)}%
+                      </span>
+                    </Label>
+                    <Slider
+                      value={[formData.solarCoverage * 100]}
+                      onValueChange={([v]) => setFormData({ ...formData, solarCoverage: v / 100 })}
+                      min={0}
+                      max={80}
+                      step={1}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Sustainability Target</Label>
+                      <Select
+                        value={formData.sustainabilityTarget}
+                        onValueChange={(v) => setFormData({ ...formData, sustainabilityTarget: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="LEED-Silver">LEED Silver</SelectItem>
+                          <SelectItem value="LEED-Gold">LEED Gold</SelectItem>
+                          <SelectItem value="LEED-Platinum">LEED Platinum</SelectItem>
+                          <SelectItem value="PassiveHouse">Passive House</SelectItem>
+                          <SelectItem value="NetZero">Net Zero</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Materials */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Palette className="w-4 h-4" />
+                    Material Selection
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Facade</Label>
+                      <Select
+                        value={formData.facadeMaterial}
+                        onValueChange={(v) => setFormData({ ...formData, facadeMaterial: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="concrete-structural">Structural Concrete</SelectItem>
+                          <SelectItem value="concrete-precast">Precast Concrete Panel</SelectItem>
+                          <SelectItem value="brick-red">Red Brick</SelectItem>
+                          <SelectItem value="metal-steel-dark">Dark Steel Cladding</SelectItem>
+                          <SelectItem value="wood-clt">Cross-Laminated Timber</SelectItem>
+                          <SelectItem value="cladding-fiber-cement">Fiber Cement Board</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Glazing</Label>
+                      <Select
+                        value={formData.glazingMaterial}
+                        onValueChange={(v) => setFormData({ ...formData, glazingMaterial: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="glass-curtainwall">Curtain Wall Glass</SelectItem>
+                          <SelectItem value="glass-residential">Residential Window Glass</SelectItem>
+                          <SelectItem value="solar-bipv">Building-Integrated PV</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Button
+                onClick={handleGenerate}
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                size="lg"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Generating Parametric Model...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-5 h-5 mr-2" />
+                    Generate Parametric Model
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Results Sidebar */}
+            <div className="space-y-6">
+              {/* Quick Stats */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Quick Calculations</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total Height</span>
+                    <span className="font-medium">
+                      {(formData.totalFloors * formData.floorToFloorHeight).toFixed(1)} m
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Gross Floor Area</span>
+                    <span className="font-medium">
+                      {(formData.footprintWidth * formData.footprintDepth * formData.totalFloors).toLocaleString()} m²
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Facade Envelope</span>
+                    <span className="font-medium">
+                      {(
+                        2 *
+                        (formData.footprintWidth + formData.footprintDepth) *
+                        formData.totalFloors *
+                        formData.floorToFloorHeight
+                      ).toLocaleString()}{' '}
+                      m²
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Glazing Area</span>
+                    <span className="font-medium">
+                      {(
+                        2 *
+                        (formData.footprintWidth + formData.footprintDepth) *
+                        formData.totalFloors *
+                        formData.floorToFloorHeight *
+                        formData.windowToWallRatio
+                      ).toFixed(0)}{' '}
+                      m²
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Solar Roof Area</span>
+                    <span className="font-medium">
+                      {(formData.footprintWidth * formData.footprintDepth * formData.solarCoverage * 0.8).toFixed(0)} m²
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Generated Model Results */}
+              {generatedModel && (
+                <Card className="border-green-200 bg-green-50/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      Model Generated
+                    </CardTitle>
+                    <CardDescription>{generatedModel.name}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <Badge className="bg-indigo-100 text-indigo-800">
+                      LOD {generatedModel.lodLevel}
+                    </Badge>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Elements</span>
+                      <span className="font-bold">{generatedModel.elementCount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Floor Plans</span>
+                      <span className="font-bold">{generatedModel.floorPlanCount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Area</span>
+                      <span className="font-bold">{generatedModel.totalArea.toLocaleString()} m²</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Solar Area</span>
+                      <span className="font-bold">{generatedModel.solarArea.toFixed(0)} m²</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Est. Energy</span>
+                      <span className="font-bold text-green-700">
+                        {(generatedModel.estimatedEnergyProduction / 1000).toFixed(0)} MWh/yr
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* LOD Reference */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">LOD Reference</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {Object.entries(LOD_INFO).map(([level, info]) => (
+                    <div
+                      key={level}
+                      className={`p-2 rounded text-sm ${
+                        formData.targetLOD === parseInt(level) ? 'bg-indigo-50 border border-indigo-200' : ''
+                      }`}
+                    >
+                      <div className="font-medium">
+                        LOD {level} - {info.label}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{info.description}</div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* FLOOR PLANS TAB */}
+        <TabsContent value="floorplans">
+          <div className="space-y-6">
+            {generatedModel ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {Array.from({ length: generatedModel.floorPlanCount }).map((_, idx) => (
+                    <Card key={idx}>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Floor {idx + 1}</CardTitle>
+                        <CardDescription>
+                          {idx === 0 && formData.projectType === 'mixed-use'
+                            ? 'Lobby + Retail'
+                            : 'Residential Units'}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {/* Simplified floor plan preview */}
+                        <div className="aspect-square bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center mb-3">
+                          <div className="text-center text-muted-foreground">
+                            <Grid3X3 className="w-8 h-8 mx-auto mb-2" />
+                            <p className="text-sm">2D Floor Plan</p>
+                            <p className="text-xs">
+                              Slice at {(1.2).toFixed(1)}m AFF
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-sm space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Height</span>
+                            <span>{(idx * formData.floorToFloorHeight).toFixed(1)} m</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Gross Area</span>
+                            <span>{(formData.footprintWidth * formData.footprintDepth).toLocaleString()} m²</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <LayoutGrid className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <p className="text-muted-foreground mb-4">
+                    Generate a parametric model first to view floor plans
+                  </p>
+                  <Button variant="outline" onClick={() => setActiveTab('parametric')}>
+                    Go to Parametric Generator
                   </Button>
                 </CardContent>
               </Card>
             )}
           </div>
-          
-          {/* Right Panel - Viewer */}
-          <div className="space-y-4">
-            {/* 3D Viewer */}
-            <Card className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Eye className="h-5 w-5" />
-                    3D Preview
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    {currentModel && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowCode(!showCode)}
-                        >
-                          <Code className="h-4 w-4 mr-1" />
-                          {showCode ? 'Hide Code' : 'Show Code'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleExport('glb')}
-                          disabled={isExporting}
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Export GLB
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
+        </TabsContent>
+
+        {/* DELIVERABLES TAB */}
+        <TabsContent value="deliverables">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Blender Script */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Box className="w-5 h-5 text-orange-600" />
+                  Blender Python Script
+                </CardTitle>
+                <CardDescription>
+                  Execute in Blender via MCP or paste into Blender scripting console
+                </CardDescription>
               </CardHeader>
-              <CardContent className="p-0">
-                <div className="relative bg-[#1a1a2e] aspect-video">
-                  {!currentModel ? (
-                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                      <div className="text-center">
-                        <Box className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                        <p>Describe your space and click Generate</p>
-                      </div>
+              <CardContent>
+                {blenderScript ? (
+                  <div className="space-y-3">
+                    <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-80 font-mono">
+                      {blenderScript.slice(0, 2000)}
+                      {blenderScript.length > 2000 && '\n\n... (truncated)'}
+                    </pre>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigator.clipboard.writeText(blenderScript)}
+                    >
+                      Copy Full Script
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Box className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Generate a model to get Blender script</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Visualization Prompt */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-purple-600" />
+                  AI Visualization Prompt
+                </CardTitle>
+                <CardDescription>
+                  Use with image-to-image or geometry-to-render AI pipelines
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {visualizationPrompt ? (
+                  <div className="space-y-3">
+                    <div className="bg-purple-50 p-4 rounded-lg text-sm">
+                      {visualizationPrompt}
                     </div>
-                  ) : (
-                    <iframe
-                      ref={viewerRef}
-                      className="w-full h-full border-0"
-                      sandbox="allow-scripts allow-same-origin"
-                      title="3D Scene Viewer"
-                    />
-                  )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigator.clipboard.writeText(visualizationPrompt)}
+                    >
+                      Copy Prompt
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Eye className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Generate a model to get visualization prompt</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Export Options */}
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Download className="w-5 h-5 text-blue-600" />
+                  Export & Integration
+                </CardTitle>
+                <CardDescription>Push deliverables to other SiteSync OS modules</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Link href="/design-services/new">
+                    <div className="p-4 rounded-lg border hover:shadow-md transition-shadow">
+                      <Palette className="w-6 h-6 text-purple-600 mb-2" />
+                      <h4 className="font-semibold text-sm">Push to Design Services</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Apply high-fidelity textures, lighting & landscaping
+                      </p>
+                    </div>
+                  </Link>
+                  <div className="p-4 rounded-lg border hover:shadow-md transition-shadow cursor-pointer opacity-80">
+                    <FileText className="w-6 h-6 text-blue-600 mb-2" />
+                    <h4 className="font-semibold text-sm">Export 2D Permit Set</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Floor plans, elevations & sections for permit review
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg border hover:shadow-md transition-shadow cursor-pointer opacity-80">
+                    <Building2 className="w-6 h-6 text-green-600 mb-2" />
+                    <h4 className="font-semibold text-sm">Export to Revit / Rhino</h4>
+                    <p className="text-xs text-muted-foreground">
+                      GLB / IFC compatible geometry for BIM tools
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-            
-            {/* Code Panel */}
-            {showCode && sceneCode && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Generated Code</CardTitle>
-                    <Button variant="ghost" size="sm" onClick={handleCopyCode}>
-                      <Copy className="h-4 w-4 mr-1" />
-                      Copy
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[300px]">
-                    <pre className="text-xs font-mono bg-muted p-4 rounded overflow-x-auto whitespace-pre-wrap">
-                      {sceneCode}
-                    </pre>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Warnings & Assumptions */}
-            {currentModel && (currentModel.warnings.length > 0 || currentModel.assumptions.length > 0) && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Info className="h-5 w-5" />
-                    Generation Notes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {currentModel.warnings.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-amber-600 mb-2 flex items-center gap-1">
-                        <AlertTriangle className="h-4 w-4" />
-                        Warnings
-                      </h4>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        {currentModel.warnings.map((w, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <span className="text-amber-500">•</span>
-                            {w}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {currentModel.assumptions.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-blue-600 mb-2 flex items-center gap-1">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Assumptions Made
-                      </h4>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        {currentModel.assumptions.map((a, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <span className="text-blue-500">•</span>
-                            {a}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Version History */}
-            {modelHistory.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <History className="h-5 w-5" />
-                    Version History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[150px]">
-                    <div className="space-y-2">
-                      {modelHistory.map((m, i) => (
-                        <div key={i} className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm">
-                          <span>Version {modelHistory.length - i}</span>
-                          <Badge variant="outline">{m.id.slice(0, 8)}...</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            )}
           </div>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -639,6 +639,131 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
+      {/* SiteSync Design & Spatial Intelligence */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.27 }}
+        className="mb-8"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Layers className="w-5 h-5 text-indigo-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Design & Spatial Intelligence</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Massing / Parametric Engine */}
+          <Card className="border-2 border-indigo-200 hover:border-indigo-400 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <Layers className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Spatial Workbench</CardTitle>
+                  <CardDescription className="text-xs">Parametric Detail Engine</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Link href="/spatial-workbench" className="flex items-center justify-between p-2 rounded hover:bg-indigo-50 text-sm">
+                  <span>Parametric Generator</span>
+                  <ArrowRight className="w-4 h-4 text-indigo-400" />
+                </Link>
+                <Link href="/spatial-workbench" className="flex items-center justify-between p-2 rounded hover:bg-indigo-50 text-sm">
+                  <span>Floor Plans</span>
+                  <ArrowRight className="w-4 h-4 text-indigo-400" />
+                </Link>
+                <Link href="/spatial-workbench" className="flex items-center justify-between p-2 rounded hover:bg-indigo-50 text-sm">
+                  <span>Deliverables</span>
+                  <ArrowRight className="w-4 h-4 text-indigo-400" />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Design Services */}
+          <Card className="border-2 border-purple-200 hover:border-purple-400 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Design Services</CardTitle>
+                  <CardDescription className="text-xs">Aesthetics & Rendering</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Link href="/design-services" className="flex items-center justify-between p-2 rounded hover:bg-purple-50 text-sm">
+                  <span>Design Requests</span>
+                  <ArrowRight className="w-4 h-4 text-purple-400" />
+                </Link>
+                <Link href="/design-services/new" className="flex items-center justify-between p-2 rounded hover:bg-purple-50 text-sm">
+                  <span>New Rendering</span>
+                  <ArrowRight className="w-4 h-4 text-purple-400" />
+                </Link>
+                <Link href="/gis" className="flex items-center justify-between p-2 rounded hover:bg-purple-50 text-sm">
+                  <span>GIS / Site Map</span>
+                  <ArrowRight className="w-4 h-4 text-purple-400" />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Ecosystem Pipeline */}
+          <Card className="border-2 border-teal-200 hover:border-teal-400 transition-colors">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <Network className="w-5 h-5 text-teal-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Ecosystem Pipeline</CardTitle>
+                  <CardDescription className="text-xs">Massing to Construction</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center gap-2 p-1.5 rounded bg-gray-50">
+                  <div className="w-2 h-2 rounded-full bg-blue-400" />
+                  <span>Massing Tool</span>
+                  <ArrowRight className="w-3 h-3 text-gray-400 ml-auto" />
+                  <span className="text-muted-foreground">GLB Blocks</span>
+                </div>
+                <div className="flex items-center gap-2 p-1.5 rounded bg-gray-50">
+                  <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                  <span>Parametric Engine</span>
+                  <ArrowRight className="w-3 h-3 text-gray-400 ml-auto" />
+                  <span className="text-muted-foreground">LOD 300</span>
+                </div>
+                <div className="flex items-center gap-2 p-1.5 rounded bg-gray-50">
+                  <div className="w-2 h-2 rounded-full bg-purple-400" />
+                  <span>Design Services</span>
+                  <ArrowRight className="w-3 h-3 text-gray-400 ml-auto" />
+                  <span className="text-muted-foreground">Renders</span>
+                </div>
+                <div className="flex items-center gap-2 p-1.5 rounded bg-gray-50">
+                  <div className="w-2 h-2 rounded-full bg-teal-400" />
+                  <span>Spatial Workbench</span>
+                  <ArrowRight className="w-3 h-3 text-gray-400 ml-auto" />
+                  <span className="text-muted-foreground">2D/3D Plans</span>
+                </div>
+                <div className="flex items-center gap-2 p-1.5 rounded bg-green-50">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="font-medium">SiteSync OS</span>
+                  <ArrowRight className="w-3 h-3 text-gray-400 ml-auto" />
+                  <span className="text-muted-foreground">Construction Docs</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </motion.div>
+
       {/* Zenflow & Quantum Ledger Integration */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

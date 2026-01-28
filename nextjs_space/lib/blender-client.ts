@@ -471,4 +471,114 @@ export async function renderPropertyVisualization(
   };
 }
 
+// ============================================
+// Parametric Detail Integration
+// ============================================
+
+/**
+ * Apply parametric detail to a massing model via Blender MCP.
+ * Takes a parametric model and executes the generated Blender script
+ * to transform LOD 100 blocks into LOD 200-300 detailed geometry.
+ */
+export async function applyParametricDetail(
+  designRequestId: string,
+  options: {
+    blenderScript: string;
+    exportFormat?: 'glb' | 'gltf' | 'fbx';
+    renderPreview?: boolean;
+    resolution?: [number, number];
+  }
+): Promise<{
+  success: boolean;
+  modelUrl?: string;
+  previewUrl?: string;
+  elementCount?: number;
+  error?: string;
+}> {
+  const client = getBlenderClient();
+
+  console.log(`[BlenderMCP] Applying parametric detail for design request: ${designRequestId}`);
+
+  try {
+    // Execute the parametric Blender script
+    await client.executeCode(options.blenderScript);
+
+    // Export the detailed model
+    const exportFormat = options.exportFormat || 'glb';
+    const exportPath = `/tmp/parametric_${designRequestId}.${exportFormat}`;
+    const modelUrl = await client.exportScene(exportPath, exportFormat);
+
+    let previewUrl: string | undefined;
+    if (options.renderPreview) {
+      const resolution = options.resolution || [1920, 1080];
+      const rendered = await client.renderScene({ resolution, samples: 128 });
+      previewUrl = `data:image/png;base64,${rendered}`;
+    }
+
+    // Get scene info to count elements
+    const scene = await client.getSceneInfo();
+    const elementCount = scene.objects?.length || 0;
+
+    return {
+      success: true,
+      modelUrl,
+      previewUrl,
+      elementCount,
+    };
+  } catch (error) {
+    console.error(`[BlenderMCP] Parametric detail error:`, error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to apply parametric detail',
+    };
+  }
+}
+
+/**
+ * Import a GLB massing model and apply parametric materials and textures.
+ * This is the "Export GLB -> Import to Claude Code/Abacus" workflow.
+ */
+export async function importAndEnhanceMassing(
+  glbFilePath: string,
+  materialAssignments: Array<{
+    objectNamePattern: string;
+    material: {
+      color: [number, number, number, number];
+      metallic: number;
+      roughness: number;
+    };
+  }>
+): Promise<{ success: boolean; enhancedObjects: string[]; error?: string }> {
+  const client = getBlenderClient();
+  const enhancedObjects: string[] = [];
+
+  try {
+    // Import the GLB massing model
+    const importedObjects = await client.importModel(glbFilePath);
+    console.log(`[BlenderMCP] Imported ${Array.isArray(importedObjects) ? importedObjects.length : 0} objects from GLB`);
+
+    // Apply material assignments
+    for (const assignment of materialAssignments) {
+      const scene = await client.getSceneInfo();
+      const matchingObjects = scene.objects.filter((obj) =>
+        obj.name.toLowerCase().includes(assignment.objectNamePattern.toLowerCase())
+      );
+
+      for (const obj of matchingObjects) {
+        await client.setMaterial(obj.name, assignment.material);
+        enhancedObjects.push(obj.name);
+      }
+    }
+
+    return { success: true, enhancedObjects };
+  } catch (error) {
+    console.error(`[BlenderMCP] Massing enhancement error:`, error);
+    return {
+      success: false,
+      enhancedObjects,
+      error: error instanceof Error ? error.message : 'Failed to enhance massing model',
+    };
+  }
+}
+
 export default BlenderMCPClient;
