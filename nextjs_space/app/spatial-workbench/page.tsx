@@ -271,6 +271,15 @@ export default function SpatialWorkbenchPage() {
     }
   }, [generateViewerHtml]);
   
+  // Auto-update viewer when sceneCode changes (handles async state updates)
+  useEffect(() => {
+    if (sceneCode && currentModel && viewerRef.current) {
+      console.log('[Spatial Workbench] Auto-updating viewer, code length:', sceneCode.length);
+      const html = generateViewerHtml(sceneCode);
+      viewerRef.current.srcdoc = html;
+    }
+  }, [sceneCode, currentModel, generateViewerHtml]);
+  
   // Convert NL prompt to layout
   const handleConvertPrompt = async () => {
     if (!nlPrompt.trim()) {
@@ -335,13 +344,24 @@ export default function SpatialWorkbenchPage() {
         throw new Error(data.error || 'Generation failed');
       }
       
+      console.log('[handleGenerate] API response:', { 
+        spatial_model_id: data.spatial_model_id,
+        status: data.status,
+        artifacts_count: data.artifacts?.length 
+      });
+      
       setCurrentModel(data);
       
       // Extract scene code
       const codeArtifact = data.artifacts?.find((a: { artifact_type: string }) => a.artifact_type === 'scene_code');
+      console.log('[handleGenerate] Code artifact found:', !!codeArtifact, 'content length:', codeArtifact?.inline_content?.length || 0);
+      
       if (codeArtifact?.inline_content) {
         setSceneCode(codeArtifact.inline_content);
-        updateViewer(codeArtifact.inline_content);
+        // Note: updateViewer may not work immediately due to async state, useEffect handles this
+      } else {
+        console.error('[handleGenerate] No scene code in response');
+        toast.error('Scene generated but no code returned');
       }
       
       toast.success('3D Scene generated successfully!', {

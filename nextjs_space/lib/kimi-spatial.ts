@@ -553,13 +553,42 @@ async function callKimiAPI(request: LLMChatRequest): Promise<LLMChatResponse> {
 }
 
 function extractCodeFromResponse(content: string): { code: string; metadata?: Record<string, unknown> } {
-  // Extract JavaScript/C# code block
-  const codeMatch = content.match(/```(?:javascript|js|csharp|cs|python)\n([\s\S]*?)```/);
-  const code = codeMatch ? codeMatch[1].trim() : '';
+  let code = '';
+  
+  // Try multiple patterns to extract code (case-insensitive)
+  const codePatterns = [
+    /```(?:javascript|js|JavaScript|JS)\s*\n([\s\S]*?)```/i,  // javascript/js blocks
+    /```(?:csharp|cs|CSharp|CS)\s*\n([\s\S]*?)```/i,          // csharp blocks
+    /```(?:python|py|Python|PY)\s*\n([\s\S]*?)```/i,          // python blocks
+    /```(?:typescript|ts|TypeScript|TS)\s*\n([\s\S]*?)```/i,  // typescript blocks
+    /```\s*\n([\s\S]*?)```/,                                    // plain code blocks (no language)
+  ];
+  
+  for (const pattern of codePatterns) {
+    const match = content.match(pattern);
+    if (match && match[1]?.trim()) {
+      code = match[1].trim();
+      break;
+    }
+  }
+  
+  // If no code block found, check if the entire response looks like code
+  if (!code && content.includes('THREE.') && content.includes('scene')) {
+    // Response might be raw code without markdown formatting
+    code = content.trim();
+    // Remove any leading/trailing non-code text
+    const sceneStart = code.indexOf('const scene') !== -1 ? code.indexOf('const scene') :
+                       code.indexOf('var scene') !== -1 ? code.indexOf('var scene') :
+                       code.indexOf('let scene') !== -1 ? code.indexOf('let scene') :
+                       code.indexOf('new THREE.Scene') !== -1 ? code.indexOf('new THREE.Scene') : -1;
+    if (sceneStart > 0) {
+      code = code.substring(sceneStart);
+    }
+  }
   
   // Extract metadata JSON block
   let metadata: Record<string, unknown> | undefined;
-  const metadataMatch = content.match(/```json\n([\s\S]*?)```/);
+  const metadataMatch = content.match(/```json\s*\n([\s\S]*?)```/i);
   if (metadataMatch) {
     try {
       metadata = JSON.parse(metadataMatch[1]);
@@ -567,6 +596,8 @@ function extractCodeFromResponse(content: string): { code: string; metadata?: Re
       // Ignore parsing errors
     }
   }
+  
+  console.log('[extractCodeFromResponse] Content length:', content.length, 'Extracted code length:', code.length);
   
   return { code, metadata };
 }
@@ -689,9 +720,20 @@ export async function generateScene(
   const latencyMs = Date.now() - startTime;
   const content = kimiResponse.choices[0]?.message?.content || '';
   
+  console.log('[generateScene] LLM response received, length:', content.length);
+  
   // Extract code and metadata
-  const { code, metadata } = extractCodeFromResponse(content);
+  let { code, metadata } = extractCodeFromResponse(content);
   const { warnings, assumptions } = extractWarningsAndAssumptions(content);
+  
+  // If no code was extracted, use fallback generator
+  if (!code || code.length < 100) {
+    console.log('[generateScene] No valid code extracted, using fallback generator');
+    code = generateFallbackThreeJSCode(request.layoutSpec);
+    warnings.push('Used fallback scene generator');
+  }
+  
+  console.log('[generateScene] Final code length:', code.length);
   
   // Map target engine to enum
   const engineMap: Record<string, SpatialTargetEngine> = {
