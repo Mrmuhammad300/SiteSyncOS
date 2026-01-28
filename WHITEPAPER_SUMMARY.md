@@ -13,7 +13,7 @@
 
 1. **Executive Summary** - Overview, value proposition, competitive edge
 2. **Industry Challenge** - $1.6T market inefficiencies, 80% over budget, 20% delays
-3. **The SiteSync OS Solution** - 11 core modules, 77 routes, 53 API endpoints
+3. **The SiteSync OS Solution** - 30 core modules, 77 routes, 79 API endpoints
 4. **AI-Powered Innovation** - Integrated AI design services, predictive analytics
 5. **Technology Architecture** - Next.js 14, TypeScript, Prisma, AWS S3, PostgreSQL
 6. **Key Features & Benefits** - Role-specific benefits (PM, Field, Executive, Architect)
@@ -59,6 +59,22 @@
 - **Description:** Pie chart showing target segments (Commercial 40%, Residential 35%, Infrastructure 15%, Specialty 10%)
 - **Tool:** Plotly (Python)
 
+## v2.1.0 Feature Additions
+
+### Parametric Detail Engine
+- Bridges LOD 100 AI massing to construction-ready geometry (LOD 200-400)
+- Window sizing, material application, solar panel zones, MEP rough-in geometry
+- Floor plan generation and Blender Python script output
+
+### Spatial Workbench Module
+- Full UI for parametric building generation with 4 project type presets
+- Building dimension configuration, material selection, sustainability targeting
+- Export to Design Services, Revit/Rhino, permit sets
+
+### Ecosystem Pipeline
+- 5-stage workflow: Massing Tool → Parametric Engine → Design Services → Spatial Workbench → SiteSync OS Export
+- Complete end-to-end pipeline from concept to construction documents
+
 ## Design Features
 
 ✅ Professional business document layout
@@ -80,8 +96,8 @@
 - **$12B** construction software market
 - **10%** annual market growth
 - **500,000+** potential customers in US
-- **77** routes, **53** API endpoints
-- **11** core modules
+- **77** routes, **79** API endpoints
+- **30** core modules
 
 ## Pricing Tiers Documented
 

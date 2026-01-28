@@ -861,7 +861,97 @@ enum MaterialStatus {
 
 \newpage
 
-# API Endpoints (53 total)
+# Parametric Detail Engine
+
+## Overview
+
+The Parametric Detail Engine (`lib/parametric-engine.ts`) bridges LOD 100 AI massing to construction-ready geometry at LOD 200-400.
+
+## LOD Levels
+
+| Level | Name | Description |
+|-------|------|-------------|
+| LOD 100 | Conceptual | Massing volumes and basic shapes |
+| LOD 200 | Schematic Design | Generic materials and approximate geometry |
+| LOD 300 | Design Development | Specific assemblies and accurate geometry |
+| LOD 350 | Construction Docs | Coordination detail with connections |
+| LOD 400 | Fabrication | Shop drawing level detail |
+
+## Key Interfaces
+
+```typescript
+interface ParametricConfig {
+  buildingType: 'senior-living' | 'veteran-housing' | 'mixed-use' | 'commercial';
+  floors: number;
+  floorHeight: number;
+  footprintWidth: number;
+  footprintDepth: number;
+  materials: {
+    facade: string;
+    glazing: string;
+    roof: string;
+    structure: string;
+  };
+  sustainability: 'leed-silver' | 'leed-gold' | 'leed-platinum' | 'passive-house' | 'net-zero';
+  targetLOD: 100 | 200 | 300 | 350 | 400;
+}
+
+interface ParametricOutput {
+  geometry: BuildingGeometry;
+  floorPlans: FloorPlan[];
+  blenderScript: string;
+  materialSchedule: MaterialEntry[];
+  solarAnalysis: SolarResult;
+  mepLayout: MEPLayout;
+}
+```
+
+## Processing Pipeline
+
+1. **Input Validation** - Validate building parameters and constraints
+2. **Envelope Generation** - Create building shell from footprint and height
+3. **Window Placement** - Apply fenestration rules per facade orientation
+4. **Material Assignment** - Map materials to facade zones and structural elements
+5. **Solar Analysis** - Calculate solar exposure and panel placement zones
+6. **MEP Routing** - Generate mechanical/electrical/plumbing rough-in geometry
+7. **Floor Plan Layout** - Generate room layouts with code-compliant dimensions
+8. **Script Generation** - Output Blender Python script for 3D visualization
+
+## Ecosystem Pipeline
+
+```
+┌──────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│ Massing Tool │───▶│ Parametric Engine │───▶│ Design Services │
+│ (GLB Blocks) │    │  (Apply Rules)   │    │  (Aesthetics)   │
+└──────────────┘    └──────────────────┘    └─────────────────┘
+                                                     │
+                    ┌──────────────────┐    ┌─────────▼───────┐
+                    │  SiteSync Export  │◀───│Spatial Workbench│
+                    │ (Construction)   │    │  (2D/3D Plans)  │
+                    └──────────────────┘    └─────────────────┘
+```
+
+\newpage
+
+# Spatial Workbench Module
+
+## Overview
+
+The Spatial Workbench (`app/spatial-workbench/page.tsx`) provides a full UI for parametric building generation with preset configurations, material selection, and deliverables export.
+
+## Feature Set
+
+- **Project Type Presets:** Senior Living, Veteran Housing, Mixed-Use, Commercial
+- **Building Configuration:** Floors, height, footprint width/depth
+- **Material Selection:** Facade, glazing, roof, structure
+- **Sustainability Targeting:** LEED Silver/Gold/Platinum, PassiveHouse, NetZero
+- **Solar Optimization:** Automated solar and envelope optimization
+- **Floor Plan Visualization:** Interactive plan display
+- **Export Targets:** Design Services, Revit/Rhino, permit sets, Blender scripts
+
+\newpage
+
+# API Endpoints (79 total)
 
 ## Authentication Endpoints
 
@@ -1609,6 +1699,37 @@ enum MaterialStatus {
 
 ### PATCH /api/materials/[id]
 **Description:** Update material requisition status
+
+## Spatial & Parametric Endpoints
+
+### POST /api/parametric/generate
+**Description:** Generate parametric building geometry from configuration
+
+**Request Body:**
+```json
+{
+  "buildingType": "senior-living",
+  "floors": 4,
+  "floorHeight": 3.2,
+  "footprintWidth": 30,
+  "footprintDepth": 20,
+  "materials": {
+    "facade": "fiber-cement",
+    "glazing": "low-e-double",
+    "roof": "tpo-membrane",
+    "structure": "steel-frame"
+  },
+  "sustainability": "leed-gold",
+  "targetLOD": 300
+}
+```
+
+**Response:** `200 OK` - Returns generated geometry, floor plans, and Blender script
+
+### GET /api/spatial-workbench
+**Description:** Get spatial workbench configurations and project presets
+
+**Response:** `200 OK` - Returns available presets and configuration options
 
 ## Webhook Endpoints
 

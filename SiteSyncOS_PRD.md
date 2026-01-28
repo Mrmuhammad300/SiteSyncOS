@@ -1468,6 +1468,52 @@ Core models with comprehensive relationships:
 - **Client Satisfaction:** Target 90% satisfaction rating
 - **ROI:** Target 300% ROI within 12 months of adoption
 
+## Completed Features (v2.1.0)
+
+### Parametric Detail Engine
+
+The Parametric Detail Engine bridges LOD 100 AI massing models to construction-ready geometry at LOD 200-400.
+
+**Key Features:**
+
+- **LOD Progression:** Supports LOD 100 (Conceptual) through LOD 400 (Fabrication)
+- **Window Sizing & Placement:** Rule-based window generation per facade zone
+- **Material Application:** Automated material and texture assignment
+- **Solar Panel Zones:** Solar array calculation and envelope optimization
+- **MEP Rough-In Geometry:** Mechanical, electrical, and plumbing layout generation
+- **Floor Plan Generation:** Automated room layouts with dimension annotations
+- **Blender Script Output:** Python scripts for 3D model generation in Blender
+
+### Spatial Workbench Module
+
+Full-featured UI for parametric building generation and 2D/3D deliverables export.
+
+**Key Features:**
+
+- **Project Type Presets:** Senior Living, Veteran Housing, Mixed-Use, Commercial
+- **Building Dimension Configuration:** Floors, height, footprint width/depth
+- **Material Selection Interface:** Facade, glazing, roof, and structure materials
+- **Sustainability Targeting:** LEED Silver/Gold/Platinum, PassiveHouse, NetZero
+- **Solar & Envelope Optimization:** Automated optimization controls
+- **Floor Plan Visualization:** Interactive floor plan display and editing
+- **Deliverables Export:** Export to Design Services, Revit/Rhino, permit sets
+
+### Ecosystem Pipeline
+
+5-stage visual workflow from concept to construction documents.
+
+**Pipeline Stages:**
+
+1. **Massing Tool** - GLB block generation for building volumes
+2. **Parametric Engine** - Apply construction rules and detail enrichment
+3. **Design Services** - Aesthetic rendering and material refinement
+4. **Spatial Workbench** - 2D/3D plan generation and review
+5. **SiteSync OS Export** - Construction document package output
+
+### Mobile Responsiveness
+
+Enhanced mobile responsiveness across all recently added features ensuring full functionality on tablets and mobile devices.
+
 ## Future Roadmap
 
 ### Phase 3 (Planned)
@@ -1492,6 +1538,6 @@ Core models with comprehensive relationships:
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** January 2026  
+**Document Version:** 2.1
+**Last Updated:** January 2026
 **Status:** Production Release
