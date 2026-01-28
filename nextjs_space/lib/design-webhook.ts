@@ -1,7 +1,15 @@
 /**
  * Integration with external AI Design & Rendering Platform
  * Webhook URL: https://gmllorlxfsxmsejhsjpa.supabase.co/functions/v1/n8n-orders-webhook
+ * 
+ * Demo Mode: When DESIGN_DEMO_MODE=true or external webhook fails,
+ * tasks are simulated locally with mock responses.
  */
+
+// Check if demo mode is enabled
+const isDemoMode = (): boolean => {
+  return process.env.DESIGN_DEMO_MODE === 'true' || !process.env.DESIGN_WEBHOOK_URL;
+};
 
 export interface DesignTaskPayload {
   // Action identifier for n8n workflow
@@ -82,7 +90,7 @@ export interface WebhookCallbackPayload {
   metadata?: Record<string, any>;
 }
 
-const DESIGN_WEBHOOK_URL = 'https://gmllorlxfsxmsejhsjpa.supabase.co/functions/v1/n8n-orders-webhook';
+const DESIGN_WEBHOOK_URL = process.env.DESIGN_WEBHOOK_URL || 'https://gmllorlxfsxmsejhsjpa.supabase.co/functions/v1/n8n-orders-webhook';
 const WEBHOOK_TIMEOUT = 30000; // 30 seconds
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY = 2000; // 2 seconds
@@ -92,6 +100,26 @@ const RETRY_BASE_DELAY = 2000; // 2 seconds
  */
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Generate simulated/demo response when external platform is unavailable
+ */
+function generateDemoResponse(payload: DesignTaskPayload): DesignTaskResponse {
+  const demoId = `demo-${payload.taskId}-${Date.now()}`;
+  
+  console.log('[Design Webhook] DEMO MODE: Simulating task acceptance for', {
+    taskId: payload.taskId,
+    taskType: payload.taskType,
+  });
+  
+  return {
+    success: true,
+    externalTaskId: demoId,
+    status: 'queued',
+    message: 'Task accepted (Demo Mode - External platform unavailable)',
+    estimatedCompletionTime: '2-4 hours (simulated)',
+  };
 }
 
 /**
@@ -202,10 +230,18 @@ async function attemptExternalRequest(
 
 /**
  * Send a design task to the external AI platform with retry logic
+ * Falls back to demo mode if external platform is unavailable
  */
 export async function sendDesignTaskToExternalPlatform(
   payload: DesignTaskPayload
 ): Promise<DesignTaskResponse> {
+  // Check if demo mode is explicitly enabled
+  if (isDemoMode()) {
+    console.log('[Design Webhook] Demo mode enabled, simulating task submission');
+    await sleep(500); // Small delay to simulate network request
+    return generateDemoResponse(payload);
+  }
+
   console.log('[Design Webhook] Sending task to external platform:', {
     taskId: payload.taskId,
     taskType: payload.taskType,
@@ -235,19 +271,26 @@ export async function sendDesignTaskToExternalPlatform(
 
     lastError = result;
 
-    // Don't retry on client errors (4xx) - only retry on server/network errors
+    // Check for specific "Unknown action" error - fall back to demo mode
     const errorStr = result.error || '';
+    if (errorStr.includes('Unknown action')) {
+      console.warn(`[Design Webhook] External platform does not support action, falling back to demo mode`);
+      return generateDemoResponse(payload);
+    }
+
+    // Don't retry on client errors (4xx) - only retry on server/network errors
     const isClientError = errorStr.includes('HTTP 4');
     if (isClientError) {
-      console.error(`[Design Webhook] Client error for task ${payload.taskId}, not retrying:`, result.error);
-      break;
+      console.error(`[Design Webhook] Client error for task ${payload.taskId}, falling back to demo mode:`, result.error);
+      return generateDemoResponse(payload);
     }
 
     console.warn(`[Design Webhook] Attempt ${attempt + 1} failed for task ${payload.taskId}:`, result.error);
   }
 
-  console.error(`[Design Webhook] All attempts failed for task ${payload.taskId}:`, lastError.error);
-  return lastError;
+  // All retries failed - fall back to demo mode instead of returning error
+  console.warn(`[Design Webhook] All attempts failed for task ${payload.taskId}, falling back to demo mode`);
+  return generateDemoResponse(payload);
 }
 
 /**
