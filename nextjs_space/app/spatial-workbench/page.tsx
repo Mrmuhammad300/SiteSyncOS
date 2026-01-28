@@ -84,14 +84,17 @@ interface GeneratedModel {
   floorPlans: FloorPlanData[];
 }
 
-type DesignPromptMode = 'conceptual' | 'technical' | 'materials' | 'sustainability' | 'layout';
+type DesignStyle = 'photorealistic' | 'architectural-render' | 'sketch' | 'blueprint' | '3d-visualization';
 
-interface ConversationMessage {
+interface GeneratedDesign {
   id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  mode?: DesignPromptMode;
-  parametricSuggestions?: Record<string, unknown>;
+  prompt: string;
+  analysis: string;
+  keyElements: string[];
+  imageUrl: string | null;
+  imageError?: string;
+  style: DesignStyle;
+  parametricSuggestions?: ParametricSuggestions | null;
   timestamp: string;
 }
 
@@ -116,20 +119,20 @@ const LOD_INFO: Record<number, { label: string; description: string }> = {
   400: { label: 'Fabrication', description: 'Shop drawing geometry and cut lists' },
 };
 
-const DESIGN_PROMPT_MODES: { key: DesignPromptMode; label: string; icon: React.ElementType; description: string }[] = [
-  { key: 'conceptual', label: 'Conceptual', icon: Lightbulb, description: 'Vision & spatial relationships' },
-  { key: 'technical', label: 'Technical', icon: Wrench, description: 'Dimensions & specifications' },
-  { key: 'materials', label: 'Materials', icon: Palette, description: 'Finishes & assemblies' },
-  { key: 'sustainability', label: 'Sustainability', icon: Leaf, description: 'Energy & certification' },
-  { key: 'layout', label: 'Layout', icon: LayoutDashboard, description: 'Floor plans & circulation' },
+const DESIGN_STYLES: { key: DesignStyle; label: string; icon: React.ElementType; description: string }[] = [
+  { key: 'photorealistic', label: 'Photorealistic', icon: SunMedium, description: 'Photo-quality renders' },
+  { key: 'architectural-render', label: 'Render', icon: Building2, description: 'Professional visualization' },
+  { key: 'sketch', label: 'Sketch', icon: Lightbulb, description: 'Concept drawings' },
+  { key: 'blueprint', label: 'Blueprint', icon: LayoutDashboard, description: 'Technical drawings' },
+  { key: '3d-visualization', label: '3D Model', icon: Layers, description: 'Isometric view' },
 ];
 
 const EXAMPLE_PROMPTS = [
-  "Design a modern 8-story senior living facility with abundant natural light, communal spaces on each floor, and rooftop garden access.",
-  "Create a sustainable mixed-use building with retail on ground floor, offices above, targeting LEED Platinum certification.",
-  "I need a veteran housing project with 60 units, emphasizing accessibility, community gathering areas, and trauma-informed design principles.",
-  "Propose facade materials for a coastal commercial building that can withstand salt air while maintaining a contemporary aesthetic.",
-  "Optimize a 5-story residential floor plan for efficiency with double-loaded corridors and maximize natural ventilation.",
+  "A modern 8-story senior living facility with floor-to-ceiling windows, rooftop gardens, and warm brick facade with contemporary metal accents",
+  "Sustainable mixed-use building with green roof, solar panels, glass curtain wall ground floor retail, and residential units above",
+  "Contemporary veteran housing complex featuring accessible ramps, community courtyard, memorial garden, and welcoming entrance canopy",
+  "Luxury coastal commercial tower with hurricane-resistant glass, white concrete facade, oceanfront terraces, and yacht club at base",
+  "Urban residential tower with stacked balconies, vertical gardens, rooftop pool, and modern minimalist concrete and glass design",
 ];
 
 export default function SpatialWorkbenchPage() {
@@ -137,20 +140,21 @@ export default function SpatialWorkbenchPage() {
   const [loading, setLoading] = useState(false);
   const [generatedModel, setGeneratedModel] = useState<GeneratedModel | null>(null);
   
-  // AI Design Prompt state
+  // AI Design Image Generation state
   const [promptInput, setPromptInput] = useState('');
-  const [promptMode, setPromptMode] = useState<DesignPromptMode>('conceptual');
-  const [promptLoading, setPromptLoading] = useState(false);
-  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
+  const [designStyle, setDesignStyle] = useState<DesignStyle>('architectural-render');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedDesigns, setGeneratedDesigns] = useState<GeneratedDesign[]>([]);
+  const [selectedDesign, setSelectedDesign] = useState<GeneratedDesign | null>(null);
   const [pendingSuggestions, setPendingSuggestions] = useState<ParametricSuggestions | null>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom of chat
+  // Auto-scroll to latest design
   useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (galleryRef.current && generatedDesigns.length > 0) {
+      galleryRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [conversation]);
+  }, [generatedDesigns.length]);
 
   // Pipeline stages run as backdrop function during generation
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([
@@ -293,29 +297,22 @@ export default function SpatialWorkbenchPage() {
     }
   };
 
-  // AI Design Prompt handlers
-  const handleSendPrompt = async () => {
-    if (!promptInput.trim() || promptLoading) return;
+  // AI Design Image Generation handlers
+  const handleGenerateDesign = async () => {
+    if (!promptInput.trim() || isGenerating) return;
 
-    const userMessage: ConversationMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: promptInput.trim(),
-      mode: promptMode,
-      timestamp: new Date().toISOString(),
-    };
-
-    setConversation((prev) => [...prev, userMessage]);
+    const currentPrompt = promptInput.trim();
     setPromptInput('');
-    setPromptLoading(true);
+    setIsGenerating(true);
 
     try {
       const response = await fetch('/api/ai/design-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: userMessage.content,
-          mode: promptMode,
+          prompt: currentPrompt,
+          style: designStyle,
+          generateImage: true,
           context: {
             projectType: formData.projectType,
             buildingName: formData.name,
@@ -326,8 +323,6 @@ export default function SpatialWorkbenchPage() {
               footprintDepth: formData.footprintDepth,
               windowToWallRatio: formData.windowToWallRatio,
               solarCoverage: formData.solarCoverage,
-              facadeMaterial: formData.facadeMaterial,
-              glazingMaterial: formData.glazingMaterial,
               sustainabilityTarget: formData.sustainabilityTarget,
             },
           },
@@ -336,40 +331,52 @@ export default function SpatialWorkbenchPage() {
 
       if (response.ok) {
         const data = await response.json();
-        const assistantMessage: ConversationMessage = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: data.response,
-          mode: data.mode,
+        const newDesign: GeneratedDesign = {
+          id: `design-${Date.now()}`,
+          prompt: currentPrompt,
+          analysis: data.analysis || '',
+          keyElements: data.keyElements || [],
+          imageUrl: data.imageUrl,
+          imageError: data.imageError,
+          style: data.style || designStyle,
           parametricSuggestions: data.parametricSuggestions,
-          timestamp: data.timestamp,
+          timestamp: data.timestamp || new Date().toISOString(),
         };
 
-        setConversation((prev) => [...prev, assistantMessage]);
+        setGeneratedDesigns((prev) => [newDesign, ...prev]);
+        setSelectedDesign(newDesign);
 
         if (data.parametricSuggestions) {
           setPendingSuggestions(data.parametricSuggestions);
         }
       } else {
-        const errorMessage: ConversationMessage = {
+        const errorDesign: GeneratedDesign = {
           id: `error-${Date.now()}`,
-          role: 'assistant',
-          content: 'I apologize, but I encountered an error processing your request. Please try again.',
+          prompt: currentPrompt,
+          analysis: 'Failed to generate design. Please try again.',
+          keyElements: [],
+          imageUrl: null,
+          imageError: 'Generation failed',
+          style: designStyle,
           timestamp: new Date().toISOString(),
         };
-        setConversation((prev) => [...prev, errorMessage]);
+        setGeneratedDesigns((prev) => [errorDesign, ...prev]);
       }
     } catch (error) {
-      console.error('Prompt error:', error);
-      const errorMessage: ConversationMessage = {
+      console.error('Design generation error:', error);
+      const errorDesign: GeneratedDesign = {
         id: `error-${Date.now()}`,
-        role: 'assistant',
-        content: 'Unable to connect to the design AI. Please check your connection and try again.',
+        prompt: currentPrompt,
+        analysis: 'Unable to connect to the design AI. Please check your connection.',
+        keyElements: [],
+        imageUrl: null,
+        imageError: 'Connection error',
+        style: designStyle,
         timestamp: new Date().toISOString(),
       };
-      setConversation((prev) => [...prev, errorMessage]);
+      setGeneratedDesigns((prev) => [errorDesign, ...prev]);
     } finally {
-      setPromptLoading(false);
+      setIsGenerating(false);
     }
   };
 
@@ -394,8 +401,9 @@ export default function SpatialWorkbenchPage() {
     setActiveTab('parametric');
   };
 
-  const handleClearConversation = () => {
-    setConversation([]);
+  const handleClearDesigns = () => {
+    setGeneratedDesigns([]);
+    setSelectedDesign(null);
     setPendingSuggestions(null);
   };
 
@@ -451,13 +459,14 @@ export default function SpatialWorkbenchPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* AI DESIGN PROMPT TAB */}
+        {/* AI DESIGN IMAGE GENERATION TAB */}
         <TabsContent value="ai-design">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Chat Interface */}
+            {/* Main Design Generator */}
             <div className="lg:col-span-2 space-y-4">
-              <Card className="h-[600px] flex flex-col">
-                <CardHeader className="pb-3 border-b">
+              {/* Input Card */}
+              <Card>
+                <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="text-base flex items-center gap-2">
@@ -465,154 +474,231 @@ export default function SpatialWorkbenchPage() {
                         Design Intelligence
                       </CardTitle>
                       <CardDescription>
-                        Describe your architectural vision and get AI-powered design guidance
+                        Describe your architectural vision and generate design imagery
                       </CardDescription>
                     </div>
-                    {conversation.length > 0 && (
-                      <Button variant="ghost" size="sm" onClick={handleClearConversation}>
+                    {generatedDesigns.length > 0 && (
+                      <Button variant="ghost" size="sm" onClick={handleClearDesigns}>
                         <RefreshCw className="w-4 h-4 mr-1" />
-                        Clear
+                        Clear All
                       </Button>
                     )}
                   </div>
                 </CardHeader>
-                
-                {/* Conversation Area */}
-                <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {conversation.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center mb-4">
-                        <Sparkles className="w-8 h-8 text-purple-600" />
+                <CardContent className="space-y-4">
+                  {/* Style Selector */}
+                  <div>
+                    <Label className="text-sm mb-2 block">Visualization Style</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {DESIGN_STYLES.map((style) => {
+                        const Icon = style.icon;
+                        return (
+                          <button
+                            key={style.key}
+                            onClick={() => setDesignStyle(style.key)}
+                            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                              designStyle === style.key
+                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                            }`}
+                            title={style.description}
+                          >
+                            <Icon className="w-4 h-4" />
+                            {style.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Prompt Input */}
+                  <div>
+                    <Label className="text-sm mb-2 block">Design Description</Label>
+                    <Textarea
+                      value={promptInput}
+                      onChange={(e) => setPromptInput(e.target.value)}
+                      placeholder="Describe the building you want to visualize... e.g., 'A modern 10-story residential tower with glass curtain walls, green terraces on every third floor, and a rooftop garden with solar panels'"
+                      className="min-h-[100px] resize-none"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.ctrlKey) {
+                          e.preventDefault();
+                          handleGenerateDesign();
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Press Ctrl+Enter to generate</p>
+                  </div>
+
+                  {/* Generate Button */}
+                  <Button
+                    onClick={handleGenerateDesign}
+                    disabled={!promptInput.trim() || isGenerating}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                    size="lg"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Generating Design...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-5 h-5 mr-2" />
+                        Generate Design
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Generated Designs Gallery */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Generated Designs</CardTitle>
+                  <CardDescription>
+                    {generatedDesigns.length === 0
+                      ? 'Your generated designs will appear here'
+                      : `${generatedDesigns.length} design${generatedDesigns.length > 1 ? 's' : ''} generated`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {generatedDesigns.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center mx-auto mb-4">
+                        <Sparkles className="w-10 h-10 text-purple-600" />
                       </div>
-                      <h3 className="text-lg font-semibold mb-2">AI-Powered Architectural Design</h3>
-                      <p className="text-muted-foreground text-sm mb-6 max-w-md">
-                        Describe your ideal building, spatial requirements, or design preferences. 
-                        The AI will provide expert guidance and can suggest parametric settings for generation.
+                      <h3 className="text-lg font-semibold mb-2">No Designs Yet</h3>
+                      <p className="text-muted-foreground text-sm mb-6 max-w-md mx-auto">
+                        Describe your architectural vision above and click Generate to create design visualizations.
                       </p>
-                      <div className="space-y-2 w-full max-w-lg">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Try an example</p>
-                        <div className="space-y-2">
-                          {EXAMPLE_PROMPTS.slice(0, 3).map((example, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => handleExamplePrompt(example)}
-                              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 transition-colors text-sm"
-                            >
-                              <ChevronRight className="w-4 h-4 inline mr-2 text-purple-500" />
-                              {example.length > 90 ? example.substring(0, 90) + '...' : example}
-                            </button>
-                          ))}
-                        </div>
+                      <div className="space-y-2 max-w-lg mx-auto">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Quick Start Examples</p>
+                        {EXAMPLE_PROMPTS.slice(0, 3).map((example, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleExamplePrompt(example)}
+                            className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 transition-colors text-sm"
+                          >
+                            <ChevronRight className="w-4 h-4 inline mr-2 text-purple-500" />
+                            {example.length > 80 ? example.substring(0, 80) + '...' : example}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   ) : (
-                    <>
-                      {conversation.map((message) => (
+                    <div ref={galleryRef} className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2">
+                      {generatedDesigns.map((design) => (
                         <div
-                          key={message.id}
-                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                          key={design.id}
+                          className={`relative rounded-lg border-2 overflow-hidden cursor-pointer transition-all hover:shadow-lg ${
+                            selectedDesign?.id === design.id
+                              ? 'border-purple-500 shadow-lg'
+                              : 'border-gray-200 hover:border-purple-300'
+                          }`}
+                          onClick={() => setSelectedDesign(design)}
                         >
-                          <div
-                            className={`max-w-[85%] rounded-lg p-3 ${
-                              message.role === 'user'
-                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                                : 'bg-gray-100 text-gray-900'
-                            }`}
-                          >
-                            {message.role === 'user' && message.mode && (
-                              <Badge variant="secondary" className="mb-2 bg-white/20 text-white text-xs">
-                                {DESIGN_PROMPT_MODES.find(m => m.key === message.mode)?.label}
-                              </Badge>
-                            )}
-                            <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-                            {message.parametricSuggestions && (
-                              <div className="mt-3 pt-3 border-t border-gray-200">
-                                <p className="text-xs font-medium mb-2 flex items-center gap-1">
-                                  <Zap className="w-3 h-3" />
-                                  Suggested Parameters Available
-                                </p>
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  onClick={handleApplySuggestions}
-                                  className="w-full"
-                                >
-                                  Apply to Generator
-                                  <ChevronRight className="w-4 h-4 ml-1" />
-                                </Button>
+                          {/* Image or Placeholder */}
+                          <div className="aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 relative">
+                            {design.imageUrl ? (
+                              <img
+                                src={design.imageUrl}
+                                alt={design.prompt}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                                {design.imageError ? (
+                                  <>
+                                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-2">
+                                      <Sparkles className="w-6 h-6 text-red-500" />
+                                    </div>
+                                    <p className="text-sm text-red-600 text-center">{design.imageError}</p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Loader2 className="w-8 h-8 text-purple-500 animate-spin mb-2" />
+                                    <p className="text-sm text-muted-foreground">Generating...</p>
+                                  </>
+                                )}
                               </div>
+                            )}
+                            {/* Style Badge */}
+                            <Badge className="absolute top-2 right-2 bg-black/60 text-white text-xs">
+                              {DESIGN_STYLES.find(s => s.key === design.style)?.label || design.style}
+                            </Badge>
+                          </div>
+                          {/* Info */}
+                          <div className="p-3 bg-white">
+                            <p className="text-sm font-medium line-clamp-2 mb-1">{design.prompt}</p>
+                            {design.analysis && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">{design.analysis}</p>
                             )}
                           </div>
                         </div>
                       ))}
-                      {promptLoading && (
-                        <div className="flex justify-start">
-                          <div className="bg-gray-100 rounded-lg p-3">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              Analyzing your design request...
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      <div ref={chatEndRef} />
-                    </>
+                    </div>
                   )}
                 </CardContent>
-
-                {/* Input Area */}
-                <div className="p-4 border-t bg-gray-50/50">
-                  <div className="flex gap-2 mb-3">
-                    {DESIGN_PROMPT_MODES.map((mode) => {
-                      const Icon = mode.icon;
-                      return (
-                        <button
-                          key={mode.key}
-                          onClick={() => setPromptMode(mode.key)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                            promptMode === mode.key
-                              ? 'bg-purple-100 text-purple-700 border border-purple-300'
-                              : 'bg-white border border-gray-200 hover:border-gray-300 text-gray-600'
-                          }`}
-                          title={mode.description}
-                        >
-                          <Icon className="w-3.5 h-3.5" />
-                          {mode.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="flex gap-2">
-                    <Textarea
-                      value={promptInput}
-                      onChange={(e) => setPromptInput(e.target.value)}
-                      placeholder="Describe your architectural vision, design requirements, or ask for guidance..."
-                      className="min-h-[60px] max-h-[120px] resize-none"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendPrompt();
-                        }
-                      }}
-                    />
-                    <Button
-                      onClick={handleSendPrompt}
-                      disabled={!promptInput.trim() || promptLoading}
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-4"
-                    >
-                      {promptLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Send className="w-5 h-5" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
               </Card>
             </div>
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Selected Design Details */}
+              {selectedDesign && (
+                <Card className="border-purple-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-purple-600" />
+                      Selected Design
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {selectedDesign.imageUrl && (
+                      <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+                        <img
+                          src={selectedDesign.imageUrl}
+                          alt={selectedDesign.prompt}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Prompt</Label>
+                      <p className="text-sm">{selectedDesign.prompt}</p>
+                    </div>
+                    {selectedDesign.analysis && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground">AI Analysis</Label>
+                        <p className="text-sm">{selectedDesign.analysis}</p>
+                      </div>
+                    )}
+                    {selectedDesign.keyElements.length > 0 && (
+                      <div>
+                        <Label className="text-xs text-muted-foreground mb-2 block">Key Elements</Label>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedDesign.keyElements.map((el, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {el}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {selectedDesign.imageUrl && (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => window.open(selectedDesign.imageUrl!, '_blank')}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Image
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Pending Suggestions */}
               {pendingSuggestions && (
                 <Card className="border-purple-200 bg-purple-50/50">
@@ -621,7 +707,7 @@ export default function SpatialWorkbenchPage() {
                       <Zap className="w-5 h-5 text-purple-600" />
                       AI Suggestions
                     </CardTitle>
-                    <CardDescription>Ready to apply to the Parametric Generator</CardDescription>
+                    <CardDescription>Apply to Parametric Generator</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm">
                     {Object.entries(pendingSuggestions).map(([key, value]) => (
@@ -650,12 +736,12 @@ export default function SpatialWorkbenchPage() {
               {/* Current Context */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Current Context</CardTitle>
-                  <CardDescription>AI uses these settings as context</CardDescription>
+                  <CardTitle className="text-base">Project Context</CardTitle>
+                  <CardDescription>Used for design context</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Project Type</span>
+                    <span className="text-muted-foreground">Type</span>
                     <Badge variant="outline" className="capitalize">
                       {formData.projectType.replace(/-/g, ' ')}
                     </Badge>
@@ -669,20 +755,16 @@ export default function SpatialWorkbenchPage() {
                     <span className="font-medium">{formData.footprintWidth}m × {formData.footprintDepth}m</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">WWR</span>
-                    <span className="font-medium">{Math.round(formData.windowToWallRatio * 100)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Target</span>
+                    <span className="text-muted-foreground">Certification</span>
                     <Badge variant="outline">{formData.sustainabilityTarget}</Badge>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* More Examples */}
+              {/* Example Prompts */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Example Prompts</CardTitle>
+                  <CardTitle className="text-base">Design Ideas</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {EXAMPLE_PROMPTS.map((example, idx) => (
@@ -691,7 +773,7 @@ export default function SpatialWorkbenchPage() {
                       onClick={() => handleExamplePrompt(example)}
                       className="w-full text-left p-2 rounded border border-gray-200 hover:border-purple-300 hover:bg-purple-50/30 transition-colors text-xs text-muted-foreground"
                     >
-                      {example.length > 60 ? example.substring(0, 60) + '...' : example}
+                      {example.length > 55 ? example.substring(0, 55) + '...' : example}
                     </button>
                   ))}
                 </CardContent>
