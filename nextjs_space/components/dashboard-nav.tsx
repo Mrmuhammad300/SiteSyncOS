@@ -27,6 +27,7 @@ import {
   FileStack,
   ClipboardCheck,
   DollarSign,
+  Calculator,
   CheckCircle,
   User,
   LogOut,
@@ -79,6 +80,7 @@ const buildNavigation = [
 
 // SiteSync Ops™ - Operations Module (Invoices, Expenses)
 const opsNavigation = [
+  { name: 'Cost Analysis', href: '/cost-analysis', icon: Calculator },
   { name: 'Budgeting', href: '/budgeting', icon: Wallet },
   { name: 'Draw Requests', href: '/draw-requests', icon: Receipt },
   { name: 'Tenants', href: '/tenant-management', icon: Users },
