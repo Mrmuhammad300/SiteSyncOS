@@ -63,6 +63,7 @@ model User {
   rfiComments             RFIComment[]
   rfiResponses            RFIResponse[]
   roiCalculations         ROICalculation[]
+  costEstimates           CostEstimate[]
   sessions                Session[]
   submittalsAssigned      Submittal[]             @relation("AssignedTo")
   submittalsSubmitted     Submittal[]             @relation("SubmittedBy")
@@ -135,6 +136,7 @@ model Project {
   punchItems           PunchItem[]
   rfis                 RFI[]
   roiCalculations      ROICalculation[]
+  costEstimates        CostEstimate[]
   submittals           Submittal[]
   timeEntries          TimeEntry[]
   workOrders           WorkOrder[]
@@ -2349,6 +2351,93 @@ model AgentMemory {
   @@unique([memoryType, projectId, key])
   @@index([memoryType])
   @@index([projectId])
+}
+
+// ============================================
+// COST ANALYSIS INTEGRATION
+// ============================================
+
+model CostEstimate {
+  id                    String              @id @default(cuid())
+  projectId             String?
+  userId                String
+  estimateName          String
+  projectType           String              // residential, commercial, industrial, mixed-use, renovation
+  squareFootage         Float
+  stories               Int                 @default(1)
+  description           String?
+
+  // Location
+  address               String?
+  city                  String?
+  state                 String?
+  zipCode               String
+
+  // 1build integration
+  oneBuildEstimateId    String?
+  oneBuildStatus        String?
+  oneBuildTotalCost     Float?
+  oneBuildCostPerSqFt   Float?
+  oneBuildLineItems     Json?               // Serialized line items from 1build
+
+  // RSMeans benchmark
+  rsMeansNationalAvg    Float?
+  rsMeansLocalizedAvg   Float?
+  rsMeansLocationFactor Float?
+  rsMeansCostRangeLow   Float?
+  rsMeansCostRangeMid   Float?
+  rsMeansCostRangeHigh  Float?
+
+  // Comparison
+  benchmarkDelta        Float?
+  benchmarkDeltaPercent Float?
+  isAboveBenchmark      Boolean?
+  confidenceLevel       String?             // high, medium, low
+  recommendations       String[]            @default([])
+
+  // Summary totals
+  estimatedTotalCost    Float               @default(0)
+  costPerSqFt           Float               @default(0)
+  laborTotal            Float               @default(0)
+  materialTotal         Float               @default(0)
+  equipmentTotal        Float               @default(0)
+  contingency           Float               @default(0)
+  grandTotal            Float               @default(0)
+
+  // Source tracking
+  dataSources           String[]            @default([])  // ["1build", "rsmeans"]
+
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  project               Project?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user                  User                @relation(fields: [userId], references: [id])
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([zipCode])
+  @@index([createdAt])
+}
+
+model CostItemLookup {
+  id                    String              @id @default(cuid())
+  source                String              // "1build" or "rsmeans"
+  externalId            String
+  description           String
+  unit                  String
+  unitCost              Float
+  laborCost             Float               @default(0)
+  materialCost          Float               @default(0)
+  equipmentCost         Float               @default(0)
+  category              String
+  divisionCode          String?
+  zipCode               String?
+  lookupDate            DateTime            @default(now())
+
+  @@index([source, externalId])
+  @@index([category])
+  @@index([divisionCode])
+  @@index([lookupDate])
 }
 
 model AgentLearningSignal {
