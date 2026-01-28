@@ -222,15 +222,15 @@ export default function LedgerPage() {
     <div className="container mx-auto py-6 px-4">
       <BackButton fallbackUrl="/dashboard" />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <BookOpen className="h-8 w-8 text-primary" />
+          <BookOpen className="h-8 w-8 text-primary flex-shrink-0" />
           <div>
-            <h1 className="text-2xl font-bold">Quantum Ledger</h1>
-            <p className="text-muted-foreground">Event-driven treasury with immutable audit trails</p>
+            <h1 className="text-xl sm:text-2xl font-bold">Quantum Ledger</h1>
+            <p className="text-sm text-muted-foreground">Event-driven treasury with immutable audit trails</p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => { fetchLedgerEntries(); fetchEvents(); }}>
+        <Button variant="outline" onClick={() => { fetchLedgerEntries(); fetchEvents(); }} className="self-start sm:self-auto">
           <RefreshCw className="h-4 w-4 mr-2" /> Refresh
         </Button>
       </div>
@@ -360,8 +360,8 @@ export default function LedgerPage() {
           </div>
 
           <Card>
-            <CardContent className="p-0">
-              <Table>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table className="min-w-[800px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10">

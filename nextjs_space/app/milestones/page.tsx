@@ -235,15 +235,15 @@ export default function MilestonesPage() {
     <div className="container mx-auto py-6 px-4">
       <BackButton fallbackUrl="/dashboard" />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <Target className="h-8 w-8 text-primary" />
+          <Target className="h-8 w-8 text-primary flex-shrink-0" />
           <div>
-            <h1 className="text-2xl font-bold">Project Milestones</h1>
-            <p className="text-muted-foreground">Track progress and trigger draw eligibility</p>
+            <h1 className="text-xl sm:text-2xl font-bold">Project Milestones</h1>
+            <p className="text-sm text-muted-foreground">Track progress and trigger draw eligibility</p>
           </div>
         </div>
-        <Button variant="outline" onClick={fetchMilestones}>
+        <Button variant="outline" onClick={fetchMilestones} className="self-start sm:self-auto">
           <RefreshCw className="h-4 w-4 mr-2" /> Refresh
         </Button>
       </div>
@@ -298,9 +298,9 @@ export default function MilestonesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-4">
+      <div className="flex flex-wrap gap-4 mb-4">
         <Select value={selectedProject} onValueChange={setSelectedProject}>
-          <SelectTrigger className="w-[220px]">
+          <SelectTrigger className="w-full sm:w-[220px]">
             <SelectValue placeholder="All Projects" />
           </SelectTrigger>
           <SelectContent>
@@ -311,7 +311,7 @@ export default function MilestonesPage() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>

@@ -267,10 +267,10 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">Welcome back, {session?.user?.name}</h1>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Welcome back, {session?.user?.name?.split(' ')[0]}</h1>
               {isAdmin && (
                 <Badge className="bg-purple-100 text-purple-800">
                   <Shield className="w-3 h-3 mr-1" />
@@ -280,10 +280,10 @@ export default function DashboardPage() {
             </div>
             <p className="text-gray-600">Asset Management Intelligence</p>
           </div>
-          
+
           {/* Admin-only Quick Actions */}
           {isAdmin && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <ReportGenerator 
                 entityType="portfolio" 
                 entityName="Portfolio Overview"
@@ -308,7 +308,7 @@ export default function DashboardPage() {
                     </DialogDescription>
                   </DialogHeader>
                   
-                  <div className="grid grid-cols-2 gap-6 py-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
                     <div className="space-y-6">
                       {/* Project Selection Dropdown */}
                       <div className="space-y-2">
@@ -864,60 +864,60 @@ export default function DashboardPage() {
         className="mt-8"
       >
         <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
           <Link href="/rfis">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-              <CardContent className="p-6">
-                <MessageSquare className="w-8 h-8 text-orange-600 mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-orange-600 transition-colors">View RFIs</h3>
-                <p className="text-sm text-gray-600">Manage requests for information</p>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group h-full">
+              <CardContent className="p-4 sm:p-6">
+                <MessageSquare className="w-6 sm:w-8 h-6 sm:h-8 text-orange-600 mb-2 sm:mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 group-hover:text-orange-600 transition-colors">View RFIs</h3>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Manage requests for information</p>
               </CardContent>
             </Card>
           </Link>
           <Link href="/daily-reports">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-              <CardContent className="p-6">
-                <FileText className="w-8 h-8 text-green-600 mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-green-600 transition-colors">Daily Reports</h3>
-                <p className="text-sm text-gray-600">Submit and view field reports</p>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group h-full">
+              <CardContent className="p-4 sm:p-6">
+                <FileText className="w-6 sm:w-8 h-6 sm:h-8 text-green-600 mb-2 sm:mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 group-hover:text-green-600 transition-colors">Daily Reports</h3>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Submit and view field reports</p>
               </CardContent>
             </Card>
           </Link>
           <Link href="/documents">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
-              <CardContent className="p-6">
-                <FileText className="w-8 h-8 text-blue-600 mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">Documents</h3>
-                <p className="text-sm text-gray-600">Access project documentation</p>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group h-full">
+              <CardContent className="p-4 sm:p-6">
+                <FileText className="w-6 sm:w-8 h-6 sm:h-8 text-blue-600 mb-2 sm:mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">Documents</h3>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Access project documentation</p>
               </CardContent>
             </Card>
           </Link>
           <Link href="/roi-calculator">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer group border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
-              <CardContent className="p-6">
-                <Calculator className="w-8 h-8 text-green-600 mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-green-600 transition-colors">ROI Calculator</h3>
-                <p className="text-sm text-gray-600">Calculate cost savings</p>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 h-full">
+              <CardContent className="p-4 sm:p-6">
+                <Calculator className="w-6 sm:w-8 h-6 sm:h-8 text-green-600 mb-2 sm:mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 group-hover:text-green-600 transition-colors">ROI Calculator</h3>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Calculate cost savings</p>
               </CardContent>
             </Card>
           </Link>
           {isManager && (
             <Link href="/accounting/integrations">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer group border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
-                <CardContent className="p-6">
-                  <DollarSign className="w-8 h-8 text-purple-600 mb-3 group-hover:scale-110 transition-transform" />
-                  <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">Accounting</h3>
-                  <p className="text-sm text-gray-600">Connect accounting software</p>
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer group border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50 h-full">
+                <CardContent className="p-4 sm:p-6">
+                  <DollarSign className="w-6 sm:w-8 h-6 sm:h-8 text-purple-600 mb-2 sm:mb-3 group-hover:scale-110 transition-transform" />
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 group-hover:text-purple-600 transition-colors">Accounting</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Connect accounting software</p>
                 </CardContent>
               </Card>
             </Link>
           )}
           <Link href="/analytics">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer group border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50">
-              <CardContent className="p-6">
-                <BarChart3 className="w-8 h-8 text-blue-600 mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">Analytics</h3>
-                <p className="text-sm text-gray-600">View insights and metrics</p>
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 h-full">
+              <CardContent className="p-4 sm:p-6">
+                <BarChart3 className="w-6 sm:w-8 h-6 sm:h-8 text-blue-600 mb-2 sm:mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">Analytics</h3>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">View insights and metrics</p>
               </CardContent>
             </Card>
           </Link>
