@@ -5,6 +5,38 @@ All notable changes to SiteSync OS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-01-28
+
+### Added
+- **Parametric Detail Engine** - Bridges LOD 100 AI massing to construction-ready geometry (LOD 200-400)
+  - Window sizing and placement rules
+  - Material and texture application per facade zone
+  - Solar panel zone calculation and envelope optimization
+  - MEP rough-in geometry generation
+  - Floor plan generation with room layouts
+  - Blender Python script generation for 3D output
+- **Spatial Workbench Module** - Full UI for parametric building generation
+  - 4 project type presets: Senior Living, Veteran Housing, Mixed-Use, Commercial
+  - Building dimension configuration (floors, height, footprint width/depth)
+  - Material selection interface (facade, glazing, roof, structure)
+  - Sustainability targeting (LEED Silver/Gold/Platinum, PassiveHouse, NetZero)
+  - Solar and envelope optimization controls
+  - Floor plan visualization and export
+  - Deliverables export to Design Services, Revit/Rhino, permit sets
+- **Ecosystem Pipeline** - 5-stage visual workflow
+  - Stage 1: Massing Tool (GLB Blocks)
+  - Stage 2: Parametric Engine (Apply rules)
+  - Stage 3: Design Services (Aesthetic rendering)
+  - Stage 4: Spatial Workbench (2D/3D plans)
+  - Stage 5: SiteSync OS Export (Construction docs)
+- **Mobile Responsiveness** - Enhanced mobile responsiveness across all recently added features
+
+### Changed
+- Updated module count from 29 to 30 (added Spatial Workbench)
+- Updated API endpoint count to 79 total endpoints
+- Updated project structure documentation
+- Enhanced lib directory with parametric-engine.ts
+
 ## [2.0.0] - 2026-01-28
 
 ### Added

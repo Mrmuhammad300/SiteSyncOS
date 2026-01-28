@@ -84,28 +84,32 @@ export interface WebhookCallbackPayload {
 
 const DESIGN_WEBHOOK_URL = 'https://gmllorlxfsxmsejhsjpa.supabase.co/functions/v1/n8n-orders-webhook';
 const WEBHOOK_TIMEOUT = 30000; // 30 seconds
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY = 2000; // 2 seconds
 
 /**
- * Send a design task to the external AI platform
+ * Sleep helper for retry delays
  */
-export async function sendDesignTaskToExternalPlatform(
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Attempt a single fetch to the external platform
+ */
+async function attemptExternalRequest(
   payload: DesignTaskPayload
 ): Promise<DesignTaskResponse> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT);
+
   try {
-    console.log('[Design Webhook] Sending task to external platform:', {
-      taskId: payload.taskId,
-      taskType: payload.taskType,
-      webhookUrl: DESIGN_WEBHOOK_URL
-    });
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT);
-
     const response = await fetch(DESIGN_WEBHOOK_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Construction-CRM/1.0',
+        'User-Agent': 'SiteSyncOS-DesignServices/1.0',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
@@ -113,52 +117,137 @@ export async function sendDesignTaskToExternalPlatform(
 
     clearTimeout(timeoutId);
 
-    const responseData = await response.json().catch(() => ({
-      success: false,
-      error: 'Invalid JSON response from external platform'
-    }));
+    // Read response as text first for reliable parsing
+    const responseText = await response.text().catch(() => '');
+
+    // Try to parse as JSON
+    let responseData: any = null;
+    if (responseText) {
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        // Response is not JSON - handle based on HTTP status
+        console.warn('[Design Webhook] Non-JSON response received:', {
+          status: response.status,
+          contentType: response.headers.get('content-type'),
+          bodyPreview: responseText.substring(0, 200),
+        });
+      }
+    }
 
     if (!response.ok) {
+      const errorMessage = responseData?.error
+        || responseData?.message
+        || (responseText ? `HTTP ${response.status}: ${responseText.substring(0, 200)}` : `HTTP ${response.status}: ${response.statusText}`);
+
       console.error('[Design Webhook] External platform returned error:', {
         status: response.status,
         statusText: response.statusText,
-        data: responseData
+        body: responseText.substring(0, 500),
       });
 
       return {
         success: false,
-        error: responseData.error || responseData.message || `HTTP ${response.status}: ${response.statusText}`,
+        error: errorMessage,
       };
     }
 
-    console.log('[Design Webhook] Task sent successfully:', {
+    // HTTP 2xx - success
+    // If we got valid JSON, extract the task details
+    if (responseData && typeof responseData === 'object') {
+      console.log('[Design Webhook] Task sent successfully (JSON response):', {
+        taskId: payload.taskId,
+        externalTaskId: responseData.externalTaskId || responseData.taskId || responseData.id,
+        status: responseData.status,
+      });
+
+      return {
+        success: true,
+        externalTaskId: responseData.externalTaskId || responseData.taskId || responseData.id || `ext-${payload.taskId}`,
+        status: responseData.status || 'queued',
+        message: responseData.message || 'Task accepted by external platform',
+        estimatedCompletionTime: responseData.estimatedCompletionTime,
+      };
+    }
+
+    // Non-JSON success response (e.g., "ok", empty body, HTML acknowledgment)
+    // Treat as accepted since the HTTP status was 2xx
+    console.log('[Design Webhook] Task sent successfully (non-JSON response):', {
       taskId: payload.taskId,
-      externalTaskId: responseData.externalTaskId || responseData.taskId,
-      status: responseData.status
+      responsePreview: responseText.substring(0, 100),
     });
 
     return {
       success: true,
-      externalTaskId: responseData.externalTaskId || responseData.taskId || responseData.id,
-      status: responseData.status || 'queued',
-      message: responseData.message,
-      estimatedCompletionTime: responseData.estimatedCompletionTime,
+      externalTaskId: `ext-${payload.taskId}-${Date.now()}`,
+      status: 'queued',
+      message: responseText || 'Task accepted by external platform (non-JSON acknowledgment)',
     };
   } catch (error: any) {
-    console.error('[Design Webhook] Failed to send task to external platform:', error);
+    clearTimeout(timeoutId);
 
     if (error.name === 'AbortError') {
       return {
         success: false,
-        error: 'Request timeout: External platform did not respond in time',
+        error: 'Request timeout: External platform did not respond within 30 seconds',
       };
     }
 
     return {
       success: false,
-      error: error.message || 'Failed to connect to external platform',
+      error: `Connection error: ${error.message || 'Failed to connect to external platform'}`,
     };
   }
+}
+
+/**
+ * Send a design task to the external AI platform with retry logic
+ */
+export async function sendDesignTaskToExternalPlatform(
+  payload: DesignTaskPayload
+): Promise<DesignTaskResponse> {
+  console.log('[Design Webhook] Sending task to external platform:', {
+    taskId: payload.taskId,
+    taskType: payload.taskType,
+    webhookUrl: DESIGN_WEBHOOK_URL,
+  });
+
+  let lastError: DesignTaskResponse = {
+    success: false,
+    error: 'Unknown error',
+  };
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      const delay = RETRY_BASE_DELAY * Math.pow(2, attempt - 1);
+      console.log(`[Design Webhook] Retry attempt ${attempt}/${MAX_RETRIES} after ${delay}ms for task ${payload.taskId}`);
+      await sleep(delay);
+    }
+
+    const result = await attemptExternalRequest(payload);
+
+    if (result.success) {
+      if (attempt > 0) {
+        console.log(`[Design Webhook] Task ${payload.taskId} succeeded on retry attempt ${attempt}`);
+      }
+      return result;
+    }
+
+    lastError = result;
+
+    // Don't retry on client errors (4xx) - only retry on server/network errors
+    const errorStr = result.error || '';
+    const isClientError = errorStr.includes('HTTP 4');
+    if (isClientError) {
+      console.error(`[Design Webhook] Client error for task ${payload.taskId}, not retrying:`, result.error);
+      break;
+    }
+
+    console.warn(`[Design Webhook] Attempt ${attempt + 1} failed for task ${payload.taskId}:`, result.error);
+  }
+
+  console.error(`[Design Webhook] All attempts failed for task ${payload.taskId}:`, lastError.error);
+  return lastError;
 }
 
 /**

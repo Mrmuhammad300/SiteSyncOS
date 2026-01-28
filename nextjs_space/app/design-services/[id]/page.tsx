@@ -20,6 +20,8 @@ import {
   AlertCircle,
   ExternalLink,
   Download,
+  RefreshCw,
+  RotateCcw,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -54,6 +56,8 @@ export default function DesignRequestDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedTaskTypes, setSelectedTaskTypes] = useState<string[]>([]);
   const [revisionNotes, setRevisionNotes] = useState('');
+  const [retrying, setRetrying] = useState(false);
+  const [retryingTaskId, setRetryingTaskId] = useState<string | null>(null);
 
   const availableTaskTypes = [
     { type: 'Architectural', label: 'Architectural Design', description: 'Complete architectural design drawings and plans' },
@@ -155,6 +159,57 @@ export default function DesignRequestDetailPage() {
       toast.error(error.message || 'Failed to update status');
     }
   };
+
+  const handleRetryAllFailed = async () => {
+    setRetrying(true);
+    try {
+      const response = await fetch(`/api/design-requests/${params.id}/retry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        toast.success(`${result.succeeded} task(s) retried successfully`);
+        if (result.failed > 0) {
+          toast.warning(`${result.failed} task(s) still failed after retry`);
+        }
+      } else {
+        toast.error(result.error || 'Failed to retry tasks');
+      }
+      fetchDesignRequest();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to retry tasks');
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  const handleRetrySingleTask = async (taskId: string) => {
+    setRetryingTaskId(taskId);
+    try {
+      const response = await fetch(`/api/design-requests/${params.id}/retry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskIds: [taskId] }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        toast.success('Task retried successfully');
+      } else {
+        toast.error(result.errors?.[0]?.error || result.error || 'Retry failed');
+      }
+      fetchDesignRequest();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to retry task');
+    } finally {
+      setRetryingTaskId(null);
+    }
+  };
+
+  const failedTaskCount = designRequest?.tasks?.filter((t: any) => t.status === 'Failed').length || 0;
 
   if (loading) {
     return (
@@ -347,10 +402,35 @@ export default function DesignRequestDetailPage() {
           {designRequest.tasks && designRequest.tasks.length > 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle>Active Tasks</CardTitle>
-                <CardDescription>
-                  Tasks currently being processed by the AI design platform
-                </CardDescription>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle>Active Tasks</CardTitle>
+                    <CardDescription>
+                      Tasks currently being processed by the AI design platform
+                    </CardDescription>
+                  </div>
+                  {failedTaskCount > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRetryAllFailed}
+                      disabled={retrying}
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      {retrying ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Retrying...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Retry All Failed ({failedTaskCount})
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -407,9 +487,39 @@ export default function DesignRequestDetailPage() {
                         )}
 
                         {task.errorMessage && (
-                          <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
-                            <AlertCircle className="h-4 w-4 inline mr-2" />
-                            {task.errorMessage}
+                          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 text-sm text-red-600 font-medium">
+                                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                                  <span>Task Failed</span>
+                                  {task.retryCount > 0 && (
+                                    <span className="text-red-400">
+                                      (Retried {task.retryCount} time{task.retryCount > 1 ? 's' : ''})
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-red-500 mt-1 ml-6">{task.errorMessage}</p>
+                              </div>
+                              {task.status === 'Failed' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleRetrySingleTask(task.id)}
+                                  disabled={retryingTaskId === task.id}
+                                  className="ml-3 text-red-600 border-red-300 hover:bg-red-100 flex-shrink-0"
+                                >
+                                  {retryingTaskId === task.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <RefreshCw className="h-3 w-3 mr-1" />
+                                      Retry
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>

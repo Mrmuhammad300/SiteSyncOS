@@ -2,11 +2,11 @@
 
 SiteSync OS is an advanced AI-powered construction management platform built with Next.js 14, Prisma, PostgreSQL, and Radix UI. Streamline your construction projects with intelligent multi-agent automation, 3D visualization, real-time collaboration, and comprehensive project oversight.
 
-**Version:** 2.0.0 | **Last Updated:** January 2026
+**Version:** 2.1.0 | **Last Updated:** January 2026
 
 ## 🚀 Features
 
-### Core Modules (29 Total)
+### Core Modules (30 Total)
 - **Project Management** - Create, track, and manage construction projects with milestones
 - **Properties** - Real estate portfolio with financial analysis, IRR/NPV calculations
 - **RFIs (Request for Information)** - Manage project clarifications with comments and responses
@@ -28,6 +28,7 @@ SiteSync OS is an advanced AI-powered construction management platform built wit
 - **Contractor Portal** - Dedicated contractor interface
 - **Accounting** - Accounting integrations and ledger management
 - **Analytics** - Business analytics and reporting dashboards
+- **Spatial Workbench** - Parametric design generation with 2D/3D deliverables export
 
 ### AI & Automation Features
 - ✅ **Multi-Agent Orchestration** - 16 specialized AI agents with event-driven execution
@@ -42,6 +43,11 @@ SiteSync OS is an advanced AI-powered construction management platform built wit
 - ✅ **Blender MCP Integration** - 3D construction visualization with Model Context Protocol
 - ✅ **Quantum Ledger** - Advanced financial ledger with event-driven workflows
 - ✅ **AI Assistant** - Context-aware recommendations and intelligent automation
+- ✅ **Parametric Detail Engine** - LOD 100-400 parametric building generation with construction-ready geometry
+  - Window sizing, material application, solar panel zones, MEP rough-in geometry
+  - Floor plan generation and Blender script output
+- ✅ **Ecosystem Pipeline** - 5-stage workflow from massing to construction documents
+  - Massing Tool → Parametric Engine → Design Services → Spatial Workbench → SiteSync OS Export
 
 ### Advanced Features
 - ✅ **Webhook Integrations** - n8n automation for change orders and design services
@@ -134,8 +140,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```
 SiteSyncOS/
 ├── nextjs_space/
-│   ├── app/                          # Main application (29 modules)
-│   │   ├── api/                      # 53+ API endpoints
+│   ├── app/                          # Main application (30 modules)
+│   │   ├── api/                      # 79 API endpoints
 │   │   ├── auth/                     # Authentication pages
 │   │   ├── dashboard/                # Main dashboard
 │   │   ├── projects/                 # Project management
@@ -161,7 +167,8 @@ SiteSyncOS/
 │   │   ├── accounting/               # Accounting integrations
 │   │   ├── milestones/               # Project milestones
 │   │   ├── roi-calculator/           # ROI calculations
-│   │   └── scenarios/                # Project scenarios
+│   │   ├── scenarios/                # Project scenarios
+│   │   └── spatial-workbench/        # Parametric design & 2D/3D deliverables
 │   ├── components/
 │   │   ├── ui/                       # Reusable UI components
 │   │   ├── dashboard-nav.tsx         # Navigation
@@ -173,6 +180,7 @@ SiteSyncOS/
 │   │   ├── blender-mcp/              # Model Context Protocol
 │   │   ├── state-machines.ts         # Workflow management
 │   │   ├── quantum-ledger.ts         # Advanced ledger
+│   │   ├── parametric-engine.ts      # LOD 100-400 parametric builder
 │   │   ├── financial-calculations.ts # IRR, NPV, cash flow
 │   │   ├── auth-options.ts           # NextAuth configuration
 │   │   ├── design-webhook.ts         # Design platform
@@ -193,7 +201,7 @@ SiteSyncOS/
 └── README.md                         # This file
 ```
 
-## 🔗 API Endpoints (53+ Endpoints)
+## 🔗 API Endpoints (79 Endpoints)
 
 ### Authentication
 - `POST /api/auth/signin` - User login
@@ -231,6 +239,10 @@ SiteSyncOS/
 ### GIS & Visualization
 - `GET /api/gis/data` - Geographic data
 - `GET /api/gis/risk-assessment` - Risk analysis
+
+### Spatial & Parametric
+- `POST /api/parametric/generate` - Generate parametric building geometry
+- `GET /api/spatial-workbench` - Spatial workbench configurations
 
 ### Webhooks
 - `POST /api/webhooks/change-orders` - n8n change order automation
@@ -282,10 +294,20 @@ All critical issues have been resolved in the latest version:
 - ✅ Asset Management Intelligence features
 - ✅ Lender and contractor portals
 
+### Completed (v2.1.0)
+- ✅ Parametric Detail Engine (LOD 100-400) for construction-ready geometry
+- ✅ Spatial Workbench with project presets (Senior Living, Veteran Housing, Mixed-Use, Commercial)
+- ✅ Ecosystem Pipeline (Massing → Parametric → Design → Spatial → Export)
+- ✅ Building dimension configuration (floors, height, footprint)
+- ✅ Material selection system (facade, glazing, roof, structure)
+- ✅ Sustainability targeting (LEED Silver/Gold/Platinum, PassiveHouse, NetZero)
+- ✅ Solar and envelope optimization
+- ✅ Floor plan generation and export to Revit/Rhino/permit sets
+- ✅ Mobile responsiveness across all modules
+
 ### In Progress
-- Phase 1: Enhanced mobile responsiveness
-- Phase 2: Real-time collaboration features
-- Phase 3: Advanced analytics dashboards
+- Phase 1: Real-time collaboration features
+- Phase 2: Advanced analytics dashboards
 
 ### Planned
 - Phase 4: IoT sensor integration
