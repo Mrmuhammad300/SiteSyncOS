@@ -21,13 +21,8 @@ import { FloorPlanViewer } from '@/components/ui/floor-plan-viewer';
 import {
   Layers,
   Box,
-  Grid3X3,
-  Sun,
   Download,
-  ArrowRight,
   Settings,
-  Eye,
-  FileText,
   Zap,
   Building2,
   LayoutGrid,
@@ -36,8 +31,6 @@ import {
   SunMedium,
   Home,
   CheckCircle2,
-  AlertCircle,
-  ChevronRight,
 } from 'lucide-react';
 
 type LODLevel = 100 | 200 | 300 | 350 | 400;
@@ -94,8 +87,7 @@ export default function SpatialWorkbenchPage() {
   const [activeTab, setActiveTab] = useState('parametric');
   const [loading, setLoading] = useState(false);
   const [generatedModel, setGeneratedModel] = useState<GeneratedModel | null>(null);
-  const [blenderScript, setBlenderScript] = useState<string | null>(null);
-  const [visualizationPrompt, setVisualizationPrompt] = useState<string | null>(null);
+  // Pipeline stages run as backdrop function during generation
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([
     { stage: 'massing', label: 'Massing Tool', status: 'pending', input: 'Zoning / Area data', output: '3D GLB Blocks' },
     { stage: 'parametric', label: 'Parametric Engine', status: 'pending', input: 'GLB + Constraints', output: 'LOD 200-300 Model' },
@@ -125,10 +117,8 @@ export default function SpatialWorkbenchPage() {
   const handleGenerate = async () => {
     setLoading(true);
     setGeneratedModel(null);
-    setBlenderScript(null);
-    setVisualizationPrompt(null);
 
-    // Animate pipeline stages
+    // Animate pipeline stages (backdrop function)
     const stagesCopy = [...pipelineStages];
     for (let i = 0; i < stagesCopy.length; i++) {
       stagesCopy[i] = { ...stagesCopy[i], status: 'in_progress' };
@@ -186,8 +176,6 @@ export default function SpatialWorkbenchPage() {
           floorPlanCount: data.model.floorPlans?.length || 0,
           floorPlans: data.model.floorPlans || [],
         });
-        setBlenderScript(data.blenderScript);
-        setVisualizationPrompt(data.visualizationPrompt);
       }
     } catch (error) {
       console.error('Generation error:', error);
@@ -270,51 +258,7 @@ export default function SpatialWorkbenchPage() {
         </div>
       </div>
 
-      {/* Ecosystem Pipeline */}
-      <Card className="mb-6 border-indigo-200 bg-gradient-to-r from-indigo-50/50 to-purple-50/50">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Ecosystem Pipeline</CardTitle>
-          <CardDescription>Massing to Construction-Ready Documentation</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-center gap-2">
-            {pipelineStages.map((stage, idx) => (
-              <div key={stage.stage} className="flex items-center gap-2">
-                <div
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${
-                    stage.status === 'completed'
-                      ? 'bg-green-50 border-green-300 text-green-800'
-                      : stage.status === 'in_progress'
-                      ? 'bg-indigo-50 border-indigo-300 text-indigo-800 animate-pulse'
-                      : 'bg-white border-gray-200 text-gray-600'
-                  }`}
-                >
-                  {stage.status === 'completed' ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  ) : stage.status === 'in_progress' ? (
-                    <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Box className="w-4 h-4" />
-                  )}
-                  <span className="font-medium">{stage.label}</span>
-                </div>
-                {idx < pipelineStages.length - 1 && (
-                  <ChevronRight className="w-4 h-4 text-gray-400 hidden sm:block" />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 grid grid-cols-5 gap-2 text-xs text-muted-foreground hidden lg:grid">
-            {pipelineStages.map((stage) => (
-              <div key={stage.stage}>
-                <span className="font-medium">In:</span> {stage.input}
-                <br />
-                <span className="font-medium">Out:</span> {stage.output}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Ecosystem Pipeline - Hidden (runs as backdrop function) */}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
@@ -325,10 +269,6 @@ export default function SpatialWorkbenchPage() {
           <TabsTrigger value="floorplans">
             <LayoutGrid className="w-4 h-4 mr-2" />
             Floor Plans
-          </TabsTrigger>
-          <TabsTrigger value="deliverables">
-            <FileText className="w-4 h-4 mr-2" />
-            Deliverables
           </TabsTrigger>
         </TabsList>
 
@@ -755,117 +695,6 @@ export default function SpatialWorkbenchPage() {
           </div>
         </TabsContent>
 
-        {/* DELIVERABLES TAB */}
-        <TabsContent value="deliverables">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Blender Script */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Box className="w-5 h-5 text-orange-600" />
-                  Blender Python Script
-                </CardTitle>
-                <CardDescription>
-                  Execute in Blender via MCP or paste into Blender scripting console
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {blenderScript ? (
-                  <div className="space-y-3">
-                    <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-80 font-mono">
-                      {blenderScript.slice(0, 2000)}
-                      {blenderScript.length > 2000 && '\n\n... (truncated)'}
-                    </pre>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigator.clipboard.writeText(blenderScript)}
-                    >
-                      Copy Full Script
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Box className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Generate a model to get Blender script</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Visualization Prompt */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-purple-600" />
-                  AI Visualization Prompt
-                </CardTitle>
-                <CardDescription>
-                  Use with image-to-image or geometry-to-render AI pipelines
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {visualizationPrompt ? (
-                  <div className="space-y-3">
-                    <div className="bg-purple-50 p-4 rounded-lg text-sm">
-                      {visualizationPrompt}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigator.clipboard.writeText(visualizationPrompt)}
-                    >
-                      Copy Prompt
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Eye className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Generate a model to get visualization prompt</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Export Options */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Download className="w-5 h-5 text-blue-600" />
-                  Export & Integration
-                </CardTitle>
-                <CardDescription>Push deliverables to other SiteSync OS modules</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Link href="/design-services/new">
-                    <div className="p-4 rounded-lg border hover:shadow-md transition-shadow">
-                      <Palette className="w-6 h-6 text-purple-600 mb-2" />
-                      <h4 className="font-semibold text-sm">Push to Design Services</h4>
-                      <p className="text-xs text-muted-foreground">
-                        Apply high-fidelity textures, lighting & landscaping
-                      </p>
-                    </div>
-                  </Link>
-                  <div className="p-4 rounded-lg border hover:shadow-md transition-shadow cursor-pointer opacity-80">
-                    <FileText className="w-6 h-6 text-blue-600 mb-2" />
-                    <h4 className="font-semibold text-sm">Export 2D Permit Set</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Floor plans, elevations & sections for permit review
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-lg border hover:shadow-md transition-shadow cursor-pointer opacity-80">
-                    <Building2 className="w-6 h-6 text-green-600 mb-2" />
-                    <h4 className="font-semibold text-sm">Export to Revit / Rhino</h4>
-                    <p className="text-xs text-muted-foreground">
-                      GLB / IFC compatible geometry for BIM tools
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );

@@ -170,15 +170,17 @@ export function DashboardNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
-          <Link href="/dashboard" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-slate-800 to-blue-600 rounded-lg flex items-center justify-center group-hover:shadow-lg transition-shadow">
-              <Boxes className="w-6 h-6 text-white" />
+          <Link href="/dashboard" className="flex items-center space-x-2 group">
+            <div className="w-9 h-9 bg-gradient-to-br from-slate-800 to-blue-600 rounded-lg flex items-center justify-center group-hover:shadow-lg transition-shadow flex-shrink-0">
+              <Boxes className="w-5 h-5 text-white" />
             </div>
-            <div className="hidden sm:block">
-              <span className="text-xl font-bold tracking-wider bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">
+            <div className="hidden sm:flex flex-col justify-center min-w-0">
+              <span className="text-lg font-bold tracking-wide bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent leading-tight">
                 SiteSync OS
               </span>
-              <span className="hidden md:block text-xs text-muted-foreground -mt-1">Asset Management Intelligence</span>
+              <span className="hidden lg:block text-[10px] text-muted-foreground leading-tight truncate">
+                Asset Intelligence
+              </span>
             </div>
           </Link>
 
