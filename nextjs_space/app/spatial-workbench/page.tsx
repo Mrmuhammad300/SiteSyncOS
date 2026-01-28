@@ -224,7 +224,7 @@ export default function SpatialWorkbenchPage() {
       border-radius: 4px;
       text-align: center;
     }
-    #error {
+    #error, #webgl-warning {
       position: absolute;
       top: 50%;
       left: 50%;
@@ -235,7 +235,9 @@ export default function SpatialWorkbenchPage() {
       background: rgba(0,0,0,0.8);
       border-radius: 8px;
       max-width: 80%;
+      text-align: center;
     }
+    #webgl-warning a { color: #4fc3f7; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>
@@ -248,14 +250,29 @@ export default function SpatialWorkbenchPage() {
     window.fetch = function() { throw new Error('Network access disabled in preview'); };
     window.XMLHttpRequest = function() { throw new Error('Network access disabled in preview'); };
     
-    try {
-      ${safeCode}
-    } catch (e) {
-      console.error('Scene error:', e);
-      const errorDiv = document.createElement('div');
-      errorDiv.id = 'error';
-      errorDiv.innerHTML = '<h3>Error rendering scene</h3><pre style="white-space:pre-wrap;">' + String(e.message).slice(0, 500) + '</pre>';
-      document.body.appendChild(errorDiv);
+    // Check WebGL support
+    function checkWebGL() {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        return !!gl;
+      } catch (e) {
+        return false;
+      }
+    }
+    
+    if (!checkWebGL()) {
+      document.body.innerHTML = '<div id="webgl-warning"><h3>WebGL Not Available</h3><p>Your browser or environment does not support WebGL, which is required to render 3D scenes.</p><p>The 3D code was generated successfully. Click "Show Code" to view and copy the generated Three.js code.</p><p>To view the 3D preview, please open this page in a browser with WebGL support (Chrome, Firefox, Safari).</p></div>';
+    } else {
+      try {
+        ${safeCode}
+      } catch (e) {
+        console.error('Scene error:', e);
+        const errorDiv = document.createElement('div');
+        errorDiv.id = 'error';
+        errorDiv.innerHTML = '<h3>Error rendering scene</h3><pre style="white-space:pre-wrap;">' + String(e.message).slice(0, 500) + '</pre>';
+        document.body.appendChild(errorDiv);
+      }
     }
   <\/script>
 </body>
@@ -941,7 +958,7 @@ export default function SpatialWorkbenchPage() {
                     <iframe
                       ref={viewerRef}
                       className="w-full h-full border-0"
-                      sandbox="allow-scripts"
+                      sandbox="allow-scripts allow-same-origin"
                       title="3D Scene Viewer"
                     />
                   )}

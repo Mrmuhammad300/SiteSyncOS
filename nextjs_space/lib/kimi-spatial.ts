@@ -184,14 +184,19 @@ export const PROMPT_CONTRACTS: Record<string, PromptContract> = {
     version: '1.0',
     targetEngine: 'threejs',
     systemInstructions: [
-      'Generate COMPLETE runnable Three.js code.',
+      'Generate COMPLETE runnable Three.js JavaScript code ONLY.',
+      'IMPORTANT: Return ONLY the JavaScript code, NOT HTML. No <!DOCTYPE>, no <html>, no <script> tags.',
+      'The JavaScript will be embedded in an existing HTML template that already includes Three.js and OrbitControls libraries.',
+      'Start your code with scene/camera/renderer setup, do NOT include library imports.',
       'Use consistent units and state all assumptions clearly.',
       'No external assets unless explicitly provided.',
       'Return code only inside a single code block marked with ```javascript.',
       'Include a metadata JSON block describing walls/doors/windows/furniture with coordinates.',
-      'Use OrbitControls for camera interaction.',
+      'Use OrbitControls for camera interaction (THREE.OrbitControls is already available).',
       'Include basic ambient and directional lighting.',
       'Use MeshStandardMaterial with appropriate colors for different room types.',
+      'Always include an animation loop with requestAnimationFrame.',
+      'Always include window resize handler.',
     ],
     safetyInstructions: [
       'Do not claim code compliance or construction suitability.',
@@ -555,35 +560,92 @@ async function callKimiAPI(request: LLMChatRequest): Promise<LLMChatResponse> {
 function extractCodeFromResponse(content: string): { code: string; metadata?: Record<string, unknown> } {
   let code = '';
   
-  // Try multiple patterns to extract code (case-insensitive)
+  console.log('[extractCodeFromResponse] Input content preview:', content.substring(0, 200));
+  
+  // Step 1: Try to extract from markdown code blocks
   const codePatterns = [
-    /```(?:javascript|js|JavaScript|JS)\s*\n([\s\S]*?)```/i,  // javascript/js blocks
-    /```(?:csharp|cs|CSharp|CS)\s*\n([\s\S]*?)```/i,          // csharp blocks
-    /```(?:python|py|Python|PY)\s*\n([\s\S]*?)```/i,          // python blocks
-    /```(?:typescript|ts|TypeScript|TS)\s*\n([\s\S]*?)```/i,  // typescript blocks
-    /```\s*\n([\s\S]*?)```/,                                    // plain code blocks (no language)
+    /```(?:javascript|js|JavaScript|JS)\s*\n([\s\S]*?)```/i,
+    /```(?:csharp|cs|CSharp|CS)\s*\n([\s\S]*?)```/i,
+    /```(?:python|py|Python|PY)\s*\n([\s\S]*?)```/i,
+    /```(?:typescript|ts|TypeScript|TS)\s*\n([\s\S]*?)```/i,
+    /```(?:html|HTML)\s*\n([\s\S]*?)```/i,  // HTML blocks (might contain JS)
+    /```\s*\n([\s\S]*?)```/,
   ];
   
   for (const pattern of codePatterns) {
     const match = content.match(pattern);
     if (match && match[1]?.trim()) {
       code = match[1].trim();
+      console.log('[extractCodeFromResponse] Matched markdown code block, length:', code.length);
       break;
     }
   }
   
-  // If no code block found, check if the entire response looks like code
-  if (!code && content.includes('THREE.') && content.includes('scene')) {
-    // Response might be raw code without markdown formatting
-    code = content.trim();
-    // Remove any leading/trailing non-code text
-    const sceneStart = code.indexOf('const scene') !== -1 ? code.indexOf('const scene') :
-                       code.indexOf('var scene') !== -1 ? code.indexOf('var scene') :
-                       code.indexOf('let scene') !== -1 ? code.indexOf('let scene') :
-                       code.indexOf('new THREE.Scene') !== -1 ? code.indexOf('new THREE.Scene') : -1;
-    if (sceneStart > 0) {
-      code = code.substring(sceneStart);
+  // Step 2: If code contains HTML (DOCTYPE or <html), extract JS from <script> tags
+  if (code.includes('<!DOCTYPE') || code.includes('<html') || code.includes('<script')) {
+    console.log('[extractCodeFromResponse] Response contains HTML, extracting script content');
+    
+    // Find the main script that contains Three.js code (not the library imports)
+    const scriptMatches = code.match(/<script[^>]*>[\s\S]*?<\/script>/gi) || [];
+    for (const scriptBlock of scriptMatches) {
+      // Skip library imports (CDN scripts or empty scripts)
+      if (scriptBlock.includes('src=') || scriptBlock.includes('cdnjs') || scriptBlock.includes('cdn.jsdelivr')) {
+        continue;
+      }
+      // Extract content between <script> tags
+      const scriptContent = scriptBlock.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim();
+      if (scriptContent.length > 50 && (scriptContent.includes('THREE.') || scriptContent.includes('scene'))) {
+        code = scriptContent;
+        console.log('[extractCodeFromResponse] Extracted JS from script tag, length:', code.length);
+        break;
+      }
     }
+  }
+  
+  // Step 3: If still no code or code still has HTML, try raw content
+  if ((!code || code.includes('<!DOCTYPE')) && content.includes('THREE.') && content.includes('scene')) {
+    console.log('[extractCodeFromResponse] Trying raw content extraction');
+    let rawContent = content;
+    
+    // If content has script tags, extract from them
+    if (rawContent.includes('<script')) {
+      const scriptMatches = rawContent.match(/<script[^>]*>[\s\S]*?<\/script>/gi) || [];
+      for (const scriptBlock of scriptMatches) {
+        if (scriptBlock.includes('src=')) continue;
+        const scriptContent = scriptBlock.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim();
+        if (scriptContent.length > 50 && scriptContent.includes('THREE.')) {
+          rawContent = scriptContent;
+          break;
+        }
+      }
+    }
+    
+    // Find where Three.js code starts
+    const sceneStart = rawContent.indexOf('const scene') !== -1 ? rawContent.indexOf('const scene') :
+                       rawContent.indexOf('var scene') !== -1 ? rawContent.indexOf('var scene') :
+                       rawContent.indexOf('let scene') !== -1 ? rawContent.indexOf('let scene') :
+                       rawContent.indexOf('new THREE.Scene') !== -1 ? rawContent.indexOf('new THREE.Scene') :
+                       rawContent.indexOf('// Scene setup') !== -1 ? rawContent.indexOf('// Scene setup') : -1;
+    
+    if (sceneStart >= 0) {
+      code = rawContent.substring(sceneStart);
+      // Remove any trailing HTML
+      const htmlEndIdx = code.indexOf('</script>');
+      if (htmlEndIdx > 0) {
+        code = code.substring(0, htmlEndIdx);
+      }
+      console.log('[extractCodeFromResponse] Extracted from scene start, length:', code.length);
+    }
+  }
+  
+  // Step 4: Clean up the code
+  if (code) {
+    // Remove any remaining HTML tags
+    code = code.replace(/<\/?script[^>]*>/gi, '');
+    // Remove HTML entities
+    code = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"');
+    // Trim whitespace
+    code = code.trim();
   }
   
   // Extract metadata JSON block
@@ -597,7 +659,7 @@ function extractCodeFromResponse(content: string): { code: string; metadata?: Re
     }
   }
   
-  console.log('[extractCodeFromResponse] Content length:', content.length, 'Extracted code length:', code.length);
+  console.log('[extractCodeFromResponse] Final code length:', code.length, 'Preview:', code.substring(0, 100));
   
   return { code, metadata };
 }
@@ -662,6 +724,28 @@ async function createAuditRecord(
   });
   
   return audit.traceId;
+}
+
+// ===========================================
+// SYNTAX VALIDATION
+// ===========================================
+
+/**
+ * Validates JavaScript syntax without executing the code.
+ * Returns null if valid, or error message if invalid.
+ */
+function validateJavaScriptSyntax(code: string): string | null {
+  try {
+    // Use Function constructor to check syntax without executing
+    // This is safe because we're only parsing, not executing
+    new Function(code);
+    return null; // Syntax is valid
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      return e.message;
+    }
+    return 'Unknown syntax error';
+  }
 }
 
 // ===========================================
@@ -731,6 +815,14 @@ export async function generateScene(
     console.log('[generateScene] No valid code extracted, using fallback generator');
     code = generateFallbackThreeJSCode(request.layoutSpec);
     warnings.push('Used fallback scene generator');
+  } else {
+    // Validate JavaScript syntax
+    const syntaxError = validateJavaScriptSyntax(code);
+    if (syntaxError) {
+      console.log('[generateScene] LLM code has syntax error:', syntaxError, '- using fallback generator');
+      code = generateFallbackThreeJSCode(request.layoutSpec);
+      warnings.push(`LLM code had syntax error (${syntaxError}), used fallback scene generator`);
+    }
   }
   
   console.log('[generateScene] Final code length:', code.length);
