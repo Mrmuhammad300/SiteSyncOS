@@ -247,12 +247,12 @@ export default function DrawRequestsPage() {
     <div className="container mx-auto py-6 px-4">
       <BackButton fallbackUrl="/dashboard" />
       
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <FileText className="h-8 w-8 text-primary" />
+          <FileText className="h-8 w-8 text-primary flex-shrink-0" />
           <div>
-            <h1 className="text-2xl font-bold">Draw Request Automation</h1>
-            <p className="text-muted-foreground">Automated lender package generation and compliance tracking</p>
+            <h1 className="text-xl sm:text-2xl font-bold">Draw Request Automation</h1>
+            <p className="text-sm text-muted-foreground">Automated lender package generation and compliance tracking</p>
           </div>
         </div>
         <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
@@ -275,7 +275,7 @@ export default function DrawRequestsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Draw Number</label>
                   <Input type="number" placeholder="1" />
@@ -347,9 +347,9 @@ export default function DrawRequestsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-4">
+      <div className="flex flex-wrap gap-4 mb-4">
         <Select value={selectedProject} onValueChange={setSelectedProject}>
-          <SelectTrigger className="w-[250px]">
+          <SelectTrigger className="w-full sm:w-[250px]">
             <SelectValue placeholder="All Projects" />
           </SelectTrigger>
           <SelectContent>
@@ -360,7 +360,7 @@ export default function DrawRequestsPage() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -385,8 +385,8 @@ export default function DrawRequestsPage() {
             Draw requests with automated policy enforcement and audit trails
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
-          <Table>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table className="min-w-[800px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Draw #</TableHead>
@@ -474,9 +474,9 @@ export default function DrawRequestsPage() {
           {selectedDraw && (
             <Tabs defaultValue="overview" className="mt-4">
               <TabsList className="grid grid-cols-3 w-full">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="events">Event Timeline</TabsTrigger>
-                <TabsTrigger value="actions">Actions</TabsTrigger>
+                <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+                <TabsTrigger value="events" className="text-xs sm:text-sm">Events</TabsTrigger>
+                <TabsTrigger value="actions" className="text-xs sm:text-sm">Actions</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-4">
@@ -486,7 +486,7 @@ export default function DrawRequestsPage() {
                     <CardTitle className="text-sm">Request Details</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs text-muted-foreground">Requested Amount</p>
                         <p className="text-xl font-bold">{formatCurrency(selectedDraw.requestedAmount || 0)}</p>
