@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { BackButton } from '@/components/ui/back-button';
+import { FloorPlanViewer } from '@/components/ui/floor-plan-viewer';
 import {
   Layers,
   Box,
@@ -49,6 +50,24 @@ interface PipelineStage {
   output: string;
 }
 
+interface FloorPlanRoom {
+  id: string;
+  name: string;
+  type: string;
+  bounds: { x: number; y: number; width: number; depth: number };
+  area: number;
+  adaAccessible: boolean;
+}
+
+interface FloorPlanData {
+  floorNumber: number;
+  height: number;
+  sliceHeight: number;
+  rooms: FloorPlanRoom[];
+  grossArea: number;
+  netArea: number;
+}
+
 interface GeneratedModel {
   id: string;
   name: string;
@@ -60,6 +79,7 @@ interface GeneratedModel {
   estimatedEnergyProduction: number;
   elementCount: number;
   floorPlanCount: number;
+  floorPlans: FloorPlanData[];
 }
 
 const LOD_INFO: Record<number, { label: string; description: string }> = {
@@ -164,6 +184,7 @@ export default function SpatialWorkbenchPage() {
           estimatedEnergyProduction: data.model.estimatedEnergyProduction,
           elementCount: data.model.elements?.length || 0,
           floorPlanCount: data.model.floorPlans?.length || 0,
+          floorPlans: data.model.floorPlans || [],
         });
         setBlenderScript(data.blenderScript);
         setVisualizationPrompt(data.visualizationPrompt);
@@ -686,40 +707,33 @@ export default function SpatialWorkbenchPage() {
         {/* FLOOR PLANS TAB */}
         <TabsContent value="floorplans">
           <div className="space-y-6">
-            {generatedModel ? (
+            {generatedModel && generatedModel.floorPlans.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {Array.from({ length: generatedModel.floorPlanCount }).map((_, idx) => (
-                    <Card key={idx}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {generatedModel.floorPlans.map((floorPlan) => (
+                    <Card key={floorPlan.floorNumber}>
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-base">Floor {idx + 1}</CardTitle>
+                        <CardTitle className="text-base flex items-center justify-between">
+                          <span>Floor {floorPlan.floorNumber}</span>
+                          <Badge variant="outline" className="font-normal">
+                            {floorPlan.floorNumber === 1 && formData.projectType === 'mixed-use'
+                              ? 'Lobby + Retail'
+                              : `${floorPlan.rooms.length} rooms`}
+                          </Badge>
+                        </CardTitle>
                         <CardDescription>
-                          {idx === 0 && formData.projectType === 'mixed-use'
-                            ? 'Lobby + Retail'
-                            : 'Residential Units'}
+                          {floorPlan.grossArea.toFixed(0)} m² gross | {floorPlan.netArea.toFixed(0)} m² net | Height: {floorPlan.height.toFixed(1)} m
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        {/* Simplified floor plan preview */}
-                        <div className="aspect-square bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center mb-3">
-                          <div className="text-center text-muted-foreground">
-                            <Grid3X3 className="w-8 h-8 mx-auto mb-2" />
-                            <p className="text-sm">2D Floor Plan</p>
-                            <p className="text-xs">
-                              Slice at {(1.2).toFixed(1)}m AFF
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-sm space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Height</span>
-                            <span>{(idx * formData.floorToFloorHeight).toFixed(1)} m</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Gross Area</span>
-                            <span>{(formData.footprintWidth * formData.footprintDepth).toLocaleString()} m²</span>
-                          </div>
-                        </div>
+                        <FloorPlanViewer
+                          floor={floorPlan}
+                          buildingWidth={formData.footprintWidth}
+                          buildingDepth={formData.footprintDepth}
+                          floorHeight={formData.floorToFloorHeight}
+                          projectType={formData.projectType}
+                          buildingName={generatedModel.name}
+                        />
                       </CardContent>
                     </Card>
                   ))}
