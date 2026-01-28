@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,11 +16,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
 import { BackButton } from '@/components/ui/back-button';
 import { FloorPlanViewer } from '@/components/ui/floor-plan-viewer';
 import {
   Layers,
-  Box,
   Download,
   Settings,
   Zap,
@@ -31,6 +31,15 @@ import {
   SunMedium,
   Home,
   CheckCircle2,
+  Sparkles,
+  Send,
+  Loader2,
+  RefreshCw,
+  ChevronRight,
+  Lightbulb,
+  Leaf,
+  Wrench,
+  LayoutDashboard,
 } from 'lucide-react';
 
 type LODLevel = 100 | 200 | 300 | 350 | 400;
@@ -75,6 +84,30 @@ interface GeneratedModel {
   floorPlans: FloorPlanData[];
 }
 
+type DesignPromptMode = 'conceptual' | 'technical' | 'materials' | 'sustainability' | 'layout';
+
+interface ConversationMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  mode?: DesignPromptMode;
+  parametricSuggestions?: Record<string, unknown>;
+  timestamp: string;
+}
+
+interface ParametricSuggestions {
+  projectType?: string;
+  totalFloors?: number;
+  floorToFloorHeight?: number;
+  footprintWidth?: number;
+  footprintDepth?: number;
+  windowToWallRatio?: number;
+  solarCoverage?: number;
+  facadeMaterial?: string;
+  glazingMaterial?: string;
+  sustainabilityTarget?: string;
+}
+
 const LOD_INFO: Record<number, { label: string; description: string }> = {
   100: { label: 'Conceptual', description: 'Gross area, height, volume, location' },
   200: { label: 'Schematic Design', description: 'Approximate geometry with generic materials' },
@@ -83,10 +116,42 @@ const LOD_INFO: Record<number, { label: string; description: string }> = {
   400: { label: 'Fabrication', description: 'Shop drawing geometry and cut lists' },
 };
 
+const DESIGN_PROMPT_MODES: { key: DesignPromptMode; label: string; icon: React.ElementType; description: string }[] = [
+  { key: 'conceptual', label: 'Conceptual', icon: Lightbulb, description: 'Vision & spatial relationships' },
+  { key: 'technical', label: 'Technical', icon: Wrench, description: 'Dimensions & specifications' },
+  { key: 'materials', label: 'Materials', icon: Palette, description: 'Finishes & assemblies' },
+  { key: 'sustainability', label: 'Sustainability', icon: Leaf, description: 'Energy & certification' },
+  { key: 'layout', label: 'Layout', icon: LayoutDashboard, description: 'Floor plans & circulation' },
+];
+
+const EXAMPLE_PROMPTS = [
+  "Design a modern 8-story senior living facility with abundant natural light, communal spaces on each floor, and rooftop garden access.",
+  "Create a sustainable mixed-use building with retail on ground floor, offices above, targeting LEED Platinum certification.",
+  "I need a veteran housing project with 60 units, emphasizing accessibility, community gathering areas, and trauma-informed design principles.",
+  "Propose facade materials for a coastal commercial building that can withstand salt air while maintaining a contemporary aesthetic.",
+  "Optimize a 5-story residential floor plan for efficiency with double-loaded corridors and maximize natural ventilation.",
+];
+
 export default function SpatialWorkbenchPage() {
-  const [activeTab, setActiveTab] = useState('parametric');
+  const [activeTab, setActiveTab] = useState('ai-design');
   const [loading, setLoading] = useState(false);
   const [generatedModel, setGeneratedModel] = useState<GeneratedModel | null>(null);
+  
+  // AI Design Prompt state
+  const [promptInput, setPromptInput] = useState('');
+  const [promptMode, setPromptMode] = useState<DesignPromptMode>('conceptual');
+  const [promptLoading, setPromptLoading] = useState(false);
+  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
+  const [pendingSuggestions, setPendingSuggestions] = useState<ParametricSuggestions | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [conversation]);
+
   // Pipeline stages run as backdrop function during generation
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([
     { stage: 'massing', label: 'Massing Tool', status: 'pending', input: 'Zoning / Area data', output: '3D GLB Blocks' },
@@ -228,6 +293,116 @@ export default function SpatialWorkbenchPage() {
     }
   };
 
+  // AI Design Prompt handlers
+  const handleSendPrompt = async () => {
+    if (!promptInput.trim() || promptLoading) return;
+
+    const userMessage: ConversationMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: promptInput.trim(),
+      mode: promptMode,
+      timestamp: new Date().toISOString(),
+    };
+
+    setConversation((prev) => [...prev, userMessage]);
+    setPromptInput('');
+    setPromptLoading(true);
+
+    try {
+      const response = await fetch('/api/ai/design-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: userMessage.content,
+          mode: promptMode,
+          context: {
+            projectType: formData.projectType,
+            buildingName: formData.name,
+            constraints: {
+              totalFloors: formData.totalFloors,
+              floorToFloorHeight: formData.floorToFloorHeight,
+              footprintWidth: formData.footprintWidth,
+              footprintDepth: formData.footprintDepth,
+              windowToWallRatio: formData.windowToWallRatio,
+              solarCoverage: formData.solarCoverage,
+              facadeMaterial: formData.facadeMaterial,
+              glazingMaterial: formData.glazingMaterial,
+              sustainabilityTarget: formData.sustainabilityTarget,
+            },
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const assistantMessage: ConversationMessage = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: data.response,
+          mode: data.mode,
+          parametricSuggestions: data.parametricSuggestions,
+          timestamp: data.timestamp,
+        };
+
+        setConversation((prev) => [...prev, assistantMessage]);
+
+        if (data.parametricSuggestions) {
+          setPendingSuggestions(data.parametricSuggestions);
+        }
+      } else {
+        const errorMessage: ConversationMessage = {
+          id: `error-${Date.now()}`,
+          role: 'assistant',
+          content: 'I apologize, but I encountered an error processing your request. Please try again.',
+          timestamp: new Date().toISOString(),
+        };
+        setConversation((prev) => [...prev, errorMessage]);
+      }
+    } catch (error) {
+      console.error('Prompt error:', error);
+      const errorMessage: ConversationMessage = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: 'Unable to connect to the design AI. Please check your connection and try again.',
+        timestamp: new Date().toISOString(),
+      };
+      setConversation((prev) => [...prev, errorMessage]);
+    } finally {
+      setPromptLoading(false);
+    }
+  };
+
+  const handleApplySuggestions = () => {
+    if (!pendingSuggestions) return;
+
+    const updates: Partial<typeof formData> = {};
+    
+    if (pendingSuggestions.projectType) updates.projectType = pendingSuggestions.projectType;
+    if (pendingSuggestions.totalFloors) updates.totalFloors = pendingSuggestions.totalFloors;
+    if (pendingSuggestions.floorToFloorHeight) updates.floorToFloorHeight = pendingSuggestions.floorToFloorHeight;
+    if (pendingSuggestions.footprintWidth) updates.footprintWidth = pendingSuggestions.footprintWidth;
+    if (pendingSuggestions.footprintDepth) updates.footprintDepth = pendingSuggestions.footprintDepth;
+    if (pendingSuggestions.windowToWallRatio) updates.windowToWallRatio = pendingSuggestions.windowToWallRatio;
+    if (pendingSuggestions.solarCoverage) updates.solarCoverage = pendingSuggestions.solarCoverage;
+    if (pendingSuggestions.facadeMaterial) updates.facadeMaterial = pendingSuggestions.facadeMaterial;
+    if (pendingSuggestions.glazingMaterial) updates.glazingMaterial = pendingSuggestions.glazingMaterial;
+    if (pendingSuggestions.sustainabilityTarget) updates.sustainabilityTarget = pendingSuggestions.sustainabilityTarget;
+
+    setFormData((prev) => ({ ...prev, ...updates }));
+    setPendingSuggestions(null);
+    setActiveTab('parametric');
+  };
+
+  const handleClearConversation = () => {
+    setConversation([]);
+    setPendingSuggestions(null);
+  };
+
+  const handleExamplePrompt = (example: string) => {
+    setPromptInput(example);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
@@ -262,6 +437,10 @@ export default function SpatialWorkbenchPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
+          <TabsTrigger value="ai-design">
+            <Sparkles className="w-4 h-4 mr-2" />
+            AI Design Prompt
+          </TabsTrigger>
           <TabsTrigger value="parametric">
             <Settings className="w-4 h-4 mr-2" />
             Parametric Generator
@@ -271,6 +450,255 @@ export default function SpatialWorkbenchPage() {
             Floor Plans
           </TabsTrigger>
         </TabsList>
+
+        {/* AI DESIGN PROMPT TAB */}
+        <TabsContent value="ai-design">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Chat Interface */}
+            <div className="lg:col-span-2 space-y-4">
+              <Card className="h-[600px] flex flex-col">
+                <CardHeader className="pb-3 border-b">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-purple-600" />
+                        Design Intelligence
+                      </CardTitle>
+                      <CardDescription>
+                        Describe your architectural vision and get AI-powered design guidance
+                      </CardDescription>
+                    </div>
+                    {conversation.length > 0 && (
+                      <Button variant="ghost" size="sm" onClick={handleClearConversation}>
+                        <RefreshCw className="w-4 h-4 mr-1" />
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                
+                {/* Conversation Area */}
+                <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {conversation.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center px-4">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center mb-4">
+                        <Sparkles className="w-8 h-8 text-purple-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">AI-Powered Architectural Design</h3>
+                      <p className="text-muted-foreground text-sm mb-6 max-w-md">
+                        Describe your ideal building, spatial requirements, or design preferences. 
+                        The AI will provide expert guidance and can suggest parametric settings for generation.
+                      </p>
+                      <div className="space-y-2 w-full max-w-lg">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Try an example</p>
+                        <div className="space-y-2">
+                          {EXAMPLE_PROMPTS.slice(0, 3).map((example, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleExamplePrompt(example)}
+                              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 transition-colors text-sm"
+                            >
+                              <ChevronRight className="w-4 h-4 inline mr-2 text-purple-500" />
+                              {example.length > 90 ? example.substring(0, 90) + '...' : example}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {conversation.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[85%] rounded-lg p-3 ${
+                              message.role === 'user'
+                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                                : 'bg-gray-100 text-gray-900'
+                            }`}
+                          >
+                            {message.role === 'user' && message.mode && (
+                              <Badge variant="secondary" className="mb-2 bg-white/20 text-white text-xs">
+                                {DESIGN_PROMPT_MODES.find(m => m.key === message.mode)?.label}
+                              </Badge>
+                            )}
+                            <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                            {message.parametricSuggestions && (
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <p className="text-xs font-medium mb-2 flex items-center gap-1">
+                                  <Zap className="w-3 h-3" />
+                                  Suggested Parameters Available
+                                </p>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={handleApplySuggestions}
+                                  className="w-full"
+                                >
+                                  Apply to Generator
+                                  <ChevronRight className="w-4 h-4 ml-1" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {promptLoading && (
+                        <div className="flex justify-start">
+                          <div className="bg-gray-100 rounded-lg p-3">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Analyzing your design request...
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={chatEndRef} />
+                    </>
+                  )}
+                </CardContent>
+
+                {/* Input Area */}
+                <div className="p-4 border-t bg-gray-50/50">
+                  <div className="flex gap-2 mb-3">
+                    {DESIGN_PROMPT_MODES.map((mode) => {
+                      const Icon = mode.icon;
+                      return (
+                        <button
+                          key={mode.key}
+                          onClick={() => setPromptMode(mode.key)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                            promptMode === mode.key
+                              ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                              : 'bg-white border border-gray-200 hover:border-gray-300 text-gray-600'
+                          }`}
+                          title={mode.description}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          {mode.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-2">
+                    <Textarea
+                      value={promptInput}
+                      onChange={(e) => setPromptInput(e.target.value)}
+                      placeholder="Describe your architectural vision, design requirements, or ask for guidance..."
+                      className="min-h-[60px] max-h-[120px] resize-none"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendPrompt();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={handleSendPrompt}
+                      disabled={!promptInput.trim() || promptLoading}
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-4"
+                    >
+                      {promptLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Send className="w-5 h-5" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Pending Suggestions */}
+              {pendingSuggestions && (
+                <Card className="border-purple-200 bg-purple-50/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-purple-600" />
+                      AI Suggestions
+                    </CardTitle>
+                    <CardDescription>Ready to apply to the Parametric Generator</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {Object.entries(pendingSuggestions).map(([key, value]) => (
+                      <div key={key} className="flex justify-between">
+                        <span className="text-muted-foreground capitalize">
+                          {key.replace(/([A-Z])/g, ' $1').trim()}
+                        </span>
+                        <span className="font-medium">
+                          {typeof value === 'number' && value < 1 && value > 0
+                            ? `${Math.round(value * 100)}%`
+                            : String(value)}
+                        </span>
+                      </div>
+                    ))}
+                    <Button
+                      onClick={handleApplySuggestions}
+                      className="w-full mt-4 bg-gradient-to-r from-purple-600 to-indigo-600"
+                    >
+                      Apply & Go to Generator
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Current Context */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Current Context</CardTitle>
+                  <CardDescription>AI uses these settings as context</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Project Type</span>
+                    <Badge variant="outline" className="capitalize">
+                      {formData.projectType.replace(/-/g, ' ')}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Floors</span>
+                    <span className="font-medium">{formData.totalFloors}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Footprint</span>
+                    <span className="font-medium">{formData.footprintWidth}m × {formData.footprintDepth}m</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">WWR</span>
+                    <span className="font-medium">{Math.round(formData.windowToWallRatio * 100)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Target</span>
+                    <Badge variant="outline">{formData.sustainabilityTarget}</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* More Examples */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Example Prompts</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {EXAMPLE_PROMPTS.map((example, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleExamplePrompt(example)}
+                      className="w-full text-left p-2 rounded border border-gray-200 hover:border-purple-300 hover:bg-purple-50/30 transition-colors text-xs text-muted-foreground"
+                    >
+                      {example.length > 60 ? example.substring(0, 60) + '...' : example}
+                    </button>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
 
         {/* PARAMETRIC GENERATOR TAB */}
         <TabsContent value="parametric">
