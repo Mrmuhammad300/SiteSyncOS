@@ -106,12 +106,17 @@ export function ThreeDFloorView({
 
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
 
-    const w = rect.width;
-    const h = rect.height;
+    // Guard against zero dimensions during initial render / SSR hydration
+    // which causes division-by-zero in the scaling math and crashes the canvas
+    const w = rect.width || canvas.clientWidth || 600;
+    const h = rect.height || canvas.clientHeight || 400;
+
+    if (w <= 0 || h <= 0) return;
+
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
 
     // Clear
     ctx.fillStyle = '#f8fafc';
@@ -356,11 +361,24 @@ export function ThreeDFloorView({
   }, [floor, buildingWidth, buildingDepth, floorHeight, projectType]);
 
   useEffect(() => {
-    drawScene();
+    // Use requestAnimationFrame to ensure the canvas has non-zero dimensions
+    // before the first draw. This prevents the image generation crash when
+    // the component mounts but the DOM hasn't fully laid out yet.
+    const rafId = requestAnimationFrame(() => {
+      drawScene();
+    });
 
-    const handleResize = () => drawScene();
+    let resizeRaf: number | null = null;
+    const handleResize = () => {
+      if (resizeRaf) cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => drawScene());
+    };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (resizeRaf) cancelAnimationFrame(resizeRaf);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [drawScene]);
 
   return (

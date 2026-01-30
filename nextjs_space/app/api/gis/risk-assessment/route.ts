@@ -104,7 +104,17 @@ function getRegionalRiskFactors(lat: number, lng: number, state?: string): RiskF
 // POST /api/gis/risk-assessment - Run risk assessment for a location
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    let session;
+    try {
+      session = await getServerSession(authOptions);
+    } catch (authError) {
+      console.error('[GIS Risk API] Authentication service unavailable:', authError);
+      return NextResponse.json(
+        { error: 'Authentication service unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -231,7 +241,17 @@ function generateRecommendations(
 // GET /api/gis/risk-assessment - Get risk assessment summary
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    let session;
+    try {
+      session = await getServerSession(authOptions);
+    } catch (authError) {
+      console.error('[GIS Risk API] Authentication service unavailable:', authError);
+      return NextResponse.json(
+        { error: 'Authentication service unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

@@ -6,7 +6,17 @@ import { prisma } from '@/lib/db';
 // GET /api/gis - Fetch all geo-located properties and projects
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    let session;
+    try {
+      session = await getServerSession(authOptions);
+    } catch (authError) {
+      console.error('[GIS API] Authentication service unavailable:', authError);
+      return NextResponse.json(
+        { error: 'Authentication service unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -115,10 +125,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(results);
   } catch (error) {
-    console.error('GIS API error:', error);
+    console.error('[GIS API] Error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    const isConnectionError = message.includes('connect') || message.includes('ECONNREFUSED') || message.includes('ETIMEDOUT');
     return NextResponse.json(
-      { error: 'Failed to fetch GIS data' },
-      { status: 500 }
+      { error: isConnectionError ? 'Database connection failed. Please try again later.' : 'Failed to fetch GIS data' },
+      { status: isConnectionError ? 503 : 500 }
     );
   }
 }
@@ -126,7 +138,17 @@ export async function GET(req: NextRequest) {
 // POST /api/gis - Update coordinates for a property or project
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    let session;
+    try {
+      session = await getServerSession(authOptions);
+    } catch (authError) {
+      console.error('[GIS API] Authentication service unavailable:', authError);
+      return NextResponse.json(
+        { error: 'Authentication service unavailable. Please try again later.' },
+        { status: 503 }
+      );
+    }
+
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -175,10 +197,12 @@ export async function POST(req: NextRequest) {
       data: result,
     });
   } catch (error) {
-    console.error('GIS update error:', error);
+    console.error('[GIS API] Update error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    const isConnectionError = message.includes('connect') || message.includes('ECONNREFUSED') || message.includes('ETIMEDOUT');
     return NextResponse.json(
-      { error: 'Failed to update GIS data' },
-      { status: 500 }
+      { error: isConnectionError ? 'Database connection failed. Please try again later.' : 'Failed to update GIS data' },
+      { status: isConnectionError ? 503 : 500 }
     );
   }
 }

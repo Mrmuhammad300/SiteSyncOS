@@ -755,7 +755,15 @@ export function generateBlenderScript(model: ParametricBuildingModel): string {
   lines.push('# --- Geometry ---');
   for (const el of model.elements) {
     const safeId = el.id.replace(/-/g, '_');
-    const matVar = `mat_${el.materialId.replace(/-/g, '_')}`;
+    const matVarName = el.materialId.replace(/-/g, '_');
+    const matVar = `mat_${matVarName}`;
+
+    // Skip elements whose material was not found in the library
+    // to prevent referencing undefined Blender material variables
+    if (!usedMaterialIds.has(el.materialId) || !getMaterialById(el.materialId)) {
+      lines.push(`# Skipped element "${el.id}" — material "${el.materialId}" not found`);
+      continue;
+    }
 
     switch (el.type) {
       case 'column':

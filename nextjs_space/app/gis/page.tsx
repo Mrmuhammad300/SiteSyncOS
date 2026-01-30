@@ -110,7 +110,7 @@ interface GISData {
 }
 
 export default function GISPage() {
-  const { data: session, status } = useSession() || {};
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [data, setData] = useState<GISData | null>(null);
   const [loading, setLoading] = useState(true);

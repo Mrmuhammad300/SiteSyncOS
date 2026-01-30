@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
 
-const inter = Inter({ subsets: ['latin'] });
+// Use system font stack instead of Google Fonts to avoid build failures
+// when the network is unavailable (e.g., CI/CD, offline builds).
+const interFontClass = 'font-sans';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,7 @@ export default function RootLayout({
       <head>
         <script src="https://apps.abacus.ai/chatllm/appllm-lib.js"></script>
       </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={interFontClass} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

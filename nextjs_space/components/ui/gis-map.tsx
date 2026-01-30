@@ -202,13 +202,19 @@ export function GISMap({
   useEffect(() => {
     const supported = isWebGLAvailable();
     setWebGLSupported(supported);
-    
+
     // If WebGL is supported, dynamically import mapbox-gl
     if (supported) {
       import('mapbox-gl').then((module) => {
-        setMapboxgl(module.default);
-      }).catch(() => {
+        if (module && module.default) {
+          setMapboxgl(module.default);
+        } else {
+          setMapError('Map library loaded but is invalid');
+        }
+      }).catch((err) => {
+        console.error('[GISMap] Failed to load mapbox-gl:', err);
         setMapError('Failed to load map library');
+        setWebGLSupported(false); // Fall back to list view
       });
     }
   }, []);
@@ -237,7 +243,10 @@ export function GISMap({
 
       map.current.on('error', (e: any) => {
         console.error('Map error:', e);
-        setMapError('Map failed to load');
+        // Only set fatal error for style/source failures, not tile 404s
+        if (e?.error?.status !== 404) {
+          setMapError('Map failed to load');
+        }
       });
 
     } catch (error) {
