@@ -99,8 +99,8 @@ export const AGENT_DEFINITIONS: AgentDefinition[] = [
     description: 'Routes tasks to specialized agents and manages execution order.',
     autonomyLevel: 'AutoExecuteThreshold',
     routingLogic: 'mixture_of_experts',
-    integrations: ['n8n', 'external_ai_services', 'design_callbacks'],
-    outputs: ['task_routing_plan', 'execution_sequence'],
+    integrations: ['n8n', 'external_ai_services', 'design_callbacks', 'trellis_3d_generation', 'moe_grounding_engine'],
+    outputs: ['task_routing_plan', 'execution_sequence', 'moe_grounding_result'],
   },
   {
     id: 'meta_reasoning_agent',
@@ -336,6 +336,35 @@ export const EVENT_AGENT_BINDINGS: EventBinding[] = [
     pipeline: ['meta_reasoning_agent', 'truth_and_evidence_validator', 'human_oversight_liaison', 'design_and_narrative_synthesizer'],
     autonomyLevel: 'DraftWithApproval',
     finalOutput: 'human_ready_design_summary',
+  },
+  // MoE Grounding Events
+  {
+    eventType: 'MoEGroundingRequested',
+    pipeline: ['agent_ecosystem_orchestrator', 'decision_advisor', 'meta_reasoning_agent', 'transparency_officer'],
+    autonomyLevel: 'DraftWithApproval',
+    finalOutput: 'moe_grounding_plan',
+    minConfidence: 0.7,
+  },
+  {
+    eventType: 'MoEGroundingCompleted',
+    pipeline: ['meta_reasoning_agent', 'truth_and_evidence_validator', 'design_and_narrative_synthesizer', 'human_oversight_liaison'],
+    autonomyLevel: 'DraftWithApproval',
+    finalOutput: 'grounded_asset_review',
+    requiresAudit: true,
+  },
+  {
+    eventType: 'MoEExpertEscalation',
+    pipeline: ['ai_risk_sentinel', 'ethical_alignment_council', 'human_oversight_liaison'],
+    autonomyLevel: 'AdvisoryOnly',
+    finalOutput: 'expert_escalation_response',
+    blockOnRiskFlag: true,
+  },
+  {
+    eventType: 'TrellisAssetGenerated',
+    pipeline: ['agent_ecosystem_orchestrator', 'meta_reasoning_agent', 'collective_memory_curator', 'transparency_officer'],
+    autonomyLevel: 'AutoExecuteThreshold',
+    finalOutput: 'asset_registration',
+    autoExecutionThreshold: 0.85,
   },
   // System Events
   {

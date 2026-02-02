@@ -2193,6 +2193,12 @@ enum DomainEventType {
   WorkflowStarted
   WorkflowStepCompleted
   WorkflowFailed
+  // MoE Grounding Events
+  MoEGroundingRequested
+  MoEGroundingCompleted
+  MoEGroundingFailed
+  MoEExpertEscalation
+  TrellisAssetGenerated
   // System Events
   SystemAlert
   SystemRiskFlag
