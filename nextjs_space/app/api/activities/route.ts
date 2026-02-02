@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
         select: { projectId: true },
       });
 
-      const projectIds = userProjects.map((pt) => pt.projectId);
+      const projectIds = userProjects.map((pt: { projectId: string }) => pt.projectId);
 
       if (where.projectId) {
         // Check if user has access to the requested project

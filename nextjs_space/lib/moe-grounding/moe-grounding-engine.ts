@@ -864,7 +864,43 @@ export async function runMoEGroundingPipeline(
 
   // Step 3: Run activated experts
   const groundingStart = Date.now();
-  const primaryOutput = trellisResult.outputs[0]; // Use primary output format
+
+  // Validate TRELLIS returned at least one output
+  if (!trellisResult.outputs || trellisResult.outputs.length === 0) {
+    const pipelineTime = Date.now() - pipelineStart;
+    return {
+      id: `moe-${Date.now()}`,
+      trellisResult,
+      expertWeights,
+      expertResults: [],
+      summary: {
+        overallConfidence: 0,
+        structurallyFeasible: null,
+        materialsGrounded: false,
+        codeCompliant: null,
+        estimatedCost: null,
+        lodStatus: null,
+        criticalIssues: [
+          `TRELLIS generation returned no outputs${trellisResult.error ? `: ${trellisResult.error}` : ''}`,
+        ],
+        recommendations: ['Verify TRELLIS server is running and model is loaded', 'Check input image/prompt quality'],
+        agentEscalation: {
+          required: true,
+          targetAgent: 'human_oversight_liaison',
+          reason: 'TRELLIS generation failed -- no outputs produced',
+        },
+      },
+      metadata: {
+        totalPipelineTimeMs: pipelineTime,
+        trellisGenerationTimeMs: trellisTime,
+        groundingTimeMs: 0,
+        expertsActivated: 0,
+        topKUsed: topK,
+      },
+    };
+  }
+
+  const primaryOutput = trellisResult.outputs[0];
   const expertResults: ExpertResult[] = [];
 
   for (const ew of expertWeights) {
@@ -940,6 +976,7 @@ async function generateWithTrellis(
       });
     }
     return client.generateFromMultiImage(request.images, {
+      model: request.model,
       outputFormats: request.outputFormats,
       sparseStructureSampling: request.sparseStructureSampling,
       slatSampling: request.slatSampling,

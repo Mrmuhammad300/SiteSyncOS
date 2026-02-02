@@ -16,7 +16,7 @@
 // ---------------------------------------------------------------------------
 
 const TRELLIS_HOST = process.env.TRELLIS_HOST || 'localhost';
-const TRELLIS_PORT = parseInt(process.env.TRELLIS_PORT || '7860');
+const TRELLIS_PORT = parseInt(process.env.TRELLIS_PORT || '7860', 10);
 const TRELLIS_BASE_URL = process.env.TRELLIS_URL || `http://${TRELLIS_HOST}:${TRELLIS_PORT}`;
 const TRELLIS_TIMEOUT = 300000; // 5 minutes for 3D generation
 
@@ -276,13 +276,14 @@ export class TrellisClient {
 
       if (!response.ok) {
         const errorText = await response.text();
+        const truncatedError = errorText.length > 500 ? errorText.slice(0, 500) + '...(truncated)' : errorText;
         return {
           id: `trellis-err-${Date.now()}`,
           status: 'error',
           model: request.model,
           outputs: [],
           metadata: { generationTimeMs: Date.now() - startTime, seed },
-          error: `TRELLIS API error ${response.status}: ${errorText}`,
+          error: `TRELLIS API error ${response.status}: ${truncatedError}`,
         };
       }
 

@@ -11,6 +11,30 @@ import {
   type TrellisModelVariant,
 } from '@/lib/moe-grounding';
 
+const VALID_ASSET_TYPES: ConstructionAssetType[] = [
+  'building_exterior', 'building_interior', 'structural_element',
+  'mep_component', 'site_element', 'furniture_fixture',
+  'material_sample', 'equipment', 'landscape', 'facade_detail',
+];
+
+const VALID_OUTPUT_FORMATS: TrellisOutputFormat[] = ['mesh', 'gaussian', 'radiance_field'];
+
+const VALID_MODELS: TrellisModelVariant[] = [
+  'TRELLIS-image-large', 'TRELLIS-text-base', 'TRELLIS-text-large', 'TRELLIS-text-xlarge',
+];
+
+function isValidAssetType(value: string): value is ConstructionAssetType {
+  return VALID_ASSET_TYPES.includes(value as ConstructionAssetType);
+}
+
+function isValidOutputFormat(value: string): value is TrellisOutputFormat {
+  return VALID_OUTPUT_FORMATS.includes(value as TrellisOutputFormat);
+}
+
+function isValidModel(value: string): value is TrellisModelVariant {
+  return VALID_MODELS.includes(value as TrellisModelVariant);
+}
+
 /**
  * GET /api/moe-grounding
  *
@@ -54,13 +78,20 @@ export async function GET(request: NextRequest) {
       }
 
       case 'preview-routing': {
-        const assetType = (searchParams.get('assetType') || 'building_exterior') as ConstructionAssetType;
+        const rawAssetType = searchParams.get('assetType') || 'building_exterior';
+        if (!isValidAssetType(rawAssetType)) {
+          return NextResponse.json(
+            { error: `Invalid assetType: ${rawAssetType}. Valid types: ${VALID_ASSET_TYPES.join(', ')}` },
+            { status: 400 }
+          );
+        }
+        const assetType: ConstructionAssetType = rawAssetType;
         const projectType = searchParams.get('projectType') || undefined;
         const lodTarget = searchParams.get('lodTarget')
-          ? parseInt(searchParams.get('lodTarget')!)
+          ? parseInt(searchParams.get('lodTarget')!, 10)
           : undefined;
         const topK = searchParams.get('topK')
-          ? parseInt(searchParams.get('topK')!)
+          ? parseInt(searchParams.get('topK')!, 10)
           : 3;
 
         const gatingInput: GatingInput = {
@@ -161,22 +192,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate assetType
+    if (!isValidAssetType(assetType)) {
+      return NextResponse.json(
+        { error: `Invalid assetType: ${assetType}. Valid types: ${VALID_ASSET_TYPES.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate outputFormats
+    const invalidFormats = outputFormats.filter((f: string) => !isValidOutputFormat(f));
+    if (invalidFormats.length > 0) {
+      return NextResponse.json(
+        { error: `Invalid outputFormats: ${invalidFormats.join(', ')}. Valid formats: ${VALID_OUTPUT_FORMATS.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate model if provided
+    if (model && !isValidModel(model)) {
+      return NextResponse.json(
+        { error: `Invalid model: ${model}. Valid models: ${VALID_MODELS.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
     // Build grounding request
+    const validatedAssetType: ConstructionAssetType = assetType;
+    const validatedFormats: TrellisOutputFormat[] = outputFormats;
     const groundingRequest: GroundingRequest = {
       generation: {
         model: model || (mode === 'text-to-3d' ? 'TRELLIS-text-large' : 'TRELLIS-image-large'),
         prompt: mode === 'text-to-3d' ? prompt : undefined,
         images: mode === 'image-to-3d' ? images : undefined,
-        outputFormats: outputFormats as TrellisOutputFormat[],
+        outputFormats: validatedFormats,
         seed,
         constructionContext: {
-          assetType: assetType as ConstructionAssetType,
+          assetType: validatedAssetType,
           projectType,
           lodTarget,
         },
       },
       groundingContext: {
-        assetType: assetType as ConstructionAssetType,
+        assetType: validatedAssetType,
         projectType,
         lodTarget,
         hasStructuralRequirements: ['building_exterior', 'structural_element'].includes(assetType),
