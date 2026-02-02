@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,9 @@ import {
   Wrench,
   BarChart3,
   FileText,
+  Upload,
+  X,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -172,6 +175,67 @@ export default function MoEGroundingPage() {
   const [lodTarget, setLodTarget] = useState(300);
   const [topK, setTopK] = useState(3);
 
+  // Image upload state
+  const [uploadedImages, setUploadedImages] = useState<{ name: string; base64: string; preview: string }[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Error state
+  const [error, setError] = useState<string | null>(null);
+
+  // Image processing helpers
+  const processFiles = useCallback((files: FileList | File[]) => {
+    const validFiles = Array.from(files).filter((f) =>
+      ['image/jpeg', 'image/png', 'image/webp'].includes(f.type)
+    );
+    if (validFiles.length === 0) {
+      setError('Please upload JPG, PNG, or WebP images.');
+      return;
+    }
+    setError(null);
+    for (const file of validFiles) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Extract the base64 part after the data URI prefix
+        const base64 = result.split(',')[1];
+        setUploadedImages((prev) => [
+          ...prev,
+          { name: file.name, base64, preview: result },
+        ]);
+      };
+      reader.onerror = () => {
+        setError(`Failed to read file: ${file.name}`);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      if (e.dataTransfer.files.length > 0) {
+        processFiles(e.dataTransfer.files);
+      }
+    },
+    [processFiles]
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const removeImage = useCallback((index: number) => {
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   // Load status and experts on mount
   useEffect(() => {
     loadStatus();
@@ -229,7 +293,17 @@ export default function MoEGroundingPage() {
   }
 
   async function runPipeline() {
-    if (mode === 'text-to-3d' && !prompt.trim()) return;
+    setError(null);
+
+    if (mode === 'text-to-3d' && !prompt.trim()) {
+      setError('Please enter a text prompt describing the construction asset.');
+      return;
+    }
+    if (mode === 'image-to-3d' && uploadedImages.length === 0) {
+      setError('Please upload at least one image to generate a 3D asset.');
+      return;
+    }
+
     setLoading(true);
     setResult(null);
 
@@ -240,7 +314,7 @@ export default function MoEGroundingPage() {
         body: JSON.stringify({
           mode,
           prompt: mode === 'text-to-3d' ? prompt : undefined,
-          images: mode === 'image-to-3d' ? [] : undefined,
+          images: mode === 'image-to-3d' ? uploadedImages.map((img) => img.base64) : undefined,
           assetType,
           projectType,
           lodTarget,
@@ -249,14 +323,23 @@ export default function MoEGroundingPage() {
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setResult(data);
-        setHistory((prev) => [data, ...prev].slice(0, 10));
-        setActiveTab('results');
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || `Server error (${res.status}). Please try again.`);
+        return;
       }
+
+      if (data.trellisResult?.status === 'error') {
+        setError(`3D generation failed: ${data.trellisResult.error || 'Unknown TRELLIS error'}`);
+      }
+
+      setResult(data);
+      setHistory((prev) => [data, ...prev].slice(0, 10));
+      setActiveTab('results');
     } catch (err) {
       console.error('Pipeline error:', err);
+      setError('Network error: Could not reach the server. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -360,14 +443,68 @@ export default function MoEGroundingPage() {
                     )}
 
                     {mode === 'image-to-3d' && (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                        <Box className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                        <p className="text-sm text-gray-500">
-                          Drop construction photos or site images here
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          Supports: JPG, PNG (multiple images for multi-view)
-                        </p>
+                      <div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              processFiles(e.target.files);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+                        <div
+                          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                            isDragging
+                              ? 'border-violet-500 bg-violet-50'
+                              : 'border-gray-300 hover:border-violet-400 hover:bg-gray-50'
+                          }`}
+                          onClick={() => fileInputRef.current?.click()}
+                          onDrop={handleDrop}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                        >
+                          <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                          <p className="text-sm text-gray-500">
+                            {isDragging ? 'Drop images here' : 'Click to browse or drag & drop construction photos'}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Supports: JPG, PNG, WebP (multiple images for multi-view)
+                          </p>
+                        </div>
+                        {uploadedImages.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            <div className="text-xs font-medium text-gray-700">
+                              {uploadedImages.length} image{uploadedImages.length > 1 ? 's' : ''} selected
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {uploadedImages.map((img, idx) => (
+                                <div key={idx} className="relative group">
+                                  <img
+                                    src={img.preview}
+                                    alt={img.name}
+                                    className="h-20 w-20 object-cover rounded-md border border-gray-200"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeImage(idx);
+                                    }}
+                                    className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                  <div className="text-xs text-gray-400 mt-0.5 truncate w-20">{img.name}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -446,11 +583,26 @@ export default function MoEGroundingPage() {
                       </div>
                     </div>
 
+                    {/* Error Display */}
+                    {error && (
+                      <div className="flex items-start gap-2 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-700">
+                        <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">{error}</div>
+                        <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+
                     {/* Run Button */}
                     <Button
                       className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700"
                       onClick={runPipeline}
-                      disabled={loading || (mode === 'text-to-3d' && !prompt.trim())}
+                      disabled={
+                        loading ||
+                        (mode === 'text-to-3d' && !prompt.trim()) ||
+                        (mode === 'image-to-3d' && uploadedImages.length === 0)
+                      }
                     >
                       {loading ? (
                         <>
