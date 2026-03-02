@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
+import { validate } from '@/lib/validations';
+import { CreateAccountingIntegrationSchema } from '@/lib/validations/accounting';
 
 type AccountingProvider = 'QuickBooks' | 'Xero' | 'FreshBooks' | 'Sage' | 'NetSuite' | 'Custom';
 
@@ -58,63 +60,37 @@ export async function GET(req: NextRequest) {
  * Create a new accounting integration
  */
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const parsed = await validate(req, CreateAccountingIntegrationSchema);
+  if (!parsed.ok) return parsed.error;
+
+  const userId = (session.user as any).id;
+  const {
+    provider, name, companyId, apiKey, apiSecret,
+    accessToken, refreshToken, webhookUrl, config,
+    autoSyncEnabled, syncFrequency,
+  } = parsed.data;
+
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    const userId = (session.user as any).id;
-    const body = await req.json();
-    
-    const {
-      provider,
-      name,
-      companyId,
-      apiKey,
-      apiSecret,
-      accessToken,
-      refreshToken,
-      webhookUrl,
-      config,
-      autoSyncEnabled,
-      syncFrequency
-    } = body;
-    
-    // Validate required fields
-    if (!provider || !name) {
-      return NextResponse.json(
-        { error: 'Provider and name are required' },
-        { status: 400 }
-      );
-    }
-    
-    // Validate provider
-    const validProviders = ['QuickBooks', 'Xero', 'FreshBooks', 'Sage', 'NetSuite', 'Custom'];
-    if (!validProviders.includes(provider)) {
-      return NextResponse.json(
-        { error: 'Invalid provider' },
-        { status: 400 }
-      );
-    }
-    
-    // Create integration
     const integration = await prisma.accountingIntegration.create({
       data: {
         userId,
         provider: provider as AccountingProvider,
         name,
-        companyId,
-        apiKey,
-        apiSecret,
-        accessToken,
-        refreshToken,
-        webhookUrl,
-        config: config ? JSON.stringify(config) : null,
-        autoSyncEnabled: autoSyncEnabled || false,
-        syncFrequency: syncFrequency || null,
-        isActive: true
+        companyId: companyId ?? null,
+        apiKey: apiKey ?? null,
+        apiSecret: apiSecret ?? null,
+        accessToken: accessToken ?? null,
+        refreshToken: refreshToken ?? null,
+        webhookUrl: webhookUrl ?? null,
+        config: config != null ? JSON.stringify(config) : null,
+        autoSyncEnabled,
+        syncFrequency: syncFrequency ?? null,
+        isActive: true,
       },
       select: {
         id: true,

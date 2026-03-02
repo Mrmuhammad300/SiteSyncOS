@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
-
 import { prisma } from '@/lib/db';
+import { validate } from '@/lib/validations';
+import { CreateProjectSchema } from '@/lib/validations/projects';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,81 +81,52 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const parsed = await validate(request, CreateProjectSchema);
+  if (!parsed.ok) return parsed.error;
+
+  const {
+    name, client, projectNumber, address, city, state, zipCode,
+    startDate, estimatedCompletion, budget, status, phase, description,
+    projectManagerId, superintendentId, architectId, engineerId,
+  } = parsed.data;
+
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const {
-      name,
-      client,
-      projectNumber,
-      address,
-      city,
-      state,
-      zipCode,
-      startDate,
-      estimatedCompletion,
-      budget,
-      status,
-      phase,
-      description,
-      projectManagerId,
-      superintendentId,
-      architectId,
-      engineerId,
-    } = body;
-
-    if (!name || !client || !projectNumber || !address || !startDate || !estimatedCompletion || !budget) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    // Check if project number already exists
     const existingProject = await prisma.project.findUnique({
       where: { projectNumber },
+      select: { id: true },
     });
 
     if (existingProject) {
-      return NextResponse.json(
-        { error: 'Project number already exists' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Project number already exists' }, { status: 409 });
     }
 
     const project = await prisma.project.create({
       data: {
-        name,
-        client,
-        projectNumber,
-        address,
-        city,
-        state,
-        zipCode,
+        name, client, projectNumber, address,
+        city: city ?? null,
+        state: state ?? null,
+        zipCode: zipCode ?? null,
         startDate: new Date(startDate),
         estimatedCompletion: new Date(estimatedCompletion),
-        budget: parseFloat(budget),
-        status: status || 'PreConstruction',
-        phase: phase || 'Planning',
-        description,
-        projectManagerId: projectManagerId || null,
-        superintendentId: superintendentId || null,
-        architectId: architectId || null,
-        engineerId: engineerId || null,
+        budget,
+        status,
+        phase,
+        description: description ?? null,
+        projectManagerId: projectManagerId ?? null,
+        superintendentId: superintendentId ?? null,
+        architectId: architectId ?? null,
+        engineerId: engineerId ?? null,
       },
     });
 
     return NextResponse.json({ project }, { status: 201 });
   } catch (error) {
-    console.error('Error creating project:', error);
-    return NextResponse.json(
-      { error: 'Failed to create project' },
-      { status: 500 }
-    );
+    console.error('[projects] Error creating project:', error);
+    return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
   }
 }

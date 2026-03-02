@@ -82,7 +82,7 @@ export interface WebhookCallbackPayload {
   metadata?: Record<string, any>;
 }
 
-const DESIGN_WEBHOOK_URL = 'https://gmllorlxfsxmsejhsjpa.supabase.co/functions/v1/n8n-orders-webhook';
+const DESIGN_WEBHOOK_URL = process.env.DESIGN_WEBHOOK_URL;
 const WEBHOOK_TIMEOUT = 30000; // 30 seconds
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY = 2000; // 2 seconds
@@ -100,6 +100,10 @@ function sleep(ms: number): Promise<void> {
 async function attemptExternalRequest(
   payload: DesignTaskPayload
 ): Promise<DesignTaskResponse> {
+  if (!DESIGN_WEBHOOK_URL) {
+    return { success: false, error: 'DESIGN_WEBHOOK_URL is not configured' };
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT);
 
@@ -279,7 +283,9 @@ export function generateCallbackUrl(requestId: string, taskId: string): string {
  * Get callback secret for webhook authentication
  */
 export function getCallbackSecret(): string {
-  return process.env.DESIGN_WEBHOOK_SECRET || 'default-secret-please-change';
+  const secret = process.env.DESIGN_WEBHOOK_SECRET;
+  if (!secret) throw new Error('DESIGN_WEBHOOK_SECRET is not configured');
+  return secret;
 }
 
 /**

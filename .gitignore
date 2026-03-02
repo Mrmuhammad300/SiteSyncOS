@@ -18,3 +18,13 @@ out
 .deploy
 .logs
 *.tsbuildinfo
+
+# Environment files — NEVER commit real secrets
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+.env.*.local
+# Allow only the sanitised template
+!.env.example
